@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#017 Contando Letras en Números — Euler Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    <style>
+        :root {
+            --bg: #000000;
+            --bg-elevated: #0a0a0f;
+            --bg-card: #111118;
+            --border: #1a1a24;
+            --border-hover: #2a2a3a;
+            --text: #e8e8ed;
+            --text-secondary: #8888a0;
+            --text-muted: #505068;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-amber: #f59e0b;
+            --accent-purple: #a855f7;
+            --accent-red: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .serif { font-family: 'Source Serif 4', Georgia, serif; }
+
+        header { position: sticky; top: 0; z-index: 50; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+
+        .level-tabs { display: flex; gap: 2px; background: var(--bg-elevated); padding: 4px; border-radius: 10px; }
+        .level-tab { padding: 8px 16px; font-size: 13px; font-weight: 500; color: var(--text-muted); background: transparent; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-family: 'JetBrains Mono', monospace; }
+        .level-tab:hover { color: var(--text-secondary); }
+        .level-tab.active { background: var(--accent-blue); color: white; }
+        .level-tab[data-level="2"].active { background: var(--accent-green); }
+
+        .level-content { display: none; animation: fadeIn 0.3s ease; }
+        .level-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .code-editor { position: relative; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .code-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: var(--bg-card); border-bottom: 1px solid var(--border); }
+        .code-lang { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent-green); text-transform: uppercase; letter-spacing: 0.5px; }
+        .run-btn { display: flex; align-items: center; gap: 6px; padding: 6px 14px; background: var(--accent-blue); color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .run-btn:hover { filter: brightness(1.1); }
+        .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .run-btn.running { background: var(--accent-amber); }
+        .code-textarea { width: 100%; min-height: 200px; padding: 16px; background: transparent; border: none; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.7; resize: vertical; outline: none; }
+        .code-output { padding: 12px 16px; background: var(--bg-card); border-top: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-secondary); min-height: 40px; white-space: pre-wrap; }
+        .code-output.success { color: var(--accent-green); }
+        .code-output.error { color: #ef4444; }
+
+        .result-box { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(34, 197, 94, 0.08) 100%); border: 1px solid var(--accent-blue); border-radius: 12px; }
+        .result-value { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 600; color: var(--accent-green); }
+
+        .concept-tag { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
+
+        .pyodide-status { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--bg-card); border-radius: 8px; font-size: 12px; color: var(--text-muted); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+        .status-dot.loading { background: var(--accent-amber); animation: pulse 1s infinite; }
+        .status-dot.ready { background: var(--accent-green); }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        code:not(.code-textarea) { padding: 2px 8px; background: var(--bg-elevated); border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.9em; color: var(--accent-amber); }
+
+        .word-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 8px;
+        }
+
+        .word-card {
+            padding: 10px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .word-card .number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: var(--accent-blue);
+            margin-bottom: 4px;
+        }
+
+        .word-card .word {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .word-card .count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--accent-green);
+            margin-top: 4px;
+        }
+
+        .pattern-box {
+            padding: 16px;
+            background: var(--bg-elevated);
+            border-radius: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+
+        .pattern-box .highlight {
+            color: var(--accent-amber);
+        }
+
+        .pattern-box .and-word {
+            color: var(--accent-purple);
+            font-weight: 500;
+        }
+
+        .breakdown-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .breakdown-table th,
+        .breakdown-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .breakdown-table th {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .breakdown-table td {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+
+        .tier-section {
+            padding: 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        .tier-header {
+            font-weight: 500;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tier-badge {
+            padding: 2px 8px;
+            background: var(--accent-blue);
+            color: white;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body>
+    <header class="px-6 py-4">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-6">
+                <a href="../../index.html" class="text-sm text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
+                    ← Euler Lab
+                </a>
+                <div class="flex items-center gap-3">
+                    <span class="mono text-lg text-[var(--accent-blue)]">#017</span>
+                    <h1 class="text-lg font-medium">Contando Letras en Números</h1>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="pyodide-status">
+                    <div class="status-dot" id="pyodideStatus"></div>
+                    <span id="pyodideText">Cargando Python...</span>
+                </div>
+                <div class="flex gap-2">
+                    <a href="../016/index.html" class="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--border)] hover:border-[var(--border-hover)]">← 016</a>
+                    <a href="../018/index.html" class="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--border)] hover:border-[var(--border-hover)]">018 →</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-8">
+        <!-- Enunciado -->
+        <div class="mb-8 p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 w-10 h-10 flex items-center justify-content-center rounded-lg bg-[var(--accent-blue)]/10 text-[var(--accent-blue)]">
+                    <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <div class="space-y-3">
+                    <h2 class="text-lg font-medium">Number Letter Counts</h2>
+                    <p class="text-[var(--text-secondary)] leading-relaxed">
+                        Si escribimos los números del 1 al 5 en palabras: one, two, three, four, five,
+                        usamos <strong class="text-white">3 + 3 + 5 + 4 + 4 = 19</strong> letras en total.
+                        <br><br>
+                        Si escribimos todos los números del <strong class="text-white">1 al 1000</strong> en palabras (inglés británico),
+                        ¿cuántas letras usamos?
+                    </p>
+                    <div class="p-3 bg-[var(--bg-elevated)] rounded-lg text-sm text-[var(--text-muted)]">
+                        <strong>Nota:</strong> No contar espacios ni guiones. Usar "and" según el inglés británico
+                        (ej: 115 = "one hundred <em>and</em> fifteen").
+                    </div>
+                    <div class="flex items-center gap-6 pt-2">
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-amber)]">●</span>
+                            Diccionarios
+                        </span>
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-green)]">●</span>
+                            Strings
+                        </span>
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-purple)]">●</span>
+                            Descomposición sistemática
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs de niveles -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="level-tabs">
+                <button class="level-tab active" data-level="1">Nivel 1: Entendimiento</button>
+                <button class="level-tab" data-level="2">Nivel 2: Implementación</button>
+            </div>
+        </div>
+
+        <!-- NIVEL 1 -->
+        <div class="level-content active" id="level1">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-blue)] flex items-center justify-center text-sm">1</span>
+                        Descomponiendo el Problema
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        La clave es identificar los <strong>bloques básicos</strong> y cómo se combinan para formar cualquier número.
+                    </p>
+                </div>
+
+                <!-- Unidades (1-9) -->
+                <div class="tier-section">
+                    <div class="tier-header">
+                        <span class="tier-badge">1-9</span>
+                        Unidades
+                    </div>
+                    <div class="word-grid">
+                        <div class="word-card">
+                            <div class="number">1</div>
+                            <div class="word">one</div>
+                            <div class="count">3 letras</div>
+                        </div>
+                        <div class="word-card">
+                            <div class="number">2</div>
+                            <div class="word">two</div>
+                            <div class="count">3 letras</div>
+                        </div>
+                        <div class="word-card">
+                            <div class="number">3</div>
+                            <div class="word">three</div>
+                            <div class="count">5 letras</div>
+                        </div>
+                        <div class="word-card">
+                            <div class="number">4</div>
+                            <div class="word">four</div>
+                            <div class="count">4 letras</div>
+                        </div>
+                        <div class="word-card">
+                            <div class="number">5</div>
+                            <div class="word">five</div>
+                            <div class="count">4 letras</div>
+                        </div>
+                        <div class="word-card">
+                            <div class="number">6</div>
+                            <div class="word">six</div>
+                            <div class="count">3 letras</div>
+                        </div>
+                        <div class="word-card">
+                            <div class="number">7</div>
+                            <div class="word">seven</div>
+                            <div class="count">5 letras</div>
+                        </div>
+                        <div class="word-card">
+                            <div class="number">8</div>
+                            <div class="word">eight</div>
+                            <div class="count">5 letras</div>
+                        </div>
+                        <div class="word-card">
+                            <div class="number">9</div>
+                            <div class="word">nine</div>
+                            <div class="count">4 letras</div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-[var(--text-muted)] mt-3">Total: 3+3+5+4+4+3+5+5+4 = <strong class="text-[var(--accent-green)]">36 letras</strong></p>
+                </div>
+
+                <!-- Teens (10-19) -->
+                <div class="tier-section">
+                    <div class="tier-header">
+                        <span class="tier-badge">10-19</span>
+                        Los "teens" (casos especiales)
+                    </div>
+                    <div class="word-grid">
+                        <div class="word-card">
+                            <div class="number">10</div>
+                            <div class="word">ten</div>
+                            <div class="count">3 letras</div>
+                        </div>
+                        <div class="word-card">
+                            <div class="number">11</div>
+                            <div class="word">eleven</div>
+                            <div class="count">6 letras</div>
+                        </div>
+                        <div class="word-card">
+                            <div class="number">12</div>
+                            <div class="word">twelve</div>
+                            <div class="count">6 letras</div>
+                        </div>
+                        <div class="word-card">
+                            <div class="number">13</div>
+                            <div class="word">thirteen</div>
+                            <div class="count">8 letras</div>
+                        </div>
+                        <div class="word-card">
+                            <div class="number">14</div>
+                            <div class="word">fourteen</div>
+                            <div class="count">8 letras</div>
+                        </div>
+                        <div class="word-card">
+                            <div class="number">15</div>
+                            <div class="word">fifteen</div>
+                            <div class="count">7 letras</div>
+                        </div>
+                        <div class="word-card">
+                            <div class="number">16</div>
+                            <div class="word">sixteen</div>
+                            <div class="count">7 letras</div>
+                        </div>
+                        <div class="word-card">
+                            <div class="number">17</div>
+                            <div class="word">seventeen</div>
+                            <div class="count">9 letras</div>
+                        </div>
+                        <div class="word-card">
+                            <div class="number">18</div>
+                            <div class="word">eighteen</div>
+                            <div class="count">8 letras</div>
+                        </div>
+                        <div class="word-card">
+                            <div class="number">19</div>
+                            <div class="word">nineteen</div>
+                            <div class="count">8 letras</div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-[var(--text-muted)] mt-3">Total: 3+6+6+8+8+7+7+9+8+8 = <strong class="text-[var(--accent-green)]">70 letras</strong></p>
+                </div>
+
+                <!-- Decenas (20, 30, ..., 90) -->
+                <div class="tier-section">
+                    <div class="tier-header">
+                        <span class="tier-badge">20-90</span>
+                        Decenas (múltiplos de 10)
+                    </div>
+                    <div class="word-grid">
+                        <div class="word-card">
+                            <div class="number">20</div>
+                            <div class="word">twenty</div>
+                            <div class="count">6 letras</div>
+                        </div>
+                        <div class="word-card">
+                            <div class="number">30</div>
+                            <div class="word">thirty</div>
+                            <div class="count">6 letras</div>
+                        </div>
+                        <div class="word-card">
+                            <div class="number">40</div>
+                            <div class="word">forty</div>
+                            <div class="count">5 letras</div>
+                        </div>
+                        <div class="word-card">
+                            <div class="number">50</div>
+                            <div class="word">fifty</div>
+                            <div class="count">5 letras</div>
+                        </div>
+                        <div class="word-card">
+                            <div class="number">60</div>
+                            <div class="word">sixty</div>
+                            <div class="count">5 letras</div>
+                        </div>
+                        <div class="word-card">
+                            <div class="number">70</div>
+                            <div class="word">seventy</div>
+                            <div class="count">7 letras</div>
+                        </div>
+                        <div class="word-card">
+                            <div class="number">80</div>
+                            <div class="word">eighty</div>
+                            <div class="count">6 letras</div>
+                        </div>
+                        <div class="word-card">
+                            <div class="number">90</div>
+                            <div class="word">ninety</div>
+                            <div class="count">6 letras</div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-[var(--text-muted)] mt-3">
+                        <strong>Ojo:</strong> Es "forty" (no "fourty"). Un error común.
+                    </p>
+                </div>
+
+                <!-- Patrón de centenas -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-purple)]">Patrón para Centenas (100-999)</h4>
+                    <div class="space-y-4">
+                        <div class="pattern-box">
+                            <p class="mb-2">100 = <span class="highlight">one</span> hundred</p>
+                            <p class="mb-2">200 = <span class="highlight">two</span> hundred</p>
+                            <p>...</p>
+                        </div>
+                        <div class="pattern-box">
+                            <p class="mb-2">101 = one hundred <span class="and-word">and</span> one</p>
+                            <p class="mb-2">115 = one hundred <span class="and-word">and</span> fifteen</p>
+                            <p class="mb-2">342 = three hundred <span class="and-word">and</span> forty-two</p>
+                        </div>
+                        <p class="text-sm text-[var(--text-secondary)]">
+                            <strong>Regla británica:</strong> Se usa "and" cuando hay unidades o decenas después de "hundred".
+                            <br>
+                            <code>100</code> = "one hundred" (sin and)
+                            <br>
+                            <code>101-199</code> = "one hundred <em>and</em> ..." (con and)
+                        </p>
+                    </div>
+                </div>
+
+                <!-- El caso especial: 1000 -->
+                <div class="p-5 bg-[var(--accent-amber)]/10 border border-[var(--accent-amber)]/30 rounded-xl">
+                    <h4 class="font-medium mb-2 text-[var(--accent-amber)]">Caso especial: 1000</h4>
+                    <p class="text-sm text-[var(--text-secondary)]">
+                        1000 = "one thousand" = 11 letras
+                        <br><br>
+                        Solo hay un número con "thousand" en nuestro rango, así que es fácil manejarlo por separado.
+                    </p>
+                </div>
+
+                <!-- Ejemplos del problema -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">Ejemplos del enunciado</h4>
+                    <table class="breakdown-table">
+                        <thead>
+                            <tr>
+                                <th>Número</th>
+                                <th>Palabra</th>
+                                <th>Letras</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>342</td>
+                                <td class="text-[var(--text-secondary)]">threehundredandfortytwo</td>
+                                <td class="text-[var(--accent-green)]">23</td>
+                            </tr>
+                            <tr>
+                                <td>115</td>
+                                <td class="text-[var(--text-secondary)]">onehundredandfifteen</td>
+                                <td class="text-[var(--accent-green)]">20</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="text-xs text-[var(--text-muted)] mt-3">
+                        Recuerda: espacios y guiones NO se cuentan.
+                    </p>
+                </div>
+
+                <!-- Resultado -->
+                <div class="result-box">
+                    <div>
+                        <div class="text-sm text-[var(--text-muted)] mb-1">Letras del 1 al 1000</div>
+                        <div class="result-value">21,124</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-[var(--text-muted)] mb-1">Números escritos</div>
+                        <div class="mono text-lg">1000</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NIVEL 2 -->
+        <div class="level-content" id="level2">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-green)] flex items-center justify-center text-sm">2</span>
+                        Implementación con Diccionarios
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        Usaremos diccionarios para mapear números a sus palabras, construyendo desde las piezas básicas.
+                    </p>
+                </div>
+
+                <!-- Por qué diccionarios -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-amber)]">¿Por qué Diccionarios?</h4>
+                    <div class="space-y-4 text-[var(--text-secondary)]">
+                        <p>
+                            Los diccionarios son perfectos para este problema porque:
+                        </p>
+                        <ul class="list-disc list-inside space-y-2 ml-4">
+                            <li><strong>Mapeo directo</strong>: número → palabra</li>
+                            <li><strong>Lookup O(1)</strong>: acceso instantáneo</li>
+                            <li><strong>Legibilidad</strong>: el código se lee como una tabla</li>
+                        </ul>
+                        <div class="p-4 bg-[var(--bg-elevated)] rounded-lg mono text-sm mt-4">
+                            <p class="text-[var(--text-muted)]"># Ejemplo de estructura</p>
+                            <p>units = {1: "one", 2: "two", 3: "three", ...}</p>
+                            <p>tens = {20: "twenty", 30: "thirty", ...}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Código principal -->
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — Solución completa</span>
+                        <button class="run-btn" onclick="runCode('code2', 'output2')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code2" style="min-height: 500px;"># Diccionarios base
+units = {
+    0: "", 1: "one", 2: "two", 3: "three", 4: "four",
+    5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine"
+}
+
+teens = {
+    10: "ten", 11: "eleven", 12: "twelve", 13: "thirteen",
+    14: "fourteen", 15: "fifteen", 16: "sixteen", 17: "seventeen",
+    18: "eighteen", 19: "nineteen"
+}
+
+tens = {
+    20: "twenty", 30: "thirty", 40: "forty", 50: "fifty",
+    60: "sixty", 70: "seventy", 80: "eighty", 90: "ninety"
+}
+
+def number_to_words(n):
+    """Convierte un número (1-1000) a su forma escrita en inglés."""
+    if n == 1000:
+        return "onethousand"
+
+    if n == 0:
+        return ""
+
+    result = ""
+
+    # Centenas (100-999)
+    if n >= 100:
+        hundreds_digit = n // 100
+        result += units[hundreds_digit] + "hundred"
+        n = n % 100  # Quedan las decenas y unidades
+
+        # Añadir "and" si hay algo después
+        if n > 0:
+            result += "and"
+
+    # Teens (10-19) - caso especial
+    if 10 <= n <= 19:
+        result += teens[n]
+        return result
+
+    # Decenas (20, 30, ..., 90)
+    if n >= 20:
+        tens_digit = (n // 10) * 10
+        result += tens[tens_digit]
+        n = n % 10
+
+    # Unidades (1-9)
+    if n > 0:
+        result += units[n]
+
+    return result
+
+# Contar letras totales del 1 al 1000
+total_letters = sum(len(number_to_words(n)) for n in range(1, 1001))
+
+print(f"Total de letras del 1 al 1000: {total_letters}")
+
+# Verificar con los ejemplos del problema
+print("\nVerificaciones:")
+print(f"342 = '{number_to_words(342)}' ({len(number_to_words(342))} letras)")
+print(f"115 = '{number_to_words(115)}' ({len(number_to_words(115))} letras)")
+
+# Mostrar algunos ejemplos
+print("\nEjemplos:")
+for n in [1, 15, 20, 21, 100, 101, 999, 1000]:
+    word = number_to_words(n)
+    print(f"  {n:>4} = {word} ({len(word)} letras)")</textarea>
+                    <div class="code-output" id="output2">// Output aparecerá aquí</div>
+                </div>
+
+                <!-- Explicación paso a paso -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">Descomponiendo un número: 342</h4>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-start gap-3">
+                            <span class="text-[var(--accent-blue)] font-medium mono">1.</span>
+                            <div>
+                                <code>342 // 100 = 3</code> → "three" + "hundred"
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-[var(--accent-blue)] font-medium mono">2.</span>
+                            <div>
+                                <code>342 % 100 = 42</code> → queda 42, añadimos "and"
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-[var(--accent-blue)] font-medium mono">3.</span>
+                            <div>
+                                <code>42 // 10 * 10 = 40</code> → "forty"
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-[var(--accent-blue)] font-medium mono">4.</span>
+                            <div>
+                                <code>42 % 10 = 2</code> → "two"
+                            </div>
+                        </div>
+                        <div class="p-3 bg-[var(--bg-elevated)] rounded-lg mt-4 mono">
+                            Resultado: "threehundredandfortytwo" = 23 letras ✓
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alternativa: precalcular 1-99 -->
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — Versión optimizada (precalculando 1-99)</span>
+                        <button class="run-btn" onclick="runCode('code2b', 'output2b')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code2b" style="min-height: 400px;">"""
+Versión optimizada: en vez de construir strings,
+podemos contar letras directamente.
+
+Observación: las letras de 1-99 se repiten en cada centena.
+"""
+
+# Longitudes de las palabras base
+units_len = [0, 3, 3, 5, 4, 4, 3, 5, 5, 4]  # "", one, two, three...
+teens_len = [3, 6, 6, 8, 8, 7, 7, 9, 8, 8]  # ten, eleven, twelve...
+tens_len = [0, 0, 6, 6, 5, 5, 5, 7, 6, 6]   # "", "", twenty, thirty...
+
+def count_letters_1_to_99():
+    """Cuenta letras del 1 al 99."""
+    total = 0
+
+    # 1-9
+    total += sum(units_len[1:10])
+
+    # 10-19
+    total += sum(teens_len)
+
+    # 20-99
+    for d in range(2, 10):  # decenas: 20, 30, ..., 90
+        # El múltiplo de 10 solo (20, 30, ...)
+        total += tens_len[d]
+        # 21-29, 31-39, etc. (9 números cada uno)
+        for u in range(1, 10):
+            total += tens_len[d] + units_len[u]
+
+    return total
+
+def count_letters_1_to_999():
+    """Cuenta letras del 1 al 999."""
+    letters_1_99 = count_letters_1_to_99()
+
+    total = letters_1_99  # 1-99
+
+    # 100-999: hay 9 centenas (100-199, 200-299, ..., 900-999)
+    hundred_len = 7  # "hundred"
+    and_len = 3      # "and"
+
+    for h in range(1, 10):  # centenas: 1xx, 2xx, ..., 9xx
+        # X00: "X hundred"
+        total += units_len[h] + hundred_len
+
+        # X01-X99: "X hundred and ..." (99 números)
+        # = 99 × (X + hundred + and) + letras de 1-99
+        total += 99 * (units_len[h] + hundred_len + and_len)
+        total += letters_1_99
+
+    return total
+
+def count_letters_1_to_1000():
+    """Cuenta letras del 1 al 1000."""
+    return count_letters_1_to_999() + 11  # "onethousand" = 11 letras
+
+result = count_letters_1_to_1000()
+print(f"Total de letras del 1 al 1000: {result}")
+
+# Desglose
+print(f"\nDesglose:")
+print(f"  1-99:   {count_letters_1_to_99()} letras")
+print(f"  1-999:  {count_letters_1_to_999()} letras")
+print(f"  1000:   11 letras")
+print(f"  Total:  {result} letras")</textarea>
+                    <div class="code-output" id="output2b">// Output aparecerá aquí</div>
+                </div>
+
+                <!-- Errores comunes -->
+                <div class="p-5 bg-[var(--accent-red)]/10 border border-[var(--accent-red)]/30 rounded-xl">
+                    <h4 class="font-medium mb-2 text-[var(--accent-red)]">Errores Comunes</h4>
+                    <ul class="list-disc list-inside space-y-2 text-sm text-[var(--text-secondary)]">
+                        <li><strong>"fourty"</strong> en vez de <strong>"forty"</strong> (sin u)</li>
+                        <li>Olvidar el <strong>"and"</strong> después de hundred</li>
+                        <li>Poner "and" en números redondos como 100, 200 (no llevan)</li>
+                        <li>Contar espacios o guiones (no deben contarse)</li>
+                        <li>Olvidar el 1000 al final</li>
+                    </ul>
+                </div>
+
+                <!-- Conceptos aprendidos -->
+                <div class="flex flex-wrap gap-3">
+                    <span class="concept-tag"><span class="text-[var(--accent-green)]">✓</span> Diccionarios como tablas de lookup</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-green)]">✓</span> Descomposición de problemas</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-green)]">✓</span> División entera y módulo</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Pyodide setup
+        let pyodide = null;
+
+        async function initPyodide() {
+            const status = document.getElementById('pyodideStatus');
+            const text = document.getElementById('pyodideText');
+            status.classList.add('loading');
+
+            try {
+                pyodide = await loadPyodide();
+                status.classList.remove('loading');
+                status.classList.add('ready');
+                text.textContent = 'Python listo';
+            } catch (e) {
+                text.textContent = 'Error cargando Python';
+                status.style.background = '#ef4444';
+            }
+        }
+
+        async function runCode(inputId, outputId) {
+            const code = document.getElementById(inputId).value;
+            const output = document.getElementById(outputId);
+            const btn = output.parentElement.querySelector('.run-btn');
+
+            if (!pyodide) {
+                output.textContent = 'Esperando Pyodide...';
+                return;
+            }
+
+            btn.classList.add('running');
+            btn.disabled = true;
+            output.textContent = 'Ejecutando...';
+            output.className = 'code-output';
+
+            try {
+                pyodide.runPython(`
+import sys
+from io import StringIO
+sys.stdout = StringIO()
+`);
+                await pyodide.runPythonAsync(code);
+                const stdout = pyodide.runPython('sys.stdout.getvalue()');
+                output.textContent = stdout || '(sin output)';
+                output.classList.add('success');
+            } catch (e) {
+                output.textContent = e.message;
+                output.classList.add('error');
+            }
+
+            btn.classList.remove('running');
+            btn.disabled = false;
+        }
+
+        // Level tabs
+        document.querySelectorAll('.level-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.level-content').forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(`level${tab.dataset.level}`).classList.add('active');
+            });
+        });
+
+        // Init
+        initPyodide();
+    </script>
+</body>
+</html>
