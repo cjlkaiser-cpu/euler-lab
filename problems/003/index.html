@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#003 Factor primo mayor — Euler Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    <style>
+        :root {
+            --bg: #000000;
+            --bg-elevated: #0a0a0f;
+            --bg-card: #111118;
+            --border: #1a1a24;
+            --border-hover: #2a2a3a;
+            --text: #e8e8ed;
+            --text-secondary: #8888a0;
+            --text-muted: #505068;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-amber: #f59e0b;
+            --accent-purple: #a855f7;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .serif { font-family: 'Source Serif 4', Georgia, serif; }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .level-tabs {
+            display: flex;
+            gap: 2px;
+            background: var(--bg-elevated);
+            padding: 4px;
+            border-radius: 10px;
+        }
+
+        .level-tab {
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .level-tab:hover { color: var(--text-secondary); }
+
+        .level-tab.active {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .level-tab[data-level="2"].active { background: var(--accent-green); }
+        .level-tab[data-level="3"].active { background: var(--accent-amber); }
+        .level-tab[data-level="4"].active { background: var(--accent-purple); }
+
+        .level-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .level-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .code-editor {
+            position: relative;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 16px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .code-lang {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--accent-green);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .run-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .run-btn:hover { filter: brightness(1.1); }
+        .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .run-btn.running { background: var(--accent-amber); }
+
+        .code-textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 16px;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            resize: vertical;
+            outline: none;
+        }
+
+        .code-output {
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--text-secondary);
+            min-height: 40px;
+        }
+
+        .code-output.success { color: var(--accent-green); }
+        .code-output.error { color: #ef4444; }
+
+        .result-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(34, 197, 94, 0.08) 100%);
+            border: 1px solid var(--accent-blue);
+            border-radius: 12px;
+        }
+
+        .result-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--accent-green);
+        }
+
+        .step-card {
+            display: flex;
+            gap: 16px;
+            padding: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            transition: border-color 0.2s;
+        }
+
+        .step-card:hover { border-color: var(--border-hover); }
+
+        .step-number {
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--accent-blue);
+        }
+
+        .math-block {
+            padding: 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .math-formula {
+            font-family: 'Source Serif 4', Georgia, serif;
+            font-size: 20px;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .math-description {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .perf-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .perf-table th, .perf-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .perf-table th {
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        .perf-table td {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+
+        .perf-bar {
+            height: 6px;
+            background: var(--bg-elevated);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+
+        .perf-bar-fill { height: 100%; border-radius: 3px; }
+        .perf-fast { background: var(--accent-green); }
+        .perf-slow { background: #ef4444; }
+
+        .concept-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .custom-input {
+            padding: 10px 14px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .custom-input:focus { border-color: var(--accent-blue); }
+
+        .pyodide-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+
+        .status-dot.loading { background: var(--accent-amber); animation: pulse 1s infinite; }
+        .status-dot.ready { background: var(--accent-green); }
+        .status-dot.error { background: #ef4444; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        code:not(.code-textarea) {
+            padding: 2px 8px;
+            background: var(--bg-elevated);
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            color: var(--accent-amber);
+        }
+
+        .factor-tree {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .factor-num {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+        }
+
+        .factor-prime {
+            background: rgba(168, 85, 247, 0.15);
+            color: #c084fc;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+
+        .factor-composite {
+            background: var(--bg-elevated);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .factor-op {
+            color: var(--text-muted);
+            font-size: 18px;
+        }
+
+        .big-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1em;
+            color: var(--accent-purple);
+            word-break: break-all;
+        }
+
+        @media (max-width: 640px) {
+            .level-tabs { flex-wrap: wrap; }
+            .level-tab { flex: 1; text-align: center; padding: 8px 12px; font-size: 12px; }
+            .result-box { flex-direction: column; text-align: center; gap: 8px; }
+            .step-card { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="max-w-3xl mx-auto px-5 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <nav class="text-xs text-gray-600 mb-1 mono">
+                        <a href="../../index.html" class="hover:text-blue-400 transition">Euler Lab</a>
+                        <span class="mx-1.5 text-gray-800">/</span>
+                        <span class="text-gray-500">#003</span>
+                    </nav>
+                    <h1 class="text-xl font-medium">Factor primo mayor</h1>
+                </div>
+                <div class="pyodide-status mono">
+                    <span class="status-dot loading" id="pyodide-dot"></span>
+                    <span id="pyodide-text">Cargando Python...</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-5 py-8">
+        <!-- Problem statement -->
+        <section class="mb-10">
+            <div class="p-6 bg-gray-950 border border-gray-900 rounded-xl">
+                <p class="serif text-lg text-gray-300 leading-relaxed">
+                    Los factores primos de <strong class="text-white">13195</strong> son 5, 7, 13 y 29.
+                </p>
+                <div class="factor-tree my-4">
+                    <span class="factor-num factor-composite">13195</span>
+                    <span class="factor-op">=</span>
+                    <span class="factor-num factor-prime">5</span>
+                    <span class="factor-op">×</span>
+                    <span class="factor-num factor-prime">7</span>
+                    <span class="factor-op">×</span>
+                    <span class="factor-num factor-prime">13</span>
+                    <span class="factor-op">×</span>
+                    <span class="factor-num factor-prime">29</span>
+                </div>
+                <p class="serif text-lg text-gray-300">
+                    ¿Cuál es el <strong class="text-white">mayor factor primo</strong> de
+                    <span class="big-number">600851475143</span>?
+                </p>
+            </div>
+        </section>
+
+        <!-- Level tabs -->
+        <nav class="mb-8 flex justify-center">
+            <div class="level-tabs">
+                <button class="level-tab active" data-level="1">A mano</button>
+                <button class="level-tab" data-level="2">Fuerza bruta</button>
+                <button class="level-tab" data-level="3">Pythónico</button>
+                <button class="level-tab" data-level="4">Matemático</button>
+            </div>
+        </nav>
+
+        <!-- LEVEL 1: A mano -->
+        <section class="level-content active" id="level-1">
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">¿Qué es un factor primo?</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        Un <strong class="text-white">factor</strong> de N es un número que divide a N exactamente.
+                        Un <strong class="text-white">factor primo</strong> es un factor que además es primo (solo divisible por 1 y por sí mismo).
+                    </p>
+                </div>
+
+                <div class="space-y-4">
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Factorizando 13195 a mano</h2>
+
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h3 class="font-medium mb-1">¿Es divisible por 2?</h3>
+                            <p class="text-gray-500 text-sm">13195 es impar → No es divisible por 2</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h3 class="font-medium mb-1">¿Es divisible por 3?</h3>
+                            <p class="text-gray-500 text-sm">1+3+1+9+5 = 19, no es múltiplo de 3 → No</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div>
+                            <h3 class="font-medium mb-1">¿Es divisible por 5?</h3>
+                            <p class="text-gray-500 text-sm">Termina en 5 → <strong class="text-green-400">Sí!</strong> 13195 ÷ 5 = 2639</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">4</div>
+                        <div>
+                            <h3 class="font-medium mb-1">Ahora factorizamos 2639</h3>
+                            <p class="text-gray-500 text-sm">2639 ÷ 7 = 377 → <strong class="text-green-400">Sí!</strong></p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">5</div>
+                        <div>
+                            <h3 class="font-medium mb-1">Factorizamos 377</h3>
+                            <p class="text-gray-500 text-sm">377 ÷ 13 = 29 → <strong class="text-green-400">29 es primo!</strong></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="math-block">
+                    <div class="math-formula">13195 = 5 × 7 × 13 × 29</div>
+                    <div class="math-description">El mayor factor primo es 29</div>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">El problema real</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        <span class="big-number">600851475143</span> es demasiado grande para factorizar a mano.
+                        Necesitamos un algoritmo eficiente.
+                    </p>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Conceptos clave</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="concept-tag">🔢 Números primos</span>
+                        <span class="concept-tag">➗ Divisibilidad</span>
+                        <span class="concept-tag">🌳 Factorización</span>
+                        <span class="concept-tag">📐 División entera</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEVEL 2: Fuerza bruta -->
+        <section class="level-content" id="level-2">
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">La estrategia</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        Dividir N por cada número empezando desde 2. Cuando encontramos un divisor,
+                        lo dividimos tantas veces como sea posible y seguimos. El último divisor encontrado es el mayor.
+                    </p>
+                </div>
+
+                <div class="p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl mb-6">
+                    <p class="text-blue-300 text-sm">
+                        <strong>Truco clave:</strong> No necesitamos verificar si el divisor es primo.
+                        Si dividimos todos los 2, luego todos los 3... cuando lleguemos a 4, ya no habrá factores de 4
+                        (porque ya quitamos los 2). Los compuestos nunca dividen.
+                    </p>
+                </div>
+
+                <!-- Variante A -->
+                <div>
+                    <h2 class="text-sm font-medium text-green-400 uppercase tracking-wide mb-3">Variante A: while True + break</h2>
+                    <p class="text-gray-400 text-sm mb-4">
+                        Bucle infinito que termina cuando N queda reducido a 1. Muy explícita en cada paso.
+                    </p>
+                    <div class="code-editor">
+                        <div class="code-header">
+                            <span class="code-lang">Python</span>
+                            <button class="run-btn" onclick="runCode('code-varA')">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                Ejecutar
+                            </button>
+                        </div>
+                        <textarea id="code-varA" class="code-textarea" spellcheck="false" style="min-height: 380px;">n = 600851475143             # Número a factorizar
+divisor = 2                  # Empezamos por el menor primo
+mayor_primo = 1              # Guardará el resultado
+
+while True:
+    if n == 1:               # ¿Ya factorizamos todo?
+        break                # Sí → terminamos
+
+    if n % divisor == 0:     # ¿divisor divide a n?
+        mayor_primo = divisor    # Guardamos este primo
+        n = n // divisor         # Dividimos n (división entera)
+        # No incrementamos divisor: puede haber más factores iguales
+    else:
+        divisor = divisor + 1    # Probamos el siguiente
+
+print(mayor_primo)</textarea>
+                        <div class="code-output" id="output-varA">Pulsa "Ejecutar" para ver el resultado</div>
+                    </div>
+                </div>
+
+                <!-- Variante B -->
+                <div>
+                    <h2 class="text-sm font-medium text-green-400 uppercase tracking-wide mb-3">Variante B: while con condición</h2>
+                    <p class="text-gray-400 text-sm mb-4">
+                        La condición de salida va en el while. Más limpia, sin break.
+                    </p>
+                    <div class="code-editor">
+                        <div class="code-header">
+                            <span class="code-lang">Python</span>
+                            <button class="run-btn" onclick="runCode('code-varB')">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                Ejecutar
+                            </button>
+                        </div>
+                        <textarea id="code-varB" class="code-textarea" spellcheck="false" style="min-height: 300px;">n = 600851475143             # Número a factorizar
+divisor = 2                  # Empezamos por el menor primo
+mayor_primo = 1              # Guardará el resultado
+
+while n > 1:                 # Mientras quede algo por factorizar
+    if n % divisor == 0:     # ¿divisor divide a n?
+        mayor_primo = divisor
+        n = n // divisor     # Dividimos (sin incrementar divisor)
+    else:
+        divisor += 1         # Siguiente candidato
+
+print(mayor_primo)</textarea>
+                        <div class="code-output" id="output-varB">Pulsa "Ejecutar" para ver el resultado</div>
+                    </div>
+                </div>
+
+                <!-- Variante C -->
+                <div>
+                    <h2 class="text-sm font-medium text-green-400 uppercase tracking-wide mb-3">Variante C: con while anidados</h2>
+                    <p class="text-gray-400 text-sm mb-4">
+                        Un while interno elimina todas las ocurrencias de cada factor. Más estructurada.
+                    </p>
+                    <div class="code-editor">
+                        <div class="code-header">
+                            <span class="code-lang">Python</span>
+                            <button class="run-btn" onclick="runCode('code-varC')">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                Ejecutar
+                            </button>
+                        </div>
+                        <textarea id="code-varC" class="code-textarea" spellcheck="false" style="min-height: 320px;">n = 600851475143
+divisor = 2
+mayor_primo = 1
+
+while n > 1:
+    # Eliminar todas las ocurrencias de este divisor
+    while n % divisor == 0:
+        mayor_primo = divisor
+        n = n // divisor
+        print(f"Dividido por {divisor}, queda n = {n}")
+
+    divisor += 1
+
+print(f"\nMayor factor primo: {mayor_primo}")</textarea>
+                        <div class="code-output" id="output-varC">Pulsa "Ejecutar" para ver el resultado</div>
+                    </div>
+                </div>
+
+                <!-- Comparativa -->
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">¿Cuál elegir?</h2>
+                    <div class="bg-gray-950 border border-gray-900 rounded-xl overflow-hidden">
+                        <table class="perf-table">
+                            <thead>
+                                <tr>
+                                    <th>Variante</th>
+                                    <th>Líneas</th>
+                                    <th>Ventaja</th>
+                                    <th>Cuándo usarla</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-gray-300">A: while True + break</td>
+                                    <td>12</td>
+                                    <td class="text-gray-400">Muy explícita</td>
+                                    <td class="text-gray-400">Para entender el algoritmo</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-gray-300">B: while con condición</td>
+                                    <td>9</td>
+                                    <td class="text-gray-400">Compacta</td>
+                                    <td class="text-gray-400">Uso general</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-gray-300">C: while anidados</td>
+                                    <td>11</td>
+                                    <td class="text-gray-400">Muestra factores</td>
+                                    <td class="text-gray-400">Debug / aprendizaje</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="result-box">
+                    <span class="text-gray-400">Resultado (las tres variantes)</span>
+                    <span class="result-value">6857</span>
+                </div>
+
+                <!-- Conceptos -->
+                <div class="space-y-4">
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Conceptos clave</h2>
+
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>n % divisor == 0</code></h3>
+                            <p class="text-gray-500 text-sm"><strong>Test de divisibilidad.</strong> Si el resto es 0, divisor divide exactamente a n.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>n // divisor</code></h3>
+                            <p class="text-gray-500 text-sm"><strong>División entera.</strong> Descarta la parte decimal. <code>7 // 2 = 3</code>, no 3.5</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div>
+                            <h3 class="font-medium mb-1">¿Por qué no incrementar cuando divide?</h3>
+                            <p class="text-gray-500 text-sm">Un número puede tener el mismo factor varias veces. Ej: 12 = 2 × 2 × 3. Debemos dividir por 2 dos veces.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">4</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>divisor += 1</code></h3>
+                            <p class="text-gray-500 text-sm"><strong>Incremento.</strong> Equivale a <code>divisor = divisor + 1</code>. Forma abreviada común en Python.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">5</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>f"texto {variable}"</code></h3>
+                            <p class="text-gray-500 text-sm"><strong>f-string.</strong> Permite insertar variables dentro de texto. La f antes de las comillas lo activa.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Conceptos de Python aprendidos</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="concept-tag">// División entera</span>
+                        <span class="concept-tag">% Módulo</span>
+                        <span class="concept-tag">+= Incremento</span>
+                        <span class="concept-tag">📝 f-strings</span>
+                        <span class="concept-tag">🔁 while anidados</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEVEL 3: Pythónico -->
+        <section class="level-content" id="level-3">
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Función reutilizable</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        Encapsulamos la lógica en una función que devuelve todos los factores primos,
+                        y usamos <code>max()</code> para obtener el mayor.
+                    </p>
+                </div>
+
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python</span>
+                        <button class="run-btn" onclick="runCode('code-pythonic')">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea id="code-pythonic" class="code-textarea" spellcheck="false" style="min-height: 280px;">def factores_primos(n):
+    """Devuelve lista de factores primos de n"""
+    factores = []
+    d = 2
+    while n > 1:
+        while n % d == 0:
+            factores.append(d)
+            n //= d
+        d += 1
+    return factores
+
+# Usar la función
+n = 600851475143
+primos = factores_primos(n)
+
+print(f"Factores primos: {primos}")
+print(f"Mayor: {max(primos)}")</textarea>
+                    <div class="code-output" id="output-pythonic">Pulsa "Ejecutar" para ver el resultado</div>
+                </div>
+
+                <div class="space-y-4">
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Desglose</h2>
+
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>def factores_primos(n):</code></h3>
+                            <p class="text-gray-500 text-sm">Definimos una función que recibe n y devuelve sus factores.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>factores.append(d)</code></h3>
+                            <p class="text-gray-500 text-sm">Cada vez que encontramos un divisor, lo añadimos a la lista.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>n //= d</code></h3>
+                            <p class="text-gray-500 text-sm">Equivale a <code>n = n // d</code>. División entera con asignación.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">4</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>max(primos)</code></h3>
+                            <p class="text-gray-500 text-sm">Función integrada que devuelve el valor máximo de un iterable.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-950 border border-gray-900 rounded-xl overflow-hidden">
+                    <table class="perf-table">
+                        <thead>
+                            <tr>
+                                <th>Aspecto</th>
+                                <th>Fuerza bruta</th>
+                                <th>Pythónico</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-gray-400">Resultado</td>
+                                <td>Solo el mayor</td>
+                                <td>Todos los factores</td>
+                            </tr>
+                            <tr>
+                                <td class="text-gray-400">Reutilización</td>
+                                <td>Código inline</td>
+                                <td>Función importable</td>
+                            </tr>
+                            <tr>
+                                <td class="text-gray-400">Memoria</td>
+                                <td>O(1)</td>
+                                <td>O(log n)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="result-box">
+                    <span class="text-gray-400">Resultado</span>
+                    <span class="result-value">6857</span>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Conceptos aprendidos</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="concept-tag">🎯 Funciones</span>
+                        <span class="concept-tag">📋 return</span>
+                        <span class="concept-tag">//= Asignación compuesta</span>
+                        <span class="concept-tag">📊 max()</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEVEL 4: Matemático -->
+        <section class="level-content" id="level-4">
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Optimización: solo hasta √n</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        <strong class="text-white">Observación clave:</strong> Si n tiene un factor primo p > √n,
+                        entonces n/p < √n. Es decir, el otro factor sería menor que √n y ya lo habríamos encontrado.
+                    </p>
+                </div>
+
+                <div class="math-block">
+                    <div class="math-formula">Si p divide a n y p > √n → n/p < √n</div>
+                    <div class="math-description">Solo necesitamos probar divisores hasta √n</div>
+                </div>
+
+                <div class="space-y-4">
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">¿Por qué funciona?</h2>
+
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h3 class="font-medium mb-1">√600851475143 ≈ 775146</h3>
+                            <p class="text-gray-500 text-sm">En vez de probar hasta 600 mil millones, probamos hasta ~775 mil.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h3 class="font-medium mb-1">Si queda n > 1 al final</h3>
+                            <p class="text-gray-500 text-sm">Ese n restante es primo (no tiene factores ≤ √n, por tanto no tiene factores propios).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python</span>
+                        <button class="run-btn" onclick="runCode('code-math')">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea id="code-math" class="code-textarea" spellcheck="false" style="min-height: 320px;">def mayor_factor_primo(n):
+    """Encuentra el mayor factor primo de n en O(√n)"""
+    mayor = 1
+    d = 2
+
+    # Solo probamos hasta √n
+    while d * d <= n:
+        while n % d == 0:
+            mayor = d
+            n //= d
+        d += 1
+
+    # Si queda n > 1, es un primo mayor que √n original
+    if n > 1:
+        mayor = n
+
+    return mayor
+
+resultado = mayor_factor_primo(600851475143)
+print(f"Mayor factor primo: {resultado}")</textarea>
+                    <div class="code-output" id="output-math">Pulsa "Ejecutar" para ver el resultado</div>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Comparativa de rendimiento</h2>
+                    <div class="bg-gray-950 border border-gray-900 rounded-xl overflow-hidden">
+                        <table class="perf-table">
+                            <thead>
+                                <tr>
+                                    <th>Método</th>
+                                    <th>Iteraciones máx</th>
+                                    <th>Para n = 10¹²</th>
+                                    <th>Complejidad</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-gray-400">Fuerza bruta</td>
+                                    <td>~n</td>
+                                    <td>10¹² ops</td>
+                                    <td class="text-red-400">O(n)</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-gray-400">Optimizado √n</td>
+                                    <td>~√n</td>
+                                    <td>10⁶ ops</td>
+                                    <td class="text-green-400">O(√n)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-gray-600 text-sm mt-3">
+                        La optimización reduce las iteraciones de 600 mil millones a ~775 mil.
+                        Un millón de veces más rápido.
+                    </p>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-500">Fuerza bruta (peor caso)</span>
+                        <span class="mono text-gray-600">~n iteraciones</span>
+                    </div>
+                    <div class="perf-bar"><div class="perf-bar-fill perf-slow" style="width: 100%"></div></div>
+
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-500">Optimizado √n</span>
+                        <span class="mono text-gray-600">~√n iteraciones</span>
+                    </div>
+                    <div class="perf-bar"><div class="perf-bar-fill perf-fast" style="width: 0.1%"></div></div>
+                </div>
+
+                <div class="result-box">
+                    <span class="text-gray-400">Resultado</span>
+                    <span class="result-value">6857</span>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Conceptos aprendidos</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="concept-tag">√ Raíz cuadrada</span>
+                        <span class="concept-tag">📉 Reducción de complejidad</span>
+                        <span class="concept-tag">🔍 Optimización matemática</span>
+                        <span class="concept-tag">⏱️ O(√n)</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Try with custom number -->
+        <section class="mt-12 pt-8 border-t border-gray-900">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Prueba con otro número</h2>
+            <div class="flex gap-3 items-center flex-wrap">
+                <input type="number" id="custom-limit" class="custom-input w-48" value="13195" min="2">
+                <button class="run-btn" onclick="runCustom()">Calcular</button>
+                <span id="custom-result" class="mono text-lg text-green-400"></span>
+            </div>
+        </section>
+
+        <!-- Navigation -->
+        <footer class="mt-16 pt-8 border-t border-gray-900 flex justify-between items-center">
+            <a href="../002/index.html" class="text-gray-500 hover:text-white transition text-sm">← Problema 2: Fibonacci pares</a>
+            <a href="../004/index.html" class="text-gray-500 hover:text-white transition text-sm">Problema 4: Palíndromo mayor →</a>
+        </footer>
+    </main>
+
+    <script>
+        // Level tabs
+        document.querySelectorAll('.level-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const level = tab.dataset.level;
+
+                document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                document.querySelectorAll('.level-content').forEach(c => c.classList.remove('active'));
+                document.getElementById(`level-${level}`).classList.add('active');
+            });
+        });
+
+        // Pyodide
+        let pyodide = null;
+
+        async function initPyodide() {
+            const dot = document.getElementById('pyodide-dot');
+            const text = document.getElementById('pyodide-text');
+
+            try {
+                pyodide = await loadPyodide();
+                dot.classList.remove('loading');
+                dot.classList.add('ready');
+                text.textContent = 'Python listo';
+            } catch (e) {
+                dot.classList.remove('loading');
+                dot.classList.add('error');
+                text.textContent = 'Error cargando Python';
+                console.error(e);
+            }
+        }
+
+        initPyodide();
+
+        async function runCode(textareaId) {
+            if (!pyodide) {
+                alert('Python aún está cargando. Espera un momento.');
+                return;
+            }
+
+            const textarea = document.getElementById(textareaId);
+            const outputId = 'output-' + textareaId.replace('code-', '');
+            const output = document.getElementById(outputId);
+            const btn = textarea.closest('.code-editor').querySelector('.run-btn');
+
+            btn.disabled = true;
+            btn.classList.add('running');
+            btn.innerHTML = '<svg class="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/></svg> Ejecutando...';
+            output.className = 'code-output';
+            output.textContent = 'Ejecutando...';
+
+            try {
+                pyodide.runPython(`
+import sys
+from io import StringIO
+sys.stdout = StringIO()
+`);
+
+                pyodide.runPython(textarea.value);
+
+                const stdout = pyodide.runPython('sys.stdout.getvalue()');
+                output.textContent = stdout || '(sin salida)';
+                output.classList.add('success');
+            } catch (e) {
+                output.textContent = e.message;
+                output.classList.add('error');
+            }
+
+            btn.disabled = false;
+            btn.classList.remove('running');
+            btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Ejecutar';
+        }
+
+        async function runCustom() {
+            if (!pyodide) {
+                alert('Python aún está cargando. Espera un momento.');
+                return;
+            }
+
+            const n = parseInt(document.getElementById('custom-limit').value);
+            const result = document.getElementById('custom-result');
+
+            if (isNaN(n) || n < 2) {
+                result.textContent = 'Introduce un número ≥ 2';
+                result.style.color = '#ef4444';
+                return;
+            }
+
+            try {
+                const code = `
+def mayor_factor_primo(n):
+    mayor = 1
+    d = 2
+    while d * d <= n:
+        while n % d == 0:
+            mayor = d
+            n //= d
+        d += 1
+    if n > 1:
+        mayor = n
+    return mayor
+
+mayor_factor_primo(${n})
+`;
+                const res = pyodide.runPython(code);
+                result.textContent = `= ${res.toLocaleString()}`;
+                result.style.color = '#22c55e';
+            } catch (e) {
+                result.textContent = 'Error: ' + e.message;
+                result.style.color = '#ef4444';
+            }
+        }
+    </script>
+</body>
+</html>
