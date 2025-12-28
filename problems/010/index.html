@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#010 Suma de Primos — Euler Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    <style>
+        :root {
+            --bg: #000000;
+            --bg-elevated: #0a0a0f;
+            --bg-card: #111118;
+            --border: #1a1a24;
+            --border-hover: #2a2a3a;
+            --text: #e8e8ed;
+            --text-secondary: #8888a0;
+            --text-muted: #505068;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-amber: #f59e0b;
+            --accent-purple: #a855f7;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .serif { font-family: 'Source Serif 4', Georgia, serif; }
+
+        header { position: sticky; top: 0; z-index: 50; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+
+        .level-tabs { display: flex; gap: 2px; background: var(--bg-elevated); padding: 4px; border-radius: 10px; }
+        .level-tab { padding: 8px 16px; font-size: 13px; font-weight: 500; color: var(--text-muted); background: transparent; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-family: 'JetBrains Mono', monospace; }
+        .level-tab:hover { color: var(--text-secondary); }
+        .level-tab.active { background: var(--accent-blue); color: white; }
+        .level-tab[data-level="2"].active { background: var(--accent-green); }
+        .level-tab[data-level="3"].active { background: var(--accent-amber); }
+        .level-tab[data-level="4"].active { background: var(--accent-purple); }
+
+        .level-content { display: none; animation: fadeIn 0.3s ease; }
+        .level-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .code-editor { position: relative; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .code-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: var(--bg-card); border-bottom: 1px solid var(--border); }
+        .code-lang { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent-green); text-transform: uppercase; letter-spacing: 0.5px; }
+        .run-btn { display: flex; align-items: center; gap: 6px; padding: 6px 14px; background: var(--accent-blue); color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .run-btn:hover { filter: brightness(1.1); }
+        .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .run-btn.running { background: var(--accent-amber); }
+        .code-textarea { width: 100%; min-height: 200px; padding: 16px; background: transparent; border: none; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.7; resize: vertical; outline: none; }
+        .code-output { padding: 12px 16px; background: var(--bg-card); border-top: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-secondary); min-height: 40px; }
+        .code-output.success { color: var(--accent-green); }
+        .code-output.error { color: #ef4444; }
+
+        .result-box { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(34, 197, 94, 0.08) 100%); border: 1px solid var(--accent-blue); border-radius: 12px; }
+        .result-value { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 600; color: var(--accent-green); }
+
+        .step-card { display: flex; gap: 16px; padding: 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; transition: border-color 0.2s; }
+        .step-card:hover { border-color: var(--border-hover); }
+        .step-number { flex-shrink: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 50%; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent-blue); }
+
+        .math-block { padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; text-align: center; }
+        .math-formula { font-family: 'Source Serif 4', Georgia, serif; font-size: 20px; color: var(--text); margin-bottom: 8px; }
+        .math-description { font-size: 13px; color: var(--text-muted); }
+
+        .perf-table { width: 100%; border-collapse: collapse; }
+        .perf-table th, .perf-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+        .perf-table th { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+        .perf-table td { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+
+        .perf-bar { height: 6px; background: var(--bg-elevated); border-radius: 3px; overflow: hidden; margin-top: 6px; }
+        .perf-bar-fill { height: 100%; border-radius: 3px; }
+        .perf-fast { background: var(--accent-green); }
+        .perf-slow { background: #ef4444; }
+
+        .concept-tag { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
+
+        .pyodide-status { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--bg-card); border-radius: 8px; font-size: 12px; color: var(--text-muted); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+        .status-dot.loading { background: var(--accent-amber); animation: pulse 1s infinite; }
+        .status-dot.ready { background: var(--accent-green); }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        code:not(.code-textarea) { padding: 2px 8px; background: var(--bg-elevated); border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.9em; color: var(--accent-amber); }
+
+        .variant-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+        .variant-tab { padding: 6px 12px; font-size: 12px; font-weight: 500; color: var(--text-muted); background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .variant-tab:hover { color: var(--text-secondary); border-color: var(--border-hover); }
+        .variant-tab.active { background: var(--accent-green); border-color: var(--accent-green); color: white; }
+        .variant-content { display: none; }
+        .variant-content.active { display: block; }
+
+        .prime-sum-demo {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 16px;
+            background: var(--bg-elevated);
+            border-radius: 8px;
+        }
+
+        .prime-chip {
+            padding: 6px 12px;
+            background: var(--accent-green);
+            color: white;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .prime-chip.composite {
+            background: var(--bg-card);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .sieve-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 4px;
+            padding: 16px;
+            background: var(--bg-elevated);
+            border-radius: 8px;
+        }
+
+        .sieve-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            border-radius: 4px;
+            background: var(--bg-card);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .sieve-cell.prime {
+            background: var(--accent-green);
+            color: white;
+            border-color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        .sieve-cell.crossed {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.3);
+            text-decoration: line-through;
+        }
+
+        .stat-card {
+            padding: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--accent-blue);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <header class="px-6 py-4">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-6">
+                <a href="../../" class="text-sm text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
+                    ← Euler Lab
+                </a>
+                <div class="flex items-center gap-3">
+                    <span class="mono text-lg text-[var(--accent-blue)]">#010</span>
+                    <h1 class="text-lg font-medium">Suma de Primos</h1>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="pyodide-status">
+                    <div class="status-dot" id="pyodideStatus"></div>
+                    <span id="pyodideText">Cargando Python...</span>
+                </div>
+                <div class="flex gap-2">
+                    <a href="../009/" class="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--border)] hover:border-[var(--border-hover)]">← 009</a>
+                    <a href="../011/" class="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--border)] hover:border-[var(--border-hover)]">011 →</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-8">
+        <!-- Enunciado -->
+        <div class="mb-8 p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 w-10 h-10 flex items-center justify-content-center rounded-lg bg-[var(--accent-blue)]/10 text-[var(--accent-blue)]">
+                    <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <div class="space-y-3">
+                    <h2 class="text-lg font-medium">Summation of Primes</h2>
+                    <p class="text-[var(--text-secondary)] leading-relaxed">
+                        La suma de los primos menores que 10 es 2 + 3 + 5 + 7 = 17. Encuentra la <strong>suma de todos los primos menores que 2,000,000</strong>.
+                    </p>
+                    <div class="flex items-center gap-6 pt-2">
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-amber)]">●</span>
+                            Criba de Eratóstenes
+                        </span>
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-purple)]">●</span>
+                            Números primos
+                        </span>
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-green)]">●</span>
+                            Optimización de memoria
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs de niveles -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="level-tabs">
+                <button class="level-tab active" data-level="1">Nivel 1: A mano</button>
+                <button class="level-tab" data-level="2">Nivel 2: Fuerza bruta</button>
+                <button class="level-tab" data-level="3">Nivel 3: Pythónico</button>
+                <button class="level-tab" data-level="4">Nivel 4: Matemático</button>
+            </div>
+        </div>
+
+        <!-- NIVEL 1 -->
+        <div class="level-content active" id="level1">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-blue)] flex items-center justify-center text-sm">1</span>
+                        Entendiendo el Problema
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        Debemos sumar todos los números primos menores que 2 millones. Un número primo solo es divisible por 1 y por sí mismo.
+                    </p>
+                </div>
+
+                <!-- Ejemplo visual -->
+                <div class="space-y-4">
+                    <h4 class="font-medium">Ejemplo: Primos menores que 30</h4>
+                    <div class="prime-sum-demo">
+                        <span class="prime-chip composite">1</span>
+                        <span class="prime-chip">2</span>
+                        <span class="prime-chip">3</span>
+                        <span class="prime-chip composite">4</span>
+                        <span class="prime-chip">5</span>
+                        <span class="prime-chip composite">6</span>
+                        <span class="prime-chip">7</span>
+                        <span class="prime-chip composite">8</span>
+                        <span class="prime-chip composite">9</span>
+                        <span class="prime-chip composite">10</span>
+                        <span class="prime-chip">11</span>
+                        <span class="prime-chip composite">12</span>
+                        <span class="prime-chip">13</span>
+                        <span class="prime-chip composite">14</span>
+                        <span class="prime-chip composite">15</span>
+                        <span class="prime-chip composite">16</span>
+                        <span class="prime-chip">17</span>
+                        <span class="prime-chip composite">18</span>
+                        <span class="prime-chip">19</span>
+                        <span class="prime-chip composite">20</span>
+                        <span class="prime-chip composite">21</span>
+                        <span class="prime-chip composite">22</span>
+                        <span class="prime-chip">23</span>
+                        <span class="prime-chip composite">24</span>
+                        <span class="prime-chip composite">25</span>
+                        <span class="prime-chip composite">26</span>
+                        <span class="prime-chip composite">27</span>
+                        <span class="prime-chip composite">28</span>
+                        <span class="prime-chip">29</span>
+                    </div>
+                    <div class="p-4 bg-[var(--bg-card)] rounded-lg">
+                        <p class="text-sm text-[var(--text-secondary)]">
+                            Suma = 2 + 3 + 5 + 7 + 11 + 13 + 17 + 19 + 23 + 29 = <strong class="text-[var(--accent-green)]">129</strong>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Estadísticas -->
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="stat-card">
+                        <div class="stat-value">148,933</div>
+                        <div class="stat-label">Primos menores que 2M</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">~7.4%</div>
+                        <div class="stat-label">Densidad de primos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">1,999,993</div>
+                        <div class="stat-label">Mayor primo < 2M</div>
+                    </div>
+                </div>
+
+                <!-- Resultado -->
+                <div class="result-box">
+                    <div>
+                        <div class="text-sm text-[var(--text-muted)] mb-1">Respuesta</div>
+                        <div class="result-value">142,913,828,922</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-[var(--text-muted)] mb-1">Límite</div>
+                        <div class="mono text-lg">n < 2,000,000</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NIVEL 2 -->
+        <div class="level-content" id="level2">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-green)] flex items-center justify-center text-sm">2</span>
+                        Fuerza Bruta - 3 Variantes
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        Probamos cada número y verificamos si es primo mediante división por prueba.
+                    </p>
+                </div>
+
+                <div class="variant-tabs">
+                    <button class="variant-tab active" data-variant="a">Variante A</button>
+                    <button class="variant-tab" data-variant="b">Variante B</button>
+                    <button class="variant-tab" data-variant="c">Variante C</button>
+                </div>
+
+                <!-- Variante A: while True + break -->
+                <div class="variant-content active" id="variant-a">
+                    <div class="space-y-4">
+                        <h4 class="font-medium text-[var(--accent-green)]">Variante A: while True + break</h4>
+                        <p class="text-sm text-[var(--text-secondary)]">Test de primalidad básico con break.</p>
+                        <div class="code-editor">
+                            <div class="code-header">
+                                <span class="code-lang">Python</span>
+                                <button class="run-btn" onclick="runCode('code2a', 'output2a')">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                                    Ejecutar
+                                </button>
+                            </div>
+                            <textarea class="code-textarea" id="code2a"># Versión reducida para demo (limite bajo)
+LIMIT = 1000  # Cambiar a 2_000_000 para respuesta real
+
+def is_prime(n):
+    if n < 2:
+        return False
+    if n == 2:
+        return True
+    if n % 2 == 0:
+        return False
+
+    divisor = 3
+    while True:
+        if divisor * divisor > n:
+            break
+        if n % divisor == 0:
+            return False
+        divisor += 2
+
+    return True
+
+total = 0
+n = 2
+
+while True:
+    if n >= LIMIT:
+        break
+
+    if is_prime(n):
+        total += n
+
+    n += 1
+
+print(f"Suma de primos < {LIMIT}: {total}")
+
+# Para 2,000,000 la respuesta es: 142913828922</textarea>
+                            <div class="code-output" id="output2a">// Output aparecerá aquí</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Variante B: while condition -->
+                <div class="variant-content" id="variant-b">
+                    <div class="space-y-4">
+                        <h4 class="font-medium text-[var(--accent-green)]">Variante B: while condición</h4>
+                        <p class="text-sm text-[var(--text-secondary)]">Condiciones directas en el while.</p>
+                        <div class="code-editor">
+                            <div class="code-header">
+                                <span class="code-lang">Python</span>
+                                <button class="run-btn" onclick="runCode('code2b', 'output2b')">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                                    Ejecutar
+                                </button>
+                            </div>
+                            <textarea class="code-textarea" id="code2b">LIMIT = 1000
+
+def is_prime(n):
+    if n < 2:
+        return False
+    if n == 2:
+        return True
+    if n % 2 == 0:
+        return False
+
+    d = 3
+    while d * d <= n:
+        if n % d == 0:
+            return False
+        d += 2
+
+    return True
+
+total = 0
+n = 2
+
+while n < LIMIT:
+    if is_prime(n):
+        total += n
+    n += 1
+
+print(f"Suma de primos < {LIMIT}: {total}")</textarea>
+                            <div class="code-output" id="output2b">// Output aparecerá aquí</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Variante C: for range -->
+                <div class="variant-content" id="variant-c">
+                    <div class="space-y-4">
+                        <h4 class="font-medium text-[var(--accent-green)]">Variante C: for range</h4>
+                        <p class="text-sm text-[var(--text-secondary)]">Usando for con range y optimización √n.</p>
+                        <div class="code-editor">
+                            <div class="code-header">
+                                <span class="code-lang">Python</span>
+                                <button class="run-btn" onclick="runCode('code2c', 'output2c')">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                                    Ejecutar
+                                </button>
+                            </div>
+                            <textarea class="code-textarea" id="code2c">from math import isqrt
+
+LIMIT = 1000
+
+def is_prime(n):
+    """Test de primalidad O(√n)."""
+    if n < 2:
+        return False
+    if n == 2:
+        return True
+    if n % 2 == 0:
+        return False
+
+    for d in range(3, isqrt(n) + 1, 2):
+        if n % d == 0:
+            return False
+
+    return True
+
+total = 0
+
+for n in range(2, LIMIT):
+    if is_prime(n):
+        total += n
+
+print(f"Suma de primos < {LIMIT}: {total}")</textarea>
+                            <div class="code-output" id="output2c">// Output aparecerá aquí</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Complejidad -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">Análisis de complejidad</h4>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <div class="text-sm text-[var(--text-muted)] mb-1">Tiempo</div>
+                            <div class="mono text-lg">O(n × √n)</div>
+                            <p class="text-xs text-[var(--text-muted)] mt-1">n números × √n divisiones cada uno</p>
+                        </div>
+                        <div>
+                            <div class="text-sm text-[var(--text-muted)] mb-1">Espacio</div>
+                            <div class="mono text-lg">O(1)</div>
+                            <p class="text-xs text-[var(--text-muted)] mt-1">Solo variables auxiliares</p>
+                        </div>
+                    </div>
+                    <p class="text-sm text-[var(--text-muted)] mt-4">
+                        ⚠️ Para n = 2,000,000 esto es muy lento (~minutos). Necesitamos la Criba de Eratóstenes.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- NIVEL 3 -->
+        <div class="level-content" id="level3">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-amber)] flex items-center justify-center text-sm">3</span>
+                        Enfoque Pythónico
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        Usando generadores, <code>filter</code>, y comprensiones con la criba básica.
+                    </p>
+                </div>
+
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python</span>
+                        <button class="run-btn" onclick="runCode('code3', 'output3')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code3">LIMIT = 10_000  # Reducido para demo rápida
+
+def sieve(n):
+    """Criba de Eratóstenes pythónica."""
+    is_prime = [True] * n
+    is_prime[0] = is_prime[1] = False
+
+    for i in range(2, int(n ** 0.5) + 1):
+        if is_prime[i]:
+            # Marcar múltiplos como compuestos
+            is_prime[i*i::i] = [False] * len(is_prime[i*i::i])
+
+    return is_prime
+
+# Generar primos y sumar
+primes = sieve(LIMIT)
+result = sum(i for i, is_p in enumerate(primes) if is_p)
+
+print(f"Suma de primos < {LIMIT}: {result}")
+
+# Alternativa con filter + enumerate
+primes_list = [i for i, is_p in enumerate(primes) if is_p]
+print(f"Cantidad de primos: {len(primes_list)}")
+print(f"Primeros 10: {primes_list[:10]}")
+print(f"Últimos 5: {primes_list[-5:]}")</textarea>
+                    <div class="code-output" id="output3">// Output aparecerá aquí</div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="p-5 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                        <h4 class="font-medium mb-3 text-[var(--accent-amber)]">Herramientas usadas</h4>
+                        <ul class="space-y-2 text-sm text-[var(--text-secondary)]">
+                            <li><code>is_prime[i*i::i]</code> — Slice con paso para marcar múltiplos</li>
+                            <li><code>enumerate()</code> — Índices y valores</li>
+                            <li><code>sum(generator)</code> — Suma perezosa</li>
+                            <li>List comprehension con filtro</li>
+                        </ul>
+                    </div>
+                    <div class="p-5 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                        <h4 class="font-medium mb-3 text-[var(--accent-amber)]">El truco del slice</h4>
+                        <div class="text-sm mono text-[var(--text-secondary)] bg-[var(--bg-elevated)] p-3 rounded-lg">
+<pre># Marcar múltiplos de 3 desde 9:
+# arr[9::3] = [False] * count
+
+# Es equivalente a:
+for j in range(9, n, 3):
+    arr[j] = False</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NIVEL 4 -->
+        <div class="level-content" id="level4">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-purple)] flex items-center justify-center text-sm">4</span>
+                        Criba de Eratóstenes Optimizada
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        La Criba de Eratóstenes es el algoritmo clásico para encontrar todos los primos hasta n. Optimizamos memoria usando solo impares.
+                    </p>
+                </div>
+
+                <!-- Visualización de la criba -->
+                <div class="space-y-4">
+                    <h4 class="font-medium">Visualización: Criba hasta 100</h4>
+                    <div class="sieve-grid" id="sieveGrid">
+                        <!-- Se llena con JS -->
+                    </div>
+                    <div class="flex gap-4 text-sm">
+                        <span class="flex items-center gap-2">
+                            <span class="w-4 h-4 rounded bg-[var(--accent-green)]"></span>
+                            Primo
+                        </span>
+                        <span class="flex items-center gap-2">
+                            <span class="w-4 h-4 rounded bg-[rgba(239,68,68,0.1)] border border-[rgba(239,68,68,0.3)]"></span>
+                            Compuesto (tachado)
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Algoritmo explicado -->
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div class="math-block">
+                        <div class="math-formula serif">O(n log log n)</div>
+                        <div class="math-description">Complejidad temporal</div>
+                    </div>
+                    <div class="math-block">
+                        <div class="math-formula serif">O(n) → O(n/2)</div>
+                        <div class="math-description">Memoria (optimizada solo impares)</div>
+                    </div>
+                </div>
+
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — Criba optimizada</span>
+                        <button class="run-btn" onclick="runCode('code4', 'output4')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code4">def sum_primes_sieve(limit):
+    """
+    Suma todos los primos menores que limit usando
+    la Criba de Eratóstenes optimizada.
+
+    Optimizaciones:
+    1. Solo almacenamos impares (mitad de memoria)
+    2. Empezamos a tachar desde p² (los menores ya están tachados)
+    3. Solo iteramos hasta √limit
+    """
+    if limit <= 2:
+        return 0
+
+    # Solo impares: índice i representa el número 2i + 1
+    # Tamaño: limit // 2
+    sieve_size = limit // 2
+    is_prime = [True] * sieve_size
+    is_prime[0] = False  # 1 no es primo
+
+    # Cribar
+    i = 1  # Representa el 3
+    while (2 * i + 1) ** 2 < limit:
+        if is_prime[i]:
+            p = 2 * i + 1  # El primo actual
+            # Tachar múltiplos impares de p, empezando en p²
+            # p² = (2i+1)² = 4i² + 4i + 1
+            # Índice de p²: (p² - 1) // 2 = 2i² + 2i
+            start = 2 * i * i + 2 * i
+            step = p  # Solo múltiplos impares, así que saltamos 2p/2 = p
+            is_prime[start::step] = [False] * len(is_prime[start::step])
+        i += 1
+
+    # Sumar: 2 + todos los impares primos
+    total = 2
+    for i in range(1, sieve_size):
+        if is_prime[i]:
+            total += 2 * i + 1
+
+    return total
+
+# Ejecutar
+LIMIT = 2_000_000
+result = sum_primes_sieve(LIMIT)
+
+print(f"Suma de primos < {LIMIT:,}: {result:,}")
+
+# Verificar
+print(f"\nVerificación:")
+print(f"Esperado: 142,913,828,922")
+print(f"Correcto: {result == 142913828922}")</textarea>
+                    <div class="code-output" id="output4">// Output aparecerá aquí</div>
+                </div>
+
+                <!-- Tabla de rendimiento -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">Comparación de rendimiento</h4>
+                    <table class="perf-table">
+                        <thead>
+                            <tr>
+                                <th>Método</th>
+                                <th>Complejidad</th>
+                                <th>Tiempo (n=2M)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Trial division</td>
+                                <td>O(n√n)</td>
+                                <td>
+                                    ~30 segundos
+                                    <div class="perf-bar"><div class="perf-bar-fill perf-slow" style="width: 100%"></div></div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Criba básica</td>
+                                <td>O(n log log n)</td>
+                                <td>
+                                    ~50 ms
+                                    <div class="perf-bar"><div class="perf-bar-fill perf-fast" style="width: 5%"></div></div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Criba optimizada (solo impares)</td>
+                                <td>O(n log log n)</td>
+                                <td>
+                                    ~25 ms
+                                    <div class="perf-bar"><div class="perf-bar-fill perf-fast" style="width: 2.5%"></div></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Nota histórica -->
+                <div class="p-5 bg-[var(--accent-purple)]/10 border border-[var(--accent-purple)]/30 rounded-xl">
+                    <h4 class="font-medium mb-2 text-[var(--accent-purple)]">Eratóstenes de Cirene (276-194 a.C.)</h4>
+                    <p class="text-sm text-[var(--text-secondary)]">
+                        Matemático, geógrafo y astrónomo griego. Además de la criba, calculó la circunferencia de la Tierra con notable precisión midiendo sombras en Alejandría y Siena. Su método para encontrar primos sigue siendo uno de los más eficientes para rangos pequeños-medianos.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Pyodide setup
+        let pyodide = null;
+
+        async function initPyodide() {
+            const status = document.getElementById('pyodideStatus');
+            const text = document.getElementById('pyodideText');
+            status.classList.add('loading');
+
+            try {
+                pyodide = await loadPyodide();
+                status.classList.remove('loading');
+                status.classList.add('ready');
+                text.textContent = 'Python listo';
+            } catch (e) {
+                text.textContent = 'Error cargando Python';
+                status.style.background = '#ef4444';
+            }
+        }
+
+        async function runCode(inputId, outputId) {
+            const code = document.getElementById(inputId).value;
+            const output = document.getElementById(outputId);
+            const btn = output.parentElement.querySelector('.run-btn');
+
+            if (!pyodide) {
+                output.textContent = 'Esperando Pyodide...';
+                return;
+            }
+
+            btn.classList.add('running');
+            btn.disabled = true;
+            output.textContent = 'Ejecutando...';
+            output.className = 'code-output';
+
+            try {
+                pyodide.runPython(`
+import sys
+from io import StringIO
+sys.stdout = StringIO()
+`);
+                await pyodide.runPythonAsync(code);
+                const stdout = pyodide.runPython('sys.stdout.getvalue()');
+                output.textContent = stdout || '(sin output)';
+                output.classList.add('success');
+            } catch (e) {
+                output.textContent = e.message;
+                output.classList.add('error');
+            }
+
+            btn.classList.remove('running');
+            btn.disabled = false;
+        }
+
+        // Level tabs
+        document.querySelectorAll('.level-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.level-content').forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(`level${tab.dataset.level}`).classList.add('active');
+            });
+        });
+
+        // Variant tabs
+        document.querySelectorAll('.variant-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.variant-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.variant-content').forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(`variant-${tab.dataset.variant}`).classList.add('active');
+            });
+        });
+
+        // Sieve visualization
+        function renderSieve() {
+            const grid = document.getElementById('sieveGrid');
+            const limit = 100;
+
+            // Generate primes using sieve
+            const isPrime = new Array(limit + 1).fill(true);
+            isPrime[0] = isPrime[1] = false;
+
+            for (let i = 2; i * i <= limit; i++) {
+                if (isPrime[i]) {
+                    for (let j = i * i; j <= limit; j += i) {
+                        isPrime[j] = false;
+                    }
+                }
+            }
+
+            let html = '';
+            for (let n = 1; n <= limit; n++) {
+                let cls = 'sieve-cell';
+                if (isPrime[n]) {
+                    cls += ' prime';
+                } else if (n > 1) {
+                    cls += ' crossed';
+                }
+                html += `<div class="${cls}">${n}</div>`;
+            }
+            grid.innerHTML = html;
+        }
+
+        // Init
+        initPyodide();
+        renderSieve();
+    </script>
+</body>
+</html>
