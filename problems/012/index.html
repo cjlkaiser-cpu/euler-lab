@@ -35,7 +35,8 @@
         .level-tab:hover { color: var(--text-secondary); }
         .level-tab.active { background: var(--accent-blue); color: white; }
         .level-tab[data-level="2"].active { background: var(--accent-green); }
-        .level-tab[data-level="3"].active { background: var(--accent-purple); }
+        .level-tab[data-level="3"].active { background: var(--accent-amber); }
+        .level-tab[data-level="4"].active { background: var(--accent-purple); }
 
         .level-content { display: none; animation: fadeIn 0.3s ease; }
         .level-content.active { display: block; }
@@ -201,7 +202,8 @@
             <div class="level-tabs">
                 <button class="level-tab active" data-level="1">Nivel 1: Entendimiento</button>
                 <button class="level-tab" data-level="2">Nivel 2: Fuerza bruta</button>
-                <button class="level-tab" data-level="3">Nivel 3: Optimizado</button>
+                <button class="level-tab" data-level="3">Nivel 3: Pythónico</button>
+                <button class="level-tab" data-level="4">Nivel 4: Gauss</button>
             </div>
         </div>
 
@@ -543,7 +545,7 @@ print(f"\nVerificación: {n} × {n+1} / 2 = {n * (n+1) // 2:,}")</textarea>
             <div class="grid gap-8">
                 <div class="space-y-4">
                     <h3 class="text-xl font-medium flex items-center gap-3">
-                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-purple)] flex items-center justify-center text-sm">3</span>
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-amber)] flex items-center justify-center text-sm">3</span>
                         Optimización con la Función Tau τ(n)
                     </h3>
                     <p class="text-[var(--text-secondary)]">
@@ -553,7 +555,7 @@ print(f"\nVerificación: {n} × {n+1} / 2 = {n * (n+1) // 2:,}")</textarea>
 
                 <!-- Fórmula de tau -->
                 <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
-                    <h4 class="font-medium mb-4 text-[var(--accent-purple)]">La fórmula mágica de τ(n)</h4>
+                    <h4 class="font-medium mb-4 text-[var(--accent-amber)]">La fórmula mágica de τ(n)</h4>
                     <p class="text-[var(--text-secondary)] mb-4">
                         Si conocemos la factorización prima de n:
                     </p>
@@ -573,7 +575,7 @@ print(f"\nVerificación: {n} × {n+1} / 2 = {n * (n+1) // 2:,}")</textarea>
                 <!-- Ejemplo detallado -->
                 <div class="grid md:grid-cols-2 gap-6">
                     <div class="p-5 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
-                        <h4 class="font-medium mb-3 text-[var(--accent-purple)]">Ejemplo: τ(28)</h4>
+                        <h4 class="font-medium mb-3 text-[var(--accent-amber)]">Ejemplo: τ(28)</h4>
                         <div class="space-y-2 text-sm">
                             <p class="text-[var(--text-secondary)]">28 = 2² × 7¹</p>
                             <p class="text-[var(--text-secondary)]">τ(28) = (2+1) × (1+1)</p>
@@ -586,7 +588,7 @@ print(f"\nVerificación: {n} × {n+1} / 2 = {n * (n+1) // 2:,}")</textarea>
                         </div>
                     </div>
                     <div class="p-5 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
-                        <h4 class="font-medium mb-3 text-[var(--accent-purple)]">¿Por qué funciona?</h4>
+                        <h4 class="font-medium mb-3 text-[var(--accent-amber)]">¿Por qué funciona?</h4>
                         <p class="text-sm text-[var(--text-secondary)]">
                             Cada divisor de n es una combinación de potencias de sus primos.
                         </p>
@@ -602,8 +604,8 @@ print(f"\nVerificación: {n} × {n+1} / 2 = {n * (n+1) // 2:,}")</textarea>
                 </div>
 
                 <!-- Propiedad multiplicativa -->
-                <div class="p-5 bg-[var(--accent-purple)]/10 border border-[var(--accent-purple)]/30 rounded-xl">
-                    <h4 class="font-medium mb-2 text-[var(--accent-purple)]">Propiedad clave: τ es multiplicativa para coprimos</h4>
+                <div class="p-5 bg-[var(--accent-amber)]/10 border border-[var(--accent-amber)]/30 rounded-xl">
+                    <h4 class="font-medium mb-2 text-[var(--accent-amber)]">Propiedad clave: τ es multiplicativa para coprimos</h4>
                     <p class="text-sm text-[var(--text-secondary)]">
                         Si <code>gcd(a, b) = 1</code> (a y b no comparten factores primos), entonces:
                     </p>
@@ -756,10 +758,253 @@ print(f"  τ = " + " × ".join(f"({e}+1)" for e in sorted(factors.values(), reve
 
                 <!-- Conceptos aprendidos -->
                 <div class="flex flex-wrap gap-3">
-                    <span class="concept-tag"><span class="text-[var(--accent-purple)]">✓</span> Función τ(n)</span>
-                    <span class="concept-tag"><span class="text-[var(--accent-purple)]">✓</span> Factorización prima</span>
-                    <span class="concept-tag"><span class="text-[var(--accent-purple)]">✓</span> Función multiplicativa</span>
-                    <span class="concept-tag"><span class="text-[var(--accent-purple)]">✓</span> Coprimos (gcd=1)</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-amber)]">✓</span> Función τ(n)</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-amber)]">✓</span> Factorización prima</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-amber)]">✓</span> Función multiplicativa</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-amber)]">✓</span> Coprimos (gcd=1)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- NIVEL 4 -->
+        <div class="level-content" id="level4">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-purple)] flex items-center justify-center text-sm">4</span>
+                        La Leyenda de Gauss y la Belleza Matemática
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        Detrás de cada fórmula elegante hay una historia. Esta es la historia de cómo un niño de 7 años
+                        descubrió un patrón que usamos 250 años después.
+                    </p>
+                </div>
+
+                <!-- La historia de Gauss -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-purple)]">La Historia: Gauss y el Maestro Büttner (1786)</h4>
+                    <div class="space-y-4 text-[var(--text-secondary)]">
+                        <p>
+                            En una escuela de Brunswick, Alemania, el maestro J.G. Büttner quería mantener ocupados a sus alumnos.
+                            Les ordenó sumar todos los números del 1 al 100. Esperaba paz y silencio durante una hora.
+                        </p>
+                        <p>
+                            <strong class="text-white">Carl Friedrich Gauss</strong>, de apenas 7 años, puso su pizarra sobre la mesa
+                            en menos de un minuto con una sola respuesta: <span class="mono text-[var(--accent-green)]">5050</span>.
+                        </p>
+                        <p class="italic border-l-2 border-[var(--accent-purple)] pl-4">
+                            "Ligget se" (Ahí está), dijo Gauss en bajo alemán.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- El insight de Gauss -->
+                <div class="space-y-4">
+                    <h4 class="font-medium text-[var(--accent-purple)]">El Insight: Ver lo que otros no ven</h4>
+                    <p class="text-[var(--text-secondary)]">
+                        Mientras sus compañeros sumaban 1+2+3+4+... laboriosamente, Gauss vio un <strong>patrón</strong>:
+                    </p>
+                </div>
+
+                <!-- Visualización del truco de Gauss -->
+                <div class="p-6 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-xl">
+                    <div class="space-y-4">
+                        <p class="text-sm text-[var(--text-muted)] text-center">Escribimos la suma dos veces, una hacia adelante y otra hacia atrás:</p>
+                        <div class="grid gap-2 mono text-center">
+                            <div class="flex justify-center gap-4 text-[var(--accent-blue)]">
+                                <span>S =</span>
+                                <span>1</span>
+                                <span>+</span>
+                                <span>2</span>
+                                <span>+</span>
+                                <span>3</span>
+                                <span>+</span>
+                                <span>...</span>
+                                <span>+</span>
+                                <span>98</span>
+                                <span>+</span>
+                                <span>99</span>
+                                <span>+</span>
+                                <span>100</span>
+                            </div>
+                            <div class="flex justify-center gap-4 text-[var(--accent-amber)]">
+                                <span>S =</span>
+                                <span>100</span>
+                                <span>+</span>
+                                <span>99</span>
+                                <span>+</span>
+                                <span>98</span>
+                                <span>+</span>
+                                <span>...</span>
+                                <span>+</span>
+                                <span>3</span>
+                                <span>+</span>
+                                <span>2</span>
+                                <span>+</span>
+                                <span>1</span>
+                            </div>
+                            <div class="border-t border-[var(--border)] pt-2 flex justify-center gap-4 text-[var(--accent-green)] font-bold">
+                                <span>2S =</span>
+                                <span>101</span>
+                                <span>+</span>
+                                <span>101</span>
+                                <span>+</span>
+                                <span>101</span>
+                                <span>+</span>
+                                <span>...</span>
+                                <span>+</span>
+                                <span>101</span>
+                                <span>+</span>
+                                <span>101</span>
+                                <span>+</span>
+                                <span>101</span>
+                            </div>
+                        </div>
+                        <div class="text-center mt-4">
+                            <p class="text-[var(--text-secondary)]">Cada columna suma <span class="text-[var(--accent-green)] font-bold">101</span>, y hay <span class="text-[var(--accent-green)] font-bold">100</span> columnas.</p>
+                            <p class="mono text-lg mt-2">2S = 100 × 101 = 10100</p>
+                            <p class="mono text-xl text-[var(--accent-green)] font-bold mt-1">S = 5050</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- La fórmula general -->
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="math-block">
+                        <div class="math-formula serif text-2xl">T<sub>n</sub> = <sup>n(n+1)</sup>/<sub>2</sub></div>
+                        <div class="math-description">La fórmula de Gauss para números triangulares</div>
+                    </div>
+                    <div class="p-5 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                        <h4 class="font-medium mb-3 text-[var(--accent-purple)]">¿Por qué n(n+1)/2?</h4>
+                        <ul class="text-sm text-[var(--text-secondary)] space-y-2">
+                            <li>• <strong>n pares</strong>: Cada número i se empareja con (n+1-i)</li>
+                            <li>• <strong>Suma del par</strong>: i + (n+1-i) = n+1 siempre</li>
+                            <li>• <strong>Total</strong>: n pares × (n+1) = n(n+1)</li>
+                            <li>• <strong>Dividir por 2</strong>: Contamos cada número dos veces</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Demostración visual con triángulos -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-purple)]">Demostración Visual: Dos Triángulos Forman un Rectángulo</h4>
+                    <div class="grid md:grid-cols-2 gap-8 items-center">
+                        <div class="text-center">
+                            <svg viewBox="0 0 200 160" class="w-full max-w-xs mx-auto">
+                                <!-- Triángulo 1 (azul) -->
+                                <rect x="10" y="10" width="30" height="30" fill="#3b82f6" rx="4"/>
+                                <rect x="10" y="45" width="30" height="30" fill="#3b82f6" rx="4"/>
+                                <rect x="45" y="45" width="30" height="30" fill="#3b82f6" rx="4"/>
+                                <rect x="10" y="80" width="30" height="30" fill="#3b82f6" rx="4"/>
+                                <rect x="45" y="80" width="30" height="30" fill="#3b82f6" rx="4"/>
+                                <rect x="80" y="80" width="30" height="30" fill="#3b82f6" rx="4"/>
+                                <rect x="10" y="115" width="30" height="30" fill="#3b82f6" rx="4"/>
+                                <rect x="45" y="115" width="30" height="30" fill="#3b82f6" rx="4"/>
+                                <rect x="80" y="115" width="30" height="30" fill="#3b82f6" rx="4"/>
+                                <rect x="115" y="115" width="30" height="30" fill="#3b82f6" rx="4"/>
+
+                                <!-- Triángulo 2 (ámbar) - rotado -->
+                                <rect x="45" y="10" width="30" height="30" fill="#f59e0b" rx="4"/>
+                                <rect x="80" y="10" width="30" height="30" fill="#f59e0b" rx="4"/>
+                                <rect x="115" y="10" width="30" height="30" fill="#f59e0b" rx="4"/>
+                                <rect x="150" y="10" width="30" height="30" fill="#f59e0b" rx="4"/>
+                                <rect x="80" y="45" width="30" height="30" fill="#f59e0b" rx="4"/>
+                                <rect x="115" y="45" width="30" height="30" fill="#f59e0b" rx="4"/>
+                                <rect x="150" y="45" width="30" height="30" fill="#f59e0b" rx="4"/>
+                                <rect x="115" y="80" width="30" height="30" fill="#f59e0b" rx="4"/>
+                                <rect x="150" y="80" width="30" height="30" fill="#f59e0b" rx="4"/>
+                                <rect x="150" y="115" width="30" height="30" fill="#f59e0b" rx="4"/>
+                            </svg>
+                        </div>
+                        <div class="space-y-3 text-[var(--text-secondary)]">
+                            <p>Dos triángulos idénticos (T₄ = 10 cada uno) forman un rectángulo de 4 × 5 = 20 cuadrados.</p>
+                            <p class="mono">2 × T₄ = 4 × 5 = 20</p>
+                            <p class="mono">T₄ = 4 × 5 / 2 = 10 ✓</p>
+                            <p class="text-sm text-[var(--text-muted)] mt-4">
+                                Esta es la esencia de la fórmula: un triángulo es exactamente la mitad de un rectángulo n × (n+1).
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conexión con divisores y τ(n) -->
+                <div class="p-6 bg-[var(--accent-purple)]/10 border border-[var(--accent-purple)]/30 rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-purple)]">La Conexión Profunda: τ(n) y Números Triangulares</h4>
+                    <div class="space-y-4 text-[var(--text-secondary)]">
+                        <p>
+                            Para este problema, necesitábamos combinar <strong>dos ideas matemáticas elegantes</strong>:
+                        </p>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div class="p-4 bg-[var(--bg-elevated)] rounded-lg">
+                                <p class="font-medium text-white mb-2">1. Gauss: T<sub>n</sub> = n(n+1)/2</p>
+                                <p class="text-sm">n y (n+1) son siempre <strong>coprimos</strong> (no comparten factores).</p>
+                            </div>
+                            <div class="p-4 bg-[var(--bg-elevated)] rounded-lg">
+                                <p class="font-medium text-white mb-2">2. τ multiplicativa</p>
+                                <p class="text-sm">Si gcd(a,b)=1, entonces τ(ab) = τ(a) × τ(b)</p>
+                            </div>
+                        </div>
+                        <p class="mt-4">
+                            Esto significa que podemos calcular τ(T<sub>n</sub>) como:
+                        </p>
+                        <div class="mono text-center p-3 bg-[var(--bg-elevated)] rounded-lg">
+                            τ(T<sub>n</sub>) = τ(n/2) × τ(n+1)  <span class="text-[var(--text-muted)]">si n es par</span><br>
+                            τ(T<sub>n</sub>) = τ(n) × τ((n+1)/2)  <span class="text-[var(--text-muted)]">si n es impar</span>
+                        </div>
+                        <p class="text-sm text-[var(--text-muted)] mt-2">
+                            Calculamos τ de números más pequeños (n o n+1) en lugar del número triangular completo.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- El legado de Gauss -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-purple)]">El Legado: Del Aula a los Algoritmos</h4>
+                    <div class="space-y-4 text-[var(--text-secondary)]">
+                        <p>
+                            Gauss se convirtió en uno de los matemáticos más influyentes de la historia.
+                            Llamado el <em>"Príncipe de las Matemáticas"</em>, contribuyó a casi todas las ramas:
+                        </p>
+                        <div class="grid md:grid-cols-3 gap-4 text-sm">
+                            <div class="p-3 bg-[var(--bg-elevated)] rounded-lg text-center">
+                                <div class="text-[var(--accent-blue)] font-medium">Teoría de Números</div>
+                                <div class="text-[var(--text-muted)]">Aritmética modular, reciprocidad cuadrática</div>
+                            </div>
+                            <div class="p-3 bg-[var(--bg-elevated)] rounded-lg text-center">
+                                <div class="text-[var(--accent-green)] font-medium">Estadística</div>
+                                <div class="text-[var(--text-muted)]">Distribución gaussiana (campana)</div>
+                            </div>
+                            <div class="p-3 bg-[var(--bg-elevated)] rounded-lg text-center">
+                                <div class="text-[var(--accent-amber)] font-medium">Álgebra</div>
+                                <div class="text-[var(--text-muted)]">Eliminación gaussiana</div>
+                            </div>
+                        </div>
+                        <p class="italic text-[var(--text-muted)] mt-4 border-l-2 border-[var(--accent-purple)] pl-4">
+                            "La matemática es la reina de las ciencias, y la teoría de números es la reina de las matemáticas."
+                            <br>— Carl Friedrich Gauss
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Lección para programadores -->
+                <div class="p-5 bg-[var(--accent-blue)]/10 border border-[var(--accent-blue)]/30 rounded-xl">
+                    <h4 class="font-medium mb-2 text-[var(--accent-blue)]">Lección para Programadores</h4>
+                    <p class="text-sm text-[var(--text-secondary)]">
+                        La historia de Gauss nos enseña algo fundamental: <strong>antes de escribir un bucle, busca el patrón</strong>.
+                        <br><br>
+                        En este problema, la diferencia entre O(n) y O(1) no es solo velocidad—es la diferencia entre
+                        <em>calcular ciegamente</em> y <em>entender la estructura matemática</em>.
+                        <br><br>
+                        El mejor código no es el más corto ni el más rápido. Es el que demuestra que entendiste el problema.
+                    </p>
+                </div>
+
+                <!-- Conceptos aprendidos -->
+                <div class="flex flex-wrap gap-3">
+                    <span class="concept-tag"><span class="text-[var(--accent-purple)]">✓</span> Historia de Gauss</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-purple)]">✓</span> Demostración visual</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-purple)]">✓</span> Pensamiento matemático</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-purple)]">✓</span> Patrones antes que bucles</span>
                 </div>
             </div>
         </div>
