@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#009 Triplete Pitagórico — Euler Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    <style>
+        :root {
+            --bg: #000000;
+            --bg-elevated: #0a0a0f;
+            --bg-card: #111118;
+            --border: #1a1a24;
+            --border-hover: #2a2a3a;
+            --text: #e8e8ed;
+            --text-secondary: #8888a0;
+            --text-muted: #505068;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-amber: #f59e0b;
+            --accent-purple: #a855f7;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .serif { font-family: 'Source Serif 4', Georgia, serif; }
+
+        header { position: sticky; top: 0; z-index: 50; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+
+        .level-tabs { display: flex; gap: 2px; background: var(--bg-elevated); padding: 4px; border-radius: 10px; }
+        .level-tab { padding: 8px 16px; font-size: 13px; font-weight: 500; color: var(--text-muted); background: transparent; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-family: 'JetBrains Mono', monospace; }
+        .level-tab:hover { color: var(--text-secondary); }
+        .level-tab.active { background: var(--accent-blue); color: white; }
+        .level-tab[data-level="2"].active { background: var(--accent-green); }
+        .level-tab[data-level="3"].active { background: var(--accent-amber); }
+        .level-tab[data-level="4"].active { background: var(--accent-purple); }
+
+        .level-content { display: none; animation: fadeIn 0.3s ease; }
+        .level-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .code-editor { position: relative; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .code-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: var(--bg-card); border-bottom: 1px solid var(--border); }
+        .code-lang { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent-green); text-transform: uppercase; letter-spacing: 0.5px; }
+        .run-btn { display: flex; align-items: center; gap: 6px; padding: 6px 14px; background: var(--accent-blue); color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .run-btn:hover { filter: brightness(1.1); }
+        .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .run-btn.running { background: var(--accent-amber); }
+        .code-textarea { width: 100%; min-height: 200px; padding: 16px; background: transparent; border: none; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.7; resize: vertical; outline: none; }
+        .code-output { padding: 12px 16px; background: var(--bg-card); border-top: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-secondary); min-height: 40px; }
+        .code-output.success { color: var(--accent-green); }
+        .code-output.error { color: #ef4444; }
+
+        .result-box { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(34, 197, 94, 0.08) 100%); border: 1px solid var(--accent-blue); border-radius: 12px; }
+        .result-value { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 600; color: var(--accent-green); }
+
+        .step-card { display: flex; gap: 16px; padding: 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; transition: border-color 0.2s; }
+        .step-card:hover { border-color: var(--border-hover); }
+        .step-number { flex-shrink: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 50%; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent-blue); }
+
+        .math-block { padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; text-align: center; }
+        .math-formula { font-family: 'Source Serif 4', Georgia, serif; font-size: 20px; color: var(--text); margin-bottom: 8px; }
+        .math-description { font-size: 13px; color: var(--text-muted); }
+
+        .perf-table { width: 100%; border-collapse: collapse; }
+        .perf-table th, .perf-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+        .perf-table th { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+        .perf-table td { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+
+        .perf-bar { height: 6px; background: var(--bg-elevated); border-radius: 3px; overflow: hidden; margin-top: 6px; }
+        .perf-bar-fill { height: 100%; border-radius: 3px; }
+        .perf-fast { background: var(--accent-green); }
+        .perf-slow { background: #ef4444; }
+
+        .concept-tag { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
+        .custom-input { padding: 10px 14px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 14px; outline: none; }
+        .custom-input:focus { border-color: var(--accent-blue); }
+
+        .pyodide-status { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--bg-card); border-radius: 8px; font-size: 12px; color: var(--text-muted); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+        .status-dot.loading { background: var(--accent-amber); animation: pulse 1s infinite; }
+        .status-dot.ready { background: var(--accent-green); }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        code:not(.code-textarea) { padding: 2px 8px; background: var(--bg-elevated); border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.9em; color: var(--accent-amber); }
+
+        .triangle-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .triangle-svg {
+            max-width: 300px;
+        }
+
+        .variant-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+        .variant-tab { padding: 6px 12px; font-size: 12px; font-weight: 500; color: var(--text-muted); background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .variant-tab:hover { color: var(--text-secondary); border-color: var(--border-hover); }
+        .variant-tab.active { background: var(--accent-green); border-color: var(--accent-green); color: white; }
+        .variant-content { display: none; }
+        .variant-content.active { display: block; }
+
+        .triplet-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 24px;
+            background: var(--bg-elevated);
+            border-radius: 12px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .triplet-value {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .triplet-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <header class="px-6 py-4">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-6">
+                <a href="../../" class="text-sm text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
+                    ← Euler Lab
+                </a>
+                <div class="flex items-center gap-3">
+                    <span class="mono text-lg text-[var(--accent-blue)]">#009</span>
+                    <h1 class="text-lg font-medium">Triplete Pitagórico</h1>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="pyodide-status">
+                    <div class="status-dot" id="pyodideStatus"></div>
+                    <span id="pyodideText">Cargando Python...</span>
+                </div>
+                <div class="flex gap-2">
+                    <a href="../008/" class="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--border)] hover:border-[var(--border-hover)]">← 008</a>
+                    <a href="../010/" class="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--border)] hover:border-[var(--border-hover)]">010 →</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-8">
+        <!-- Enunciado -->
+        <div class="mb-8 p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 w-10 h-10 flex items-center justify-content-center rounded-lg bg-[var(--accent-blue)]/10 text-[var(--accent-blue)]">
+                    <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <div class="space-y-3">
+                    <h2 class="text-lg font-medium">Special Pythagorean Triplet</h2>
+                    <p class="text-[var(--text-secondary)] leading-relaxed">
+                        Un triplete pitagórico cumple <strong>a² + b² = c²</strong>. Encuentra el único triplete donde <strong>a + b + c = 1000</strong> y calcula el producto <strong>a × b × c</strong>.
+                    </p>
+                    <div class="flex items-center gap-6 pt-2">
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-amber)]">●</span>
+                            Teorema de Pitágoras
+                        </span>
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-purple)]">●</span>
+                            Fórmula de Euclides
+                        </span>
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-green)]">●</span>
+                            Álgebra
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs de niveles -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="level-tabs">
+                <button class="level-tab active" data-level="1">Nivel 1: A mano</button>
+                <button class="level-tab" data-level="2">Nivel 2: Fuerza bruta</button>
+                <button class="level-tab" data-level="3">Nivel 3: Pythónico</button>
+                <button class="level-tab" data-level="4">Nivel 4: Matemático</button>
+            </div>
+        </div>
+
+        <!-- NIVEL 1 -->
+        <div class="level-content active" id="level1">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-blue)] flex items-center justify-center text-sm">1</span>
+                        Entendiendo el Problema
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        Un triplete pitagórico es un conjunto de tres enteros positivos (a, b, c) que satisfacen el teorema de Pitágoras. El ejemplo más famoso es (3, 4, 5).
+                    </p>
+                </div>
+
+                <!-- Triángulo visual -->
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                        <div class="triangle-container">
+                            <svg class="triangle-svg" viewBox="0 0 200 180">
+                                <!-- Triángulo -->
+                                <polygon points="20,160 180,160 180,40" fill="none" stroke="var(--accent-blue)" stroke-width="2"/>
+                                <!-- Ángulo recto -->
+                                <rect x="165" y="145" width="15" height="15" fill="none" stroke="var(--accent-purple)" stroke-width="1.5"/>
+                                <!-- Etiquetas -->
+                                <text x="100" y="175" text-anchor="middle" fill="var(--text)" font-family="JetBrains Mono" font-size="14">a = 200</text>
+                                <text x="190" y="100" text-anchor="start" fill="var(--text)" font-family="JetBrains Mono" font-size="14">b = 375</text>
+                                <text x="85" y="90" text-anchor="middle" fill="var(--accent-green)" font-family="JetBrains Mono" font-size="14">c = 425</text>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="math-block">
+                            <div class="math-formula serif">a² + b² = c²</div>
+                            <div class="math-description">Teorema de Pitágoras</div>
+                        </div>
+                        <div class="math-block">
+                            <div class="math-formula serif">a + b + c = 1000</div>
+                            <div class="math-description">Restricción del problema</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pasos manuales -->
+                <div class="space-y-4">
+                    <h4 class="font-medium">Verificación manual:</h4>
+                    <div class="grid gap-4">
+                        <div class="step-card">
+                            <div class="step-number">1</div>
+                            <div>
+                                <p class="font-medium mb-1">Verificar la suma</p>
+                                <p class="text-sm text-[var(--text-secondary)]">200 + 375 + 425 = <strong>1000</strong> ✓</p>
+                            </div>
+                        </div>
+                        <div class="step-card">
+                            <div class="step-number">2</div>
+                            <div>
+                                <p class="font-medium mb-1">Verificar Pitágoras</p>
+                                <p class="text-sm text-[var(--text-secondary)]">200² + 375² = 40,000 + 140,625 = <strong>180,625</strong></p>
+                                <p class="text-sm text-[var(--text-secondary)]">425² = <strong>180,625</strong> ✓</p>
+                            </div>
+                        </div>
+                        <div class="step-card">
+                            <div class="step-number">3</div>
+                            <div>
+                                <p class="font-medium mb-1">Calcular el producto</p>
+                                <p class="text-sm text-[var(--text-secondary)]">200 × 375 × 425 = <strong>31,875,000</strong></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- El triplete -->
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="triplet-card">
+                        <div>
+                            <div class="triplet-label">a</div>
+                            <div class="triplet-value text-[var(--accent-blue)]">200</div>
+                        </div>
+                    </div>
+                    <div class="triplet-card">
+                        <div>
+                            <div class="triplet-label">b</div>
+                            <div class="triplet-value text-[var(--accent-amber)]">375</div>
+                        </div>
+                    </div>
+                    <div class="triplet-card">
+                        <div>
+                            <div class="triplet-label">c</div>
+                            <div class="triplet-value text-[var(--accent-green)]">425</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resultado -->
+                <div class="result-box">
+                    <div>
+                        <div class="text-sm text-[var(--text-muted)] mb-1">Respuesta (a × b × c)</div>
+                        <div class="result-value">31,875,000</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-[var(--text-muted)] mb-1">Triplete</div>
+                        <div class="mono text-lg">(200, 375, 425)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NIVEL 2 -->
+        <div class="level-content" id="level2">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-green)] flex items-center justify-center text-sm">2</span>
+                        Fuerza Bruta - 3 Variantes
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        Probamos combinaciones de a y b, calculando c = 1000 - a - b, y verificamos si es un triplete válido.
+                    </p>
+                </div>
+
+                <div class="variant-tabs">
+                    <button class="variant-tab active" data-variant="a">Variante A</button>
+                    <button class="variant-tab" data-variant="b">Variante B</button>
+                    <button class="variant-tab" data-variant="c">Variante C</button>
+                </div>
+
+                <!-- Variante A: while True + break -->
+                <div class="variant-content active" id="variant-a">
+                    <div class="space-y-4">
+                        <h4 class="font-medium text-[var(--accent-green)]">Variante A: while True + break</h4>
+                        <p class="text-sm text-[var(--text-secondary)]">Bucle infinito con break cuando encontramos el triplete.</p>
+                        <div class="code-editor">
+                            <div class="code-header">
+                                <span class="code-lang">Python</span>
+                                <button class="run-btn" onclick="runCode('code2a', 'output2a')">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                                    Ejecutar
+                                </button>
+                            </div>
+                            <textarea class="code-textarea" id="code2a">TARGET = 1000
+found = False
+a = 1
+
+while True:
+    if found:
+        break
+    if a >= TARGET // 3:
+        break
+
+    b = a + 1
+    while True:
+        if b >= (TARGET - a) // 2:
+            break
+
+        c = TARGET - a - b
+
+        if a * a + b * b == c * c:
+            print(f"Triplete: ({a}, {b}, {c})")
+            print(f"Verificación: {a}² + {b}² = {a*a} + {b*b} = {a*a + b*b}")
+            print(f"             {c}² = {c*c}")
+            print(f"Producto: {a * b * c}")
+            found = True
+            break
+
+        b += 1
+    a += 1</textarea>
+                            <div class="code-output" id="output2a">// Output aparecerá aquí</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Variante B: while condition -->
+                <div class="variant-content" id="variant-b">
+                    <div class="space-y-4">
+                        <h4 class="font-medium text-[var(--accent-green)]">Variante B: while condición</h4>
+                        <p class="text-sm text-[var(--text-secondary)]">Condiciones directas en los while.</p>
+                        <div class="code-editor">
+                            <div class="code-header">
+                                <span class="code-lang">Python</span>
+                                <button class="run-btn" onclick="runCode('code2b', 'output2b')">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                                    Ejecutar
+                                </button>
+                            </div>
+                            <textarea class="code-textarea" id="code2b">TARGET = 1000
+result = None
+
+a = 1
+while a < TARGET // 3 and result is None:
+    b = a + 1
+    while b < (TARGET - a) // 2 and result is None:
+        c = TARGET - a - b
+
+        if a * a + b * b == c * c:
+            result = (a, b, c)
+
+        b += 1
+    a += 1
+
+if result:
+    a, b, c = result
+    print(f"Triplete: {result}")
+    print(f"Suma: {a} + {b} + {c} = {a + b + c}")
+    print(f"Producto: {a * b * c}")</textarea>
+                            <div class="code-output" id="output2b">// Output aparecerá aquí</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Variante C: for range -->
+                <div class="variant-content" id="variant-c">
+                    <div class="space-y-4">
+                        <h4 class="font-medium text-[var(--accent-green)]">Variante C: for range</h4>
+                        <p class="text-sm text-[var(--text-secondary)]">Usando for con range para iterar.</p>
+                        <div class="code-editor">
+                            <div class="code-header">
+                                <span class="code-lang">Python</span>
+                                <button class="run-btn" onclick="runCode('code2c', 'output2c')">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                                    Ejecutar
+                                </button>
+                            </div>
+                            <textarea class="code-textarea" id="code2c">def find_pythagorean_triplet(target):
+    """Encuentra el triplete pitagórico que suma target."""
+    # a < b < c y a + b + c = target
+    # Por lo tanto: a < target/3
+    for a in range(1, target // 3):
+        # b < c y b + c = target - a
+        # Por lo tanto: b < (target - a) / 2
+        for b in range(a + 1, (target - a) // 2):
+            c = target - a - b
+
+            if a * a + b * b == c * c:
+                return (a, b, c)
+
+    return None
+
+triplet = find_pythagorean_triplet(1000)
+
+if triplet:
+    a, b, c = triplet
+    print(f"Triplete: {triplet}")
+    print(f"Producto: {a * b * c}")</textarea>
+                            <div class="code-output" id="output2c">// Output aparecerá aquí</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Complejidad -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">Análisis de complejidad</h4>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <div class="text-sm text-[var(--text-muted)] mb-1">Tiempo</div>
+                            <div class="mono text-lg">O(n²)</div>
+                            <p class="text-xs text-[var(--text-muted)] mt-1">Dos bucles anidados hasta n/3 y n/2</p>
+                        </div>
+                        <div>
+                            <div class="text-sm text-[var(--text-muted)] mb-1">Espacio</div>
+                            <div class="mono text-lg">O(1)</div>
+                            <p class="text-xs text-[var(--text-muted)] mt-1">Solo variables auxiliares</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NIVEL 3 -->
+        <div class="level-content" id="level3">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-amber)] flex items-center justify-center text-sm">3</span>
+                        Enfoque Pythónico
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        Usando generadores y <code>next()</code> para encontrar el primer triplete válido.
+                    </p>
+                </div>
+
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python</span>
+                        <button class="run-btn" onclick="runCode('code3', 'output3')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code3">from math import prod
+
+TARGET = 1000
+
+# Generador de tripletes pitagóricos con suma específica
+triplet = next(
+    (a, b, c)
+    for a in range(1, TARGET // 3)
+    for b in range(a + 1, (TARGET - a) // 2)
+    for c in [TARGET - a - b]  # Truco: "asignar" c dentro de la comprensión
+    if a * a + b * b == c * c
+)
+
+print(f"Triplete: {triplet}")
+print(f"Producto: {prod(triplet)}")
+
+# Alternativa más explícita
+def pythagorean_triplets(target):
+    """Generador de tripletes pitagóricos que suman target."""
+    for a in range(1, target // 3):
+        for b in range(a + 1, (target - a) // 2):
+            c = target - a - b
+            if a * a + b * b == c * c:
+                yield (a, b, c)
+
+# Usando el generador
+first = next(pythagorean_triplets(1000))
+print(f"\nCon generador: {first}")</textarea>
+                    <div class="code-output" id="output3">// Output aparecerá aquí</div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="p-5 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                        <h4 class="font-medium mb-3 text-[var(--accent-amber)]">Herramientas usadas</h4>
+                        <ul class="space-y-2 text-sm text-[var(--text-secondary)]">
+                            <li><code>next()</code> — Obtiene el primer elemento de un iterador</li>
+                            <li><code>for c in [expr]</code> — Truco para "asignar" en comprensión</li>
+                            <li><code>yield</code> — Generador perezoso</li>
+                            <li><code>math.prod()</code> — Producto de iterables</li>
+                        </ul>
+                    </div>
+                    <div class="p-5 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                        <h4 class="font-medium mb-3 text-[var(--accent-amber)]">El truco de <code>for c in [expr]</code></h4>
+                        <p class="text-sm text-[var(--text-secondary)] mb-3">
+                            En Python no puedes hacer asignaciones dentro de una comprensión. El truco es usar un <code>for</code> sobre una lista de un elemento:
+                        </p>
+                        <div class="text-sm mono text-[var(--text-secondary)] bg-[var(--bg-elevated)] p-3 rounded-lg">
+<pre># Esto NO funciona:
+# (a, b, c := 1000-a-b)
+
+# Esto SÍ funciona:
+for c in [1000 - a - b]</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NIVEL 4 -->
+        <div class="level-content" id="level4">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-purple)] flex items-center justify-center text-sm">4</span>
+                        Solución Algebraica con Fórmula de Euclides
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        La fórmula de Euclides genera <strong>todos</strong> los tripletes pitagóricos primitivos. Con álgebra, podemos reducir el problema a encontrar dos parámetros.
+                    </p>
+                </div>
+
+                <!-- Fórmula de Euclides -->
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div class="math-block">
+                        <div class="math-formula serif">a = m² - n²</div>
+                        <div class="math-description">Cateto menor</div>
+                    </div>
+                    <div class="math-block">
+                        <div class="math-formula serif">b = 2mn</div>
+                        <div class="math-description">Cateto mayor</div>
+                    </div>
+                    <div class="math-block">
+                        <div class="math-formula serif">c = m² + n²</div>
+                        <div class="math-description">Hipotenusa</div>
+                    </div>
+                </div>
+
+                <!-- Derivación algebraica -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">Derivación algebraica</h4>
+                    <div class="space-y-3 text-[var(--text-secondary)]">
+                        <p>Sumando los tres términos:</p>
+                        <div class="p-4 bg-[var(--bg-elevated)] rounded-lg mono text-center">
+                            a + b + c = (m² - n²) + 2mn + (m² + n²) = 2m² + 2mn = 2m(m + n)
+                        </div>
+                        <p>Si <code>a + b + c = 1000</code>, entonces:</p>
+                        <div class="p-4 bg-[var(--bg-elevated)] rounded-lg mono text-center">
+                            2m(m + n) = 1000  →  m(m + n) = 500
+                        </div>
+                        <p>Buscamos m, n enteros positivos con m > n tal que m(m + n) = 500</p>
+                    </div>
+                </div>
+
+                <!-- Tabla de factores -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">Factorización de 500</h4>
+                    <p class="text-sm text-[var(--text-secondary)] mb-4">500 = 2² × 5³. Buscamos m tal que 500/m - m = n > 0:</p>
+                    <table class="perf-table">
+                        <thead>
+                            <tr>
+                                <th>m</th>
+                                <th>m + n = 500/m</th>
+                                <th>n</th>
+                                <th>¿Válido?</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>10</td>
+                                <td>50</td>
+                                <td>40</td>
+                                <td class="text-[#ef4444]">m < n</td>
+                            </tr>
+                            <tr>
+                                <td>20</td>
+                                <td>25</td>
+                                <td class="text-[var(--accent-green)]">5</td>
+                                <td class="text-[var(--accent-green)]">✓ m > n</td>
+                            </tr>
+                            <tr>
+                                <td>25</td>
+                                <td>20</td>
+                                <td>-5</td>
+                                <td class="text-[#ef4444]">n < 0</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — Solución O(√n)</span>
+                        <button class="run-btn" onclick="runCode('code4', 'output4')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code4">from math import isqrt
+
+def pythagorean_triplet_algebraic(perimeter):
+    """
+    Encuentra el triplete pitagórico con perímetro dado.
+
+    Usando la fórmula de Euclides:
+    a = k(m² - n²), b = k(2mn), c = k(m² + n²)
+
+    El perímetro es: 2km(m + n) = perimeter
+    Por lo tanto: km(m + n) = perimeter / 2
+    """
+    half = perimeter // 2  # = 500
+
+    # m debe ser divisor de half y m² < half
+    for m in range(2, isqrt(half) + 1):
+        if half % m == 0:
+            # m + n = half / m, entonces n = half/m - m
+            quotient = half // m  # m + n (posiblemente con factor k)
+
+            # Buscamos k tal que m + n = quotient / k
+            # donde n = quotient/k - m > 0 y gcd(m,n) = 1 para primitivo
+
+            # Para el caso más simple (k=1):
+            n = quotient - m
+            if n > 0 and m > n:
+                # Generar triplete
+                a = m * m - n * n
+                b = 2 * m * n
+                c = m * m + n * n
+
+                # Verificar que suma al perímetro
+                if a + b + c == perimeter:
+                    return sorted([a, b, c])
+
+    return None
+
+triplet = pythagorean_triplet_algebraic(1000)
+a, b, c = triplet
+
+print(f"Parámetros de Euclides: m = 20, n = 5")
+print(f"a = m² - n² = 400 - 25 = {20*20 - 5*5}")
+print(f"b = 2mn = 2 × 20 × 5 = {2*20*5}")
+print(f"c = m² + n² = 400 + 25 = {20*20 + 5*5}")
+print()
+print(f"Triplete: ({a}, {b}, {c})")
+print(f"Suma: {a + b + c}")
+print(f"Producto: {a * b * c}")</textarea>
+                    <div class="code-output" id="output4">// Output aparecerá aquí</div>
+                </div>
+
+                <!-- Tabla de rendimiento -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">Comparación de rendimiento</h4>
+                    <table class="perf-table">
+                        <thead>
+                            <tr>
+                                <th>Método</th>
+                                <th>Complejidad</th>
+                                <th>Iteraciones (n=1000)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Fuerza bruta</td>
+                                <td>O(n²)</td>
+                                <td>
+                                    ~55,000 iteraciones
+                                    <div class="perf-bar"><div class="perf-bar-fill perf-slow" style="width: 100%"></div></div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Fórmula de Euclides</td>
+                                <td>O(√n)</td>
+                                <td>
+                                    ~22 iteraciones
+                                    <div class="perf-bar"><div class="perf-bar-fill perf-fast" style="width: 0.04%"></div></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Nota histórica -->
+                <div class="p-5 bg-[var(--accent-purple)]/10 border border-[var(--accent-purple)]/30 rounded-xl">
+                    <h4 class="font-medium mb-2 text-[var(--accent-purple)]">Nota histórica</h4>
+                    <p class="text-sm text-[var(--text-secondary)]">
+                        La fórmula de Euclides (~300 a.C.) genera todos los tripletes pitagóricos primitivos. Un triplete es <strong>primitivo</strong> si gcd(a,b,c) = 1. Todo triplete no primitivo es un múltiplo de uno primitivo.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Pyodide setup
+        let pyodide = null;
+
+        async function initPyodide() {
+            const status = document.getElementById('pyodideStatus');
+            const text = document.getElementById('pyodideText');
+            status.classList.add('loading');
+
+            try {
+                pyodide = await loadPyodide();
+                status.classList.remove('loading');
+                status.classList.add('ready');
+                text.textContent = 'Python listo';
+            } catch (e) {
+                text.textContent = 'Error cargando Python';
+                status.style.background = '#ef4444';
+            }
+        }
+
+        async function runCode(inputId, outputId) {
+            const code = document.getElementById(inputId).value;
+            const output = document.getElementById(outputId);
+            const btn = output.parentElement.querySelector('.run-btn');
+
+            if (!pyodide) {
+                output.textContent = 'Esperando Pyodide...';
+                return;
+            }
+
+            btn.classList.add('running');
+            btn.disabled = true;
+            output.textContent = 'Ejecutando...';
+            output.className = 'code-output';
+
+            try {
+                pyodide.runPython(`
+import sys
+from io import StringIO
+sys.stdout = StringIO()
+`);
+                await pyodide.runPythonAsync(code);
+                const stdout = pyodide.runPython('sys.stdout.getvalue()');
+                output.textContent = stdout || '(sin output)';
+                output.classList.add('success');
+            } catch (e) {
+                output.textContent = e.message;
+                output.classList.add('error');
+            }
+
+            btn.classList.remove('running');
+            btn.disabled = false;
+        }
+
+        // Level tabs
+        document.querySelectorAll('.level-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.level-content').forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(`level${tab.dataset.level}`).classList.add('active');
+            });
+        });
+
+        // Variant tabs
+        document.querySelectorAll('.variant-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.variant-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.variant-content').forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(`variant-${tab.dataset.variant}`).classList.add('active');
+            });
+        });
+
+        // Init
+        initPyodide();
+    </script>
+</body>
+</html>
