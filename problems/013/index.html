@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#013 Suma Grande — Euler Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    <style>
+        :root {
+            --bg: #000000;
+            --bg-elevated: #0a0a0f;
+            --bg-card: #111118;
+            --border: #1a1a24;
+            --border-hover: #2a2a3a;
+            --text: #e8e8ed;
+            --text-secondary: #8888a0;
+            --text-muted: #505068;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-amber: #f59e0b;
+            --accent-purple: #a855f7;
+            --accent-red: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .serif { font-family: 'Source Serif 4', Georgia, serif; }
+
+        header { position: sticky; top: 0; z-index: 50; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+
+        .level-tabs { display: flex; gap: 2px; background: var(--bg-elevated); padding: 4px; border-radius: 10px; }
+        .level-tab { padding: 8px 16px; font-size: 13px; font-weight: 500; color: var(--text-muted); background: transparent; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-family: 'JetBrains Mono', monospace; }
+        .level-tab:hover { color: var(--text-secondary); }
+        .level-tab.active { background: var(--accent-blue); color: white; }
+        .level-tab[data-level="2"].active { background: var(--accent-green); }
+
+        .level-content { display: none; animation: fadeIn 0.3s ease; }
+        .level-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .code-editor { position: relative; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .code-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: var(--bg-card); border-bottom: 1px solid var(--border); }
+        .code-lang { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent-green); text-transform: uppercase; letter-spacing: 0.5px; }
+        .run-btn { display: flex; align-items: center; gap: 6px; padding: 6px 14px; background: var(--accent-blue); color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .run-btn:hover { filter: brightness(1.1); }
+        .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .run-btn.running { background: var(--accent-amber); }
+        .code-textarea { width: 100%; min-height: 200px; padding: 16px; background: transparent; border: none; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.7; resize: vertical; outline: none; }
+        .code-output { padding: 12px 16px; background: var(--bg-card); border-top: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-secondary); min-height: 40px; }
+        .code-output.success { color: var(--accent-green); }
+        .code-output.error { color: #ef4444; }
+
+        .result-box { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(34, 197, 94, 0.08) 100%); border: 1px solid var(--accent-blue); border-radius: 12px; }
+        .result-value { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 600; color: var(--accent-green); }
+
+        .step-card { display: flex; gap: 16px; padding: 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; transition: border-color 0.2s; }
+        .step-card:hover { border-color: var(--border-hover); }
+        .step-number { flex-shrink: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 50%; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent-blue); }
+
+        .math-block { padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; text-align: center; }
+        .math-formula { font-family: 'Source Serif 4', Georgia, serif; font-size: 20px; color: var(--text); margin-bottom: 8px; }
+        .math-description { font-size: 13px; color: var(--text-muted); }
+
+        .concept-tag { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
+
+        .pyodide-status { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--bg-card); border-radius: 8px; font-size: 12px; color: var(--text-muted); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+        .status-dot.loading { background: var(--accent-amber); animation: pulse 1s infinite; }
+        .status-dot.ready { background: var(--accent-green); }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        code:not(.code-textarea) { padding: 2px 8px; background: var(--bg-elevated); border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.9em; color: var(--accent-amber); }
+
+        .number-scroll {
+            max-height: 300px;
+            overflow-y: auto;
+            background: var(--bg-elevated);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .number-scroll::-webkit-scrollbar { width: 8px; }
+        .number-scroll::-webkit-scrollbar-track { background: var(--bg-card); border-radius: 4px; }
+        .number-scroll::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 4px; }
+
+        .number-line {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.8;
+            word-break: break-all;
+        }
+
+        .number-line .first-digits {
+            color: var(--accent-green);
+            font-weight: 500;
+        }
+
+        .overflow-demo {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .lang-box {
+            padding: 16px;
+            background: var(--bg-elevated);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .lang-box.error {
+            border-color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .lang-box.success {
+            border-color: var(--accent-green);
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        .bits-visual {
+            display: flex;
+            gap: 2px;
+            flex-wrap: wrap;
+            padding: 12px;
+            background: var(--bg-elevated);
+            border-radius: 8px;
+        }
+
+        .bit {
+            width: 12px;
+            height: 20px;
+            background: var(--accent-blue);
+            border-radius: 2px;
+            font-size: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .bit.overflow {
+            background: var(--accent-red);
+        }
+    </style>
+</head>
+<body>
+    <header class="px-6 py-4">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-6">
+                <a href="../../index.html" class="text-sm text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
+                    ← Euler Lab
+                </a>
+                <div class="flex items-center gap-3">
+                    <span class="mono text-lg text-[var(--accent-blue)]">#013</span>
+                    <h1 class="text-lg font-medium">Suma Grande</h1>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="pyodide-status">
+                    <div class="status-dot" id="pyodideStatus"></div>
+                    <span id="pyodideText">Cargando Python...</span>
+                </div>
+                <div class="flex gap-2">
+                    <a href="../012/index.html" class="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--border)] hover:border-[var(--border-hover)]">← 012</a>
+                    <a href="../014/index.html" class="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--border)] hover:border-[var(--border-hover)]">014 →</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-8">
+        <!-- Enunciado -->
+        <div class="mb-8 p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 w-10 h-10 flex items-center justify-content-center rounded-lg bg-[var(--accent-blue)]/10 text-[var(--accent-blue)]">
+                    <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <div class="space-y-3">
+                    <h2 class="text-lg font-medium">Large Sum</h2>
+                    <p class="text-[var(--text-secondary)] leading-relaxed">
+                        Calcula los <strong class="text-white">primeros 10 dígitos</strong> de la suma de
+                        <strong class="text-white">100 números de 50 dígitos</strong> cada uno.
+                    </p>
+                    <div class="flex items-center gap-6 pt-2">
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-amber)]">●</span>
+                            BigInt
+                        </span>
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-purple)]">●</span>
+                            Precisión arbitraria
+                        </span>
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-green)]">●</span>
+                            Overflow
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs de niveles -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="level-tabs">
+                <button class="level-tab active" data-level="1">Nivel 1: Entendimiento</button>
+                <button class="level-tab" data-level="2">Nivel 2: Python al rescate</button>
+            </div>
+        </div>
+
+        <!-- NIVEL 1 -->
+        <div class="level-content active" id="level1">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-blue)] flex items-center justify-center text-sm">1</span>
+                        ¿Por qué este problema es interesante?
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        A primera vista parece trivial: sumar 100 números. Pero hay un detalle crucial:
+                        cada número tiene <strong>50 dígitos</strong>. Esto rompe la mayoría de lenguajes de programación.
+                    </p>
+                </div>
+
+                <!-- El problema del overflow -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-red)]">El Problema: Integer Overflow</h4>
+                    <p class="text-[var(--text-secondary)] mb-4">
+                        En la mayoría de lenguajes, los enteros tienen un <strong>tamaño fijo</strong>:
+                    </p>
+                    <div class="grid md:grid-cols-3 gap-4 mb-6">
+                        <div class="p-4 bg-[var(--bg-elevated)] rounded-lg text-center">
+                            <div class="text-sm text-[var(--text-muted)] mb-1">32 bits</div>
+                            <div class="mono text-lg">2,147,483,647</div>
+                            <div class="text-xs text-[var(--text-muted)] mt-1">~2 mil millones</div>
+                        </div>
+                        <div class="p-4 bg-[var(--bg-elevated)] rounded-lg text-center">
+                            <div class="text-sm text-[var(--text-muted)] mb-1">64 bits</div>
+                            <div class="mono text-lg">9.2 × 10<sup>18</sup></div>
+                            <div class="text-xs text-[var(--text-muted)] mt-1">~19 dígitos</div>
+                        </div>
+                        <div class="p-4 bg-[var(--bg-elevated)] rounded-lg text-center border border-[var(--accent-red)]">
+                            <div class="text-sm text-[var(--text-muted)] mb-1">Nuestros números</div>
+                            <div class="mono text-lg text-[var(--accent-red)]">10<sup>50</sup></div>
+                            <div class="text-xs text-[var(--text-muted)] mt-1">50 dígitos 💥</div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-[var(--text-muted)]">
+                        Un número de 50 dígitos necesitaría ~166 bits. ¡No cabe ni en un entero de 128 bits!
+                    </p>
+                </div>
+
+                <!-- Demostración de overflow -->
+                <div class="space-y-4">
+                    <h4 class="font-medium">¿Qué pasa cuando hay overflow?</h4>
+                    <div class="overflow-demo">
+                        <div class="lang-box error">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="text-sm font-medium">C / C++</span>
+                                <span class="text-xs px-2 py-0.5 bg-[var(--accent-red)]/20 text-[var(--accent-red)] rounded">Overflow silencioso</span>
+                            </div>
+                            <pre class="mono text-xs text-[var(--text-muted)]">int x = 2147483647;
+x = x + 1;
+// x = -2147483648 😱
+// ¡Se volvió negativo!</pre>
+                        </div>
+                        <div class="lang-box error">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="text-sm font-medium">Java</span>
+                                <span class="text-xs px-2 py-0.5 bg-[var(--accent-red)]/20 text-[var(--accent-red)] rounded">Overflow silencioso</span>
+                            </div>
+                            <pre class="mono text-xs text-[var(--text-muted)]">long x = 9223372036854775807L;
+x = x + 1;
+// x = -9223372036854775808
+// También negativo</pre>
+                        </div>
+                        <div class="lang-box error">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="text-sm font-medium">JavaScript</span>
+                                <span class="text-xs px-2 py-0.5 bg-[var(--accent-amber)]/20 text-[var(--accent-amber)] rounded">Pérdida de precisión</span>
+                            </div>
+                            <pre class="mono text-xs text-[var(--text-muted)]">let x = 9007199254740992;
+x = x + 1;
+// x = 9007199254740992
+// ¡No cambió! 😱</pre>
+                        </div>
+                        <div class="lang-box success">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="text-sm font-medium">Python</span>
+                                <span class="text-xs px-2 py-0.5 bg-[var(--accent-green)]/20 text-[var(--accent-green)] rounded">Precisión arbitraria</span>
+                            </div>
+                            <pre class="mono text-xs text-[var(--text-muted)]">x = 10**100
+x = x + 1
+# x = 100000...00001
+# ¡Funciona perfecto! ✓</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visualización de bits -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-blue)]">¿Cómo funciona el overflow?</h4>
+                    <p class="text-[var(--text-secondary)] mb-4">
+                        Con 8 bits puedes representar números del 0 al 255. Si sumas 255 + 1:
+                    </p>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <p class="text-sm text-[var(--text-muted)] mb-2">255 en binario:</p>
+                            <div class="bits-visual">
+                                <div class="bit">1</div>
+                                <div class="bit">1</div>
+                                <div class="bit">1</div>
+                                <div class="bit">1</div>
+                                <div class="bit">1</div>
+                                <div class="bit">1</div>
+                                <div class="bit">1</div>
+                                <div class="bit">1</div>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-sm text-[var(--text-muted)] mb-2">255 + 1 = ¿256? No, = 0:</p>
+                            <div class="bits-visual">
+                                <div class="bit overflow">1</div>
+                                <div class="bit" style="opacity: 0.3">0</div>
+                                <div class="bit" style="opacity: 0.3">0</div>
+                                <div class="bit" style="opacity: 0.3">0</div>
+                                <div class="bit" style="opacity: 0.3">0</div>
+                                <div class="bit" style="opacity: 0.3">0</div>
+                                <div class="bit" style="opacity: 0.3">0</div>
+                                <div class="bit" style="opacity: 0.3">0</div>
+                                <div class="bit" style="opacity: 0.3">0</div>
+                            </div>
+                            <p class="text-xs text-[var(--accent-red)] mt-2">El bit 9 se pierde → resultado = 0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Los 100 números -->
+                <div class="space-y-4">
+                    <h4 class="font-medium">Los 100 números de 50 dígitos:</h4>
+                    <div class="number-scroll" id="numberList">
+                        <!-- Se llena con JavaScript -->
+                    </div>
+                    <p class="text-sm text-[var(--text-muted)]">
+                        Nota: Los primeros 11 dígitos están resaltados. Spoiler: solo necesitas esos para obtener la respuesta.
+                    </p>
+                </div>
+
+                <!-- El insight del shortcut -->
+                <div class="p-5 bg-[var(--accent-blue)]/10 border border-[var(--accent-blue)]/30 rounded-xl">
+                    <h4 class="font-medium mb-2 text-[var(--accent-blue)]">Insight: ¿Necesitas los 50 dígitos?</h4>
+                    <p class="text-sm text-[var(--text-secondary)]">
+                        Si solo queremos los <strong>primeros 10 dígitos</strong> de la suma,
+                        ¿necesitamos sumar números completos de 50 dígitos?
+                        <br><br>
+                        <strong>No.</strong> Los dígitos del final (posiciones 12-50) no pueden afectar los primeros 10 dígitos
+                        de la suma porque el "carry" máximo de 100 sumas es solo 2 dígitos.
+                        <br><br>
+                        Podríamos usar solo los <strong>primeros 13 dígitos</strong> de cada número y obtener la misma respuesta.
+                        Pero en Python, ¿para qué molestarse? Sumamos todo sin problema.
+                    </p>
+                </div>
+
+                <!-- Resultado -->
+                <div class="result-box">
+                    <div>
+                        <div class="text-sm text-[var(--text-muted)] mb-1">Primeros 10 dígitos</div>
+                        <div class="result-value">5537376230</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-[var(--text-muted)] mb-1">Suma total (dígitos)</div>
+                        <div class="mono text-lg">52</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NIVEL 2 -->
+        <div class="level-content" id="level2">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-green)] flex items-center justify-center text-sm">2</span>
+                        Python: Precisión Arbitraria Nativa
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        En Python, los enteros pueden ser <strong>tan grandes como quieras</strong>.
+                        No hay límite de 32 o 64 bits. El único límite es la memoria RAM.
+                    </p>
+                </div>
+
+                <!-- Cómo funciona internamente -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-green)]">¿Cómo lo hace Python?</h4>
+                    <div class="space-y-4 text-[var(--text-secondary)]">
+                        <p>
+                            Python representa números grandes como un <strong>array de "dígitos"</strong> en base 2³⁰
+                            (o 2¹⁵ en sistemas de 32 bits):
+                        </p>
+                        <div class="p-4 bg-[var(--bg-elevated)] rounded-lg mono text-sm">
+                            <p class="text-[var(--text-muted)]"># Internamente, un número grande se almacena así:</p>
+                            <p>12345678901234567890</p>
+                            <p class="text-[var(--text-muted)]"># → [dígito₀, dígito₁, dígito₂, ...] en base 2³⁰</p>
+                            <p class="text-[var(--text-muted)]"># Cada "dígito" cabe en un entero de máquina</p>
+                        </div>
+                        <p>
+                            Las operaciones (+, -, ×, ÷) se implementan como algoritmos sobre estos arrays,
+                            similar a como harías suma larga en papel pero en base 2³⁰.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- La solución trivial -->
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — Solución directa</span>
+                        <button class="run-btn" onclick="runCode('code2', 'output2')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code2"># Los 100 números de 50 dígitos
+NUMBERS = """
+37107287533902102798797998220837590246510135740250
+46376937677490009712648124896970078050417018260538
+74324986199524741059474233309513058123726617309629
+91942213363574161572522430563301811072406154908250
+23067588207539346171171980310421047513778063246676
+89261670696623633820136378418383684178734361726757
+28112879812849979408065481931592621691275889832738
+44274228917432520321923589422876796487670272189318
+47451445736001306439091167216856844588711603153276
+70386486105843025439939619828917593665686757934951
+62176457141856560629502157223196586755079324193331
+64906352462741904929101432445813822663347944758178
+92575867718337217661963751590579239728245598838407
+58203565325359399008402633568948830189458628227828
+80181199384826282014278194139940567587151170094390
+35398664372827112653829987240784473053190104293586
+86515506006295864861532075273371959191420517255829
+71693888707715466499115593487603532921714970056938
+54370070576826684624621495650076471787294438377604
+53282654108756828443191190634694037855217779295145
+36123272525000296071075082563815656710885258350721
+45876576172410976447339110607218265236877223636045
+17423706905851860660448207621209813287860733969412
+81142660418086830619328460811191061556940512689692
+51934325451728388641918047049293215058642563049483
+62467221648435076201727918039944693004732956340691
+15732444386908125794514089057706229429197107928209
+55037687525678773091862540744969844508330393682126
+18336384825330154686196124348767681297534375946515
+80386287592878490201521685554828717201219257766954
+78182833757993103614740356856449095527097864797581
+16726320100436897842553539920931837441497806860984
+48403098129077791799088218795327364475675590848030
+87086987551392711854517078544161852424320693150332
+59959406895756536782107074926966537676326235447210
+65727333001053367881220235421809751254540594752243
+33729880903315528676414243047545594574243451774082
+85209617077293168548807152695067183173143871265983
+91190817011339447546154922047665194077515665674114
+24103343018765109867101983818259936218267396518611
+65831894084399099960473949084722925397878523685806
+46243685845993978174596921909725765744791635980092
+73417758154723560404438315595613498280547529236413
+71938091444115595479491516939811561036220864389610
+12753608968776939014046408515950689747127256203488
+39587087209175710891987245038402970694710101369655
+31260149504410609236309795318498713755657999254578
+62442879655814921349732163831488610776407852292010
+55525820568837659587883310788292197420684829930901
+86290977028960371228548935178266693948321258489660
+32030195726803812945424663142910108704373610297010
+30161835082657703274144413733848880856727071096880
+08542aborator893619641055959806601684467012318939986
+03515810228133763901185837805218710620567110491750
+09417162081834033786089321779844608114976325907797
+49895665655935317337990114592431812124655684876341
+16385292296695820259656357956116846296083306100658
+24600697845960555626614353188189705973994213888672
+03517819207028886398764933016633095604878762389352
+81870665657023855799984920917229725365775104853998
+17799206131227876437290650817628327078441763447593
+50628107032713847089640903460063429254227835080895
+08925315212673394620015540736302249663448454799743
+25795606727004348962939466101902505044235295521127
+77505192654626461960051478467396542356403687345838
+12249395501929688154942982671123935461093563345925
+57690730679261557752123815617093457093781215985246
+10364716391287605030645335286206879307747628835596
+41689549127310597691671414613761901168600649767790
+31080560660980526324802156892421805004387899881915
+84432318549618282292267014291192539tried927461906889
+46966325247795200122195091693108848903042815633653
+30185571371089143418521639801633830233098328414697
+89837696990189508700255010061544558109603706353686
+84149152534428793078339989658215788277173766979518
+65227947827988387921983603399538317851880106055043
+21015694564770530912011816088279199135107321390968
+51785836045721250119088703429496211428722478190932
+38364844540127696061952349953688908619792749155866
+25364004367398024234391298350460807355295701185897
+54146773739859849040645273920993988980987506935776
+28098316214664955891978912402071611444656068882377
+31795073818054234167936408935261931550246708818820
+02312370698081916678385193655012227309057657654198
+22193656794628446512151716054434795445689238329597
+75081948256877029679187674027826574813559507851046
+66415776912668648262962671607247178122824410772190
+66523752560873839824953555495905016099927157949347
+90063521761074227883635225015379322857875604974847
+89891132379116172019287270484068488156708058675418
+40090172780022912682842561515666805361544996929830
+39946959316634594478205657556888825680400538402983
+73119085928187055628395810301060826109505612932957
+15974094849191609168078015656743679700510295112702
+09765589443062198028248117469425866971970987215875
+61320970601922170304606298553968866270849434916400
+35106759246204398936562147283991803289150009806551
+00054750501410158513867618941301090895285787750199
+77083088903622030804341552616327567028086015031076
+83085070350346298641816351688925890957991914840581
+10929655580717024209869659606486180609751894013986
+92548010403838917991976064877686191195138434513008
+20720926210207003052154010634573901104303400155911
+55534720918209812723091671415926287380653117666157
+53503534226472524250874054075591789781264330331690
+""".strip().split('\n')
+
+# Convertir a enteros y sumar
+numbers = [int(n) for n in NUMBERS]
+total = sum(numbers)
+
+print(f"Suma total:")
+print(f"  {total}")
+print(f"\nNúmero de dígitos: {len(str(total))}")
+print(f"\nPrimeros 10 dígitos: {str(total)[:10]}")</textarea>
+                    <div class="code-output" id="output2">// Output aparecerá aquí</div>
+                </div>
+
+                <!-- Explicación línea por línea -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">Desglose del código</h4>
+                    <div class="space-y-4 text-sm">
+                        <div class="flex gap-4">
+                            <code class="text-[var(--accent-amber)] whitespace-nowrap">int(n)</code>
+                            <p class="text-[var(--text-secondary)]">
+                                Convierte un string a entero. Python automáticamente usa precisión arbitraria si el número es grande.
+                                No hay que hacer nada especial.
+                            </p>
+                        </div>
+                        <div class="flex gap-4">
+                            <code class="text-[var(--accent-amber)] whitespace-nowrap">sum()</code>
+                            <p class="text-[var(--text-secondary)]">
+                                Suma todos los elementos de una lista. Funciona con enteros de cualquier tamaño.
+                            </p>
+                        </div>
+                        <div class="flex gap-4">
+                            <code class="text-[var(--accent-amber)] whitespace-nowrap">str(n)[:10]</code>
+                            <p class="text-[var(--text-secondary)]">
+                                Convierte el número a string y toma los primeros 10 caracteres (dígitos).
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- One-liner -->
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — One-liner</span>
+                        <button class="run-btn" onclick="runCode('code2b', 'output2b')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code2b" style="min-height: 100px"># Si los números están en un string multilínea:
+data = """37107287533902102798797998220837590246510135740250
+46376937677490009712648124896970078050417018260538
+74324986199524741059474233309513058123726617309629"""
+
+# One-liner elegante
+print(str(sum(int(line) for line in data.strip().split('\n')))[:10])</textarea>
+                    <div class="code-output" id="output2b">// Output aparecerá aquí</div>
+                </div>
+
+                <!-- El shortcut matemático -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-green)]">El Shortcut: Solo los primeros dígitos</h4>
+                    <p class="text-[var(--text-secondary)] mb-4">
+                        Si quisiéramos optimizar (por ejemplo, en C sin BigInt), podríamos usar solo los primeros 13 dígitos:
+                    </p>
+                    <div class="p-4 bg-[var(--bg-elevated)] rounded-lg mono text-sm text-[var(--text-muted)]">
+                        100 números × primer dígito máximo (9) = 900 de carry máximo<br>
+                        → Solo necesitamos 3 dígitos extra de margen<br>
+                        → 10 + 3 = 13 dígitos por número son suficientes
+                    </div>
+                </div>
+
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — Shortcut (no necesario pero didáctico)</span>
+                        <button class="run-btn" onclick="runCode('code2c', 'output2c')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code2c" style="min-height: 120px">NUMBERS = """37107287533902102798797998220837590246510135740250
+46376937677490009712648124896970078050417018260538
+74324986199524741059474233309513058123726617309629
+91942213363574161572522430563301811072406154908250""".strip().split('\n')
+
+# Solo tomamos los primeros 13 dígitos de cada número
+truncated = [int(n[:13]) for n in NUMBERS]
+partial_sum = sum(truncated)
+
+print(f"Suma de primeros 13 dígitos: {partial_sum}")
+print(f"Primeros 10 del resultado:  {str(partial_sum)[:10]}")
+
+# Con el set completo, el resultado es el mismo: 5537376230</textarea>
+                    <div class="code-output" id="output2c">// Output aparecerá aquí</div>
+                </div>
+
+                <!-- Comparación con otros lenguajes -->
+                <div class="p-5 bg-[var(--accent-purple)]/10 border border-[var(--accent-purple)]/30 rounded-xl">
+                    <h4 class="font-medium mb-2 text-[var(--accent-purple)]">¿Y en otros lenguajes?</h4>
+                    <div class="text-sm text-[var(--text-secondary)] space-y-2">
+                        <p><strong>JavaScript:</strong> Usar <code>BigInt</code> (desde ES2020): <code>BigInt("123456...")</code></p>
+                        <p><strong>Java:</strong> Usar <code>java.math.BigInteger</code></p>
+                        <p><strong>C/C++:</strong> Usar librerías como GMP, o implementar aritmética de strings</p>
+                        <p><strong>Rust:</strong> Crate <code>num-bigint</code></p>
+                    </div>
+                </div>
+
+                <!-- Conceptos aprendidos -->
+                <div class="flex flex-wrap gap-3">
+                    <span class="concept-tag"><span class="text-[var(--accent-green)]">✓</span> Integer overflow</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-green)]">✓</span> Precisión arbitraria</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-green)]">✓</span> BigInt en Python</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-green)]">✓</span> Conversión str ↔ int</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Los 100 números
+        const NUMBERS = [
+            "37107287533902102798797998220837590246510135740250",
+            "46376937677490009712648124896970078050417018260538",
+            "74324986199524741059474233309513058123726617309629",
+            "91942213363574161572522430563301811072406154908250",
+            "23067588207539346171171980310421047513778063246676",
+            "89261670696623633820136378418383684178734361726757",
+            "28112879812849979408065481931592621691275889832738",
+            "44274228917432520321923589422876796487670272189318",
+            "47451445736001306439091167216856844588711603153276",
+            "70386486105843025439939619828917593665686757934951",
+            "62176457141856560629502157223196586755079324193331",
+            "64906352462741904929101432445813822663347944758178",
+            "92575867718337217661963751590579239728245598838407",
+            "58203565325359399008402633568948830189458628227828",
+            "80181199384826282014278194139940567587151170094390",
+            "35398664372827112653829987240784473053190104293586",
+            "86515506006295864861532075273371959191420517255829",
+            "71693888707715466499115593487603532921714970056938",
+            "54370070576826684624621495650076471787294438377604",
+            "53282654108756828443191190634694037855217779295145",
+            "36123272525000296071075082563815656710885258350721",
+            "45876576172410976447339110607218265236877223636045",
+            "17423706905851860660448207621209813287860733969412",
+            "81142660418086830619328460811191061556940512689692",
+            "51934325451728388641918047049293215058642563049483",
+            "62467221648435076201727918039944693004732956340691",
+            "15732444386908125794514089057706229429197107928209",
+            "55037687525678773091862540744969844508330393682126",
+            "18336384825330154686196124348767681297534375946515",
+            "80386287592878490201521685554828717201219257766954",
+            "78182833757993103614740356856449095527097864797581",
+            "16726320100436897842553539920931837441497806860984",
+            "48403098129077791799088218795327364475675590848030",
+            "87086987551392711854517078544161852424320693150332",
+            "59959406895756536782107074926966537676326235447210",
+            "65727333001053367881220235421809751254540594752243",
+            "33729880903315528676414243047545594574243451774082",
+            "85209617077293168548807152695067183173143871265983",
+            "91190817011339447546154922047665194077515665674114",
+            "24103343018765109867101983818259936218267396518611",
+            "65831894084399099960473949084722925397878523685806",
+            "46243685845993978174596921909725765744791635980092",
+            "73417758154723560404438315595613498280547529236413",
+            "71938091444115595479491516939811561036220864389610",
+            "12753608968776939014046408515950689747127256203488",
+            "39587087209175710891987245038402970694710101369655",
+            "31260149504410609236309795318498713755657999254578",
+            "62442879655814921349732163831488610776407852292010",
+            "55525820568837659587883310788292197420684829930901",
+            "86290977028960371228548935178266693948321258489660",
+            "32030195726803812945424663142910108704373610297010",
+            "30161835082657703274144413733848880856727071096880",
+            "08542892893619641055959806601684467012318939986150",
+            "03515810228133763901185837805218710620567110491750",
+            "09417162081834033786089321779844608114976325907797",
+            "49895665655935317337990114592431812124655684876341",
+            "16385292296695820259656357956116846296083306100658",
+            "24600697845960555626614353188189705973994213888672",
+            "03517819207028886398764933016633095604878762389352",
+            "81870665657023855799984920917229725365775104853998",
+            "17799206131227876437290650817628327078441763447593",
+            "50628107032713847089640903460063429254227835080895",
+            "08925315212673394620015540736302249663448454799743",
+            "25795606727004348962939466101902505044235295521127",
+            "77505192654626461960051478467396542356403687345838",
+            "12249395501929688154942982671123935461093563345925",
+            "57690730679261557752123815617093457093781215985246",
+            "10364716391287605030645335286206879307747628835596",
+            "41689549127310597691671414613761901168600649767790",
+            "31080560660980526324802156892421805004387899881915",
+            "84432318549618282292267014291192539927461906889698",
+            "46966325247795200122195091693108848903042815633653",
+            "30185571371089143418521639801633830233098328414697",
+            "89837696990189508700255010061544558109603706353686",
+            "84149152534428793078339989658215788277173766979518",
+            "65227947827988387921983603399538317851880106055043",
+            "21015694564770530912011816088279199135107321390968",
+            "51785836045721250119088703429496211428722478190932",
+            "38364844540127696061952349953688908619792749155866",
+            "25364004367398024234391298350460807355295701185897",
+            "54146773739859849040645273920993988980987506935776",
+            "28098316214664955891978912402071611444656068882377",
+            "31795073818054234167936408935261931550246708818820",
+            "02312370698081916678385193655012227309057657654198",
+            "22193656794628446512151716054434795445689238329597",
+            "75081948256877029679187674027826574813559507851046",
+            "66415776912668648262962671607247178122824410772190",
+            "66523752560873839824953555495905016099927157949347",
+            "90063521761074227883635225015379322857875604974847",
+            "89891132379116172019287270484068488156708058675418",
+            "40090172780022912682842561515666805361544996929830",
+            "39946959316634594478205657556888825680400538402983",
+            "73119085928187055628395810301060826109505612932957",
+            "15974094849191609168078015656743679700510295112702",
+            "09765589443062198028248117469425866971970987215875",
+            "61320970601922170304606298553968866270849434916400",
+            "35106759246204398936562147283991803289150009806551",
+            "00054750501410158513867618941301090895285787750199",
+            "77083088903622030804341552616327567028086015031076",
+            "83085070350346298641816351688925890957991914840581"
+        ];
+
+        // Render number list
+        function renderNumbers() {
+            const container = document.getElementById('numberList');
+            container.innerHTML = NUMBERS.map((n, i) =>
+                `<div class="number-line"><span class="first-digits">${n.slice(0, 11)}</span>${n.slice(11)}</div>`
+            ).join('');
+        }
+
+        // Pyodide setup
+        let pyodide = null;
+
+        async function initPyodide() {
+            const status = document.getElementById('pyodideStatus');
+            const text = document.getElementById('pyodideText');
+            status.classList.add('loading');
+
+            try {
+                pyodide = await loadPyodide();
+                status.classList.remove('loading');
+                status.classList.add('ready');
+                text.textContent = 'Python listo';
+            } catch (e) {
+                text.textContent = 'Error cargando Python';
+                status.style.background = '#ef4444';
+            }
+        }
+
+        async function runCode(inputId, outputId) {
+            const code = document.getElementById(inputId).value;
+            const output = document.getElementById(outputId);
+            const btn = output.parentElement.querySelector('.run-btn');
+
+            if (!pyodide) {
+                output.textContent = 'Esperando Pyodide...';
+                return;
+            }
+
+            btn.classList.add('running');
+            btn.disabled = true;
+            output.textContent = 'Ejecutando...';
+            output.className = 'code-output';
+
+            try {
+                pyodide.runPython(`
+import sys
+from io import StringIO
+sys.stdout = StringIO()
+`);
+                await pyodide.runPythonAsync(code);
+                const stdout = pyodide.runPython('sys.stdout.getvalue()');
+                output.textContent = stdout || '(sin output)';
+                output.classList.add('success');
+            } catch (e) {
+                output.textContent = e.message;
+                output.classList.add('error');
+            }
+
+            btn.classList.remove('running');
+            btn.disabled = false;
+        }
+
+        // Level tabs
+        document.querySelectorAll('.level-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.level-content').forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(`level${tab.dataset.level}`).classList.add('active');
+            });
+        });
+
+        // Init
+        renderNumbers();
+        initPyodide();
+    </script>
+</body>
+</html>
