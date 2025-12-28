@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#005 Mínimo común múltiplo — Euler Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    <style>
+        :root {
+            --bg: #000000;
+            --bg-elevated: #0a0a0f;
+            --bg-card: #111118;
+            --border: #1a1a24;
+            --border-hover: #2a2a3a;
+            --text: #e8e8ed;
+            --text-secondary: #8888a0;
+            --text-muted: #505068;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-amber: #f59e0b;
+            --accent-purple: #a855f7;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .serif { font-family: 'Source Serif 4', Georgia, serif; }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .level-tabs {
+            display: flex;
+            gap: 2px;
+            background: var(--bg-elevated);
+            padding: 4px;
+            border-radius: 10px;
+        }
+
+        .level-tab {
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .level-tab:hover { color: var(--text-secondary); }
+        .level-tab.active { background: var(--accent-blue); color: white; }
+        .level-tab[data-level="2"].active { background: var(--accent-green); }
+        .level-tab[data-level="3"].active { background: var(--accent-amber); }
+        .level-tab[data-level="4"].active { background: var(--accent-purple); }
+
+        .level-content { display: none; animation: fadeIn 0.3s ease; }
+        .level-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .code-editor {
+            position: relative;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 16px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .code-lang {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--accent-green);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .run-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .run-btn:hover { filter: brightness(1.1); }
+        .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .run-btn.running { background: var(--accent-amber); }
+
+        .code-textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 16px;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            resize: vertical;
+            outline: none;
+        }
+
+        .code-output {
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--text-secondary);
+            min-height: 40px;
+        }
+
+        .code-output.success { color: var(--accent-green); }
+        .code-output.error { color: #ef4444; }
+
+        .result-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(34, 197, 94, 0.08) 100%);
+            border: 1px solid var(--accent-blue);
+            border-radius: 12px;
+        }
+
+        .result-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--accent-green);
+        }
+
+        .step-card {
+            display: flex;
+            gap: 16px;
+            padding: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            transition: border-color 0.2s;
+        }
+
+        .step-card:hover { border-color: var(--border-hover); }
+
+        .step-number {
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--accent-blue);
+        }
+
+        .math-block {
+            padding: 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .math-formula {
+            font-family: 'Source Serif 4', Georgia, serif;
+            font-size: 20px;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .math-description {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .perf-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .perf-table th, .perf-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .perf-table th {
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        .perf-table td {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+
+        .perf-bar { height: 6px; background: var(--bg-elevated); border-radius: 3px; overflow: hidden; margin-top: 6px; }
+        .perf-bar-fill { height: 100%; border-radius: 3px; }
+        .perf-fast { background: var(--accent-green); }
+        .perf-slow { background: #ef4444; }
+
+        .concept-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .custom-input {
+            padding: 10px 14px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .custom-input:focus { border-color: var(--accent-blue); }
+
+        .pyodide-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+        .status-dot.loading { background: var(--accent-amber); animation: pulse 1s infinite; }
+        .status-dot.ready { background: var(--accent-green); }
+        .status-dot.error { background: #ef4444; }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        code:not(.code-textarea) {
+            padding: 2px 8px;
+            background: var(--bg-elevated);
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            color: var(--accent-amber);
+        }
+
+        .number-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 6px;
+            max-width: 400px;
+        }
+
+        .number-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            border-radius: 6px;
+        }
+
+        .num-prime {
+            background: rgba(168, 85, 247, 0.2);
+            color: #c084fc;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+
+        .num-composite {
+            background: var(--bg-elevated);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .prime-power {
+            display: inline-flex;
+            align-items: baseline;
+            padding: 6px 12px;
+            background: rgba(168, 85, 247, 0.15);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            margin: 4px;
+        }
+
+        .prime-base { font-size: 18px; color: #c084fc; }
+        .prime-exp { font-size: 12px; color: #a855f7; margin-left: 2px; vertical-align: super; }
+
+        @media (max-width: 640px) {
+            .level-tabs { flex-wrap: wrap; }
+            .level-tab { flex: 1; text-align: center; padding: 8px 12px; font-size: 12px; }
+            .result-box { flex-direction: column; text-align: center; gap: 8px; }
+            .step-card { flex-direction: column; }
+            .number-grid { grid-template-columns: repeat(5, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="max-w-3xl mx-auto px-5 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <nav class="text-xs text-gray-600 mb-1 mono">
+                        <a href="../../index.html" class="hover:text-blue-400 transition">Euler Lab</a>
+                        <span class="mx-1.5 text-gray-800">/</span>
+                        <span class="text-gray-500">#005</span>
+                    </nav>
+                    <h1 class="text-xl font-medium">Mínimo común múltiplo</h1>
+                </div>
+                <div class="pyodide-status mono">
+                    <span class="status-dot loading" id="pyodide-dot"></span>
+                    <span id="pyodide-text">Cargando Python...</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-5 py-8">
+        <!-- Problem statement -->
+        <section class="mb-10">
+            <div class="p-6 bg-gray-950 border border-gray-900 rounded-xl">
+                <p class="serif text-lg text-gray-300 leading-relaxed">
+                    <strong class="text-white">2520</strong> es el número más pequeño que se puede dividir
+                    entre todos los números del 1 al 10 sin dejar resto.
+                </p>
+                <p class="serif text-lg text-gray-300 mt-3">
+                    ¿Cuál es el número más pequeño divisible por todos los números del
+                    <strong class="text-white">1 al 20</strong>?
+                </p>
+            </div>
+        </section>
+
+        <!-- Level tabs -->
+        <nav class="mb-8 flex justify-center">
+            <div class="level-tabs">
+                <button class="level-tab active" data-level="1">A mano</button>
+                <button class="level-tab" data-level="2">Fuerza bruta</button>
+                <button class="level-tab" data-level="3">Pythónico</button>
+                <button class="level-tab" data-level="4">Matemático</button>
+            </div>
+        </nav>
+
+        <!-- LEVEL 1: A mano -->
+        <section class="level-content active" id="level-1">
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">MCM: Mínimo Común Múltiplo</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        El <strong class="text-white">MCM</strong> de varios números es el menor número que es múltiplo de todos ellos.
+                        Es decir, el menor número divisible por todos.
+                    </p>
+                </div>
+
+                <div class="space-y-4">
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Verificando el ejemplo: MCM(1-10) = 2520</h2>
+
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h3 class="font-medium mb-1">2520 ÷ 1 = 2520 ✓</h3>
+                            <p class="text-gray-500 text-sm">Todo número es divisible por 1</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h3 class="font-medium mb-1">2520 ÷ 2 = 1260 ✓</h3>
+                            <p class="text-gray-500 text-sm">2520 es par</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div>
+                            <h3 class="font-medium mb-1">2520 ÷ 7 = 360 ✓</h3>
+                            <p class="text-gray-500 text-sm">El caso menos obvio: 7 × 360 = 2520</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">4</div>
+                        <div>
+                            <h3 class="font-medium mb-1">2520 ÷ 10 = 252 ✓</h3>
+                            <p class="text-gray-500 text-sm">Todos del 1 al 10 dividen exactamente</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Los números del 1 al 20</h2>
+                    <div class="number-grid">
+                        <span class="number-cell num-composite">1</span>
+                        <span class="number-cell num-prime">2</span>
+                        <span class="number-cell num-prime">3</span>
+                        <span class="number-cell num-composite">4</span>
+                        <span class="number-cell num-prime">5</span>
+                        <span class="number-cell num-composite">6</span>
+                        <span class="number-cell num-prime">7</span>
+                        <span class="number-cell num-composite">8</span>
+                        <span class="number-cell num-composite">9</span>
+                        <span class="number-cell num-composite">10</span>
+                        <span class="number-cell num-prime">11</span>
+                        <span class="number-cell num-composite">12</span>
+                        <span class="number-cell num-prime">13</span>
+                        <span class="number-cell num-composite">14</span>
+                        <span class="number-cell num-composite">15</span>
+                        <span class="number-cell num-composite">16</span>
+                        <span class="number-cell num-prime">17</span>
+                        <span class="number-cell num-composite">18</span>
+                        <span class="number-cell num-prime">19</span>
+                        <span class="number-cell num-composite">20</span>
+                    </div>
+                    <p class="text-gray-500 text-sm mt-3">Primos en morado: 2, 3, 5, 7, 11, 13, 17, 19</p>
+                </div>
+
+                <div class="math-block">
+                    <div class="math-formula">MCM(a, b) = (a × b) / MCD(a, b)</div>
+                    <div class="math-description">MCD = Máximo Común Divisor</div>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Conceptos clave</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="concept-tag">🔢 MCM</span>
+                        <span class="concept-tag">🔗 MCD</span>
+                        <span class="concept-tag">💜 Primos</span>
+                        <span class="concept-tag">➗ Divisibilidad</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEVEL 2: Fuerza bruta -->
+        <section class="level-content" id="level-2">
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">La estrategia</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        Podemos probar números hasta encontrar uno divisible por todos, o calcular el MCM
+                        acumulando de dos en dos.
+                    </p>
+                </div>
+
+                <div class="p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl mb-6">
+                    <p class="text-blue-300 text-sm">
+                        <strong>Relación clave:</strong> MCM(a, b) = a × b ÷ MCD(a, b).
+                        El MCD se calcula con el algoritmo de Euclides.
+                    </p>
+                </div>
+
+                <!-- Variante A -->
+                <div>
+                    <h2 class="text-sm font-medium text-green-400 uppercase tracking-wide mb-3">Variante A: probar múltiplos de 20</h2>
+                    <p class="text-gray-400 text-sm mb-4">
+                        El resultado debe ser múltiplo de 20. Probamos 20, 40, 60... hasta encontrar uno divisible por todos.
+                    </p>
+                    <div class="code-editor">
+                        <div class="code-header">
+                            <span class="code-lang">Python</span>
+                            <button class="run-btn" onclick="runCode('code-varA')">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                Ejecutar
+                            </button>
+                        </div>
+                        <textarea id="code-varA" class="code-textarea" spellcheck="false" style="min-height: 340px;">def divisible_por_todos(n, hasta):
+    """Comprueba si n es divisible por todos los números del 1 al hasta"""
+    for i in range(1, hasta + 1):
+        if n % i != 0:
+            return False
+    return True
+
+# Buscar el menor múltiplo de 20 divisible por todos
+n = 20
+while True:
+    if divisible_por_todos(n, 20):
+        break
+    n = n + 20          # Siguiente múltiplo de 20
+
+print(n)</textarea>
+                        <div class="code-output" id="output-varA">Pulsa "Ejecutar" para ver el resultado</div>
+                    </div>
+                </div>
+
+                <!-- Variante B -->
+                <div>
+                    <h2 class="text-sm font-medium text-green-400 uppercase tracking-wide mb-3">Variante B: MCD con Euclides</h2>
+                    <p class="text-gray-400 text-sm mb-4">
+                        Implementamos MCD manualmente y calculamos MCM acumulando.
+                    </p>
+                    <div class="code-editor">
+                        <div class="code-header">
+                            <span class="code-lang">Python</span>
+                            <button class="run-btn" onclick="runCode('code-varB')">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                Ejecutar
+                            </button>
+                        </div>
+                        <textarea id="code-varB" class="code-textarea" spellcheck="false" style="min-height: 340px;">def mcd(a, b):
+    """Máximo Común Divisor usando algoritmo de Euclides"""
+    while b != 0:
+        a, b = b, a % b
+    return a
+
+def mcm(a, b):
+    """Mínimo Común Múltiplo"""
+    return a * b // mcd(a, b)
+
+# Calcular MCM acumulado del 1 al 20
+resultado = 1
+for i in range(1, 21):
+    resultado = mcm(resultado, i)
+    print(f"MCM(1..{i}) = {resultado}")
+
+print(f"\nResultado: {resultado}")</textarea>
+                        <div class="code-output" id="output-varB">Pulsa "Ejecutar" para ver el resultado</div>
+                    </div>
+                </div>
+
+                <!-- Variante C -->
+                <div>
+                    <h2 class="text-sm font-medium text-green-400 uppercase tracking-wide mb-3">Variante C: usando math.gcd</h2>
+                    <p class="text-gray-400 text-sm mb-4">
+                        Python tiene <code>math.gcd</code> incorporado. Lo usamos directamente.
+                    </p>
+                    <div class="code-editor">
+                        <div class="code-header">
+                            <span class="code-lang">Python</span>
+                            <button class="run-btn" onclick="runCode('code-varC')">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                Ejecutar
+                            </button>
+                        </div>
+                        <textarea id="code-varC" class="code-textarea" spellcheck="false" style="min-height: 220px;">from math import gcd
+
+def mcm(a, b):
+    return a * b // gcd(a, b)
+
+resultado = 1
+for i in range(1, 21):
+    resultado = mcm(resultado, i)
+
+print(resultado)</textarea>
+                        <div class="code-output" id="output-varC">Pulsa "Ejecutar" para ver el resultado</div>
+                    </div>
+                </div>
+
+                <!-- Comparativa -->
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">¿Cuál elegir?</h2>
+                    <div class="bg-gray-950 border border-gray-900 rounded-xl overflow-hidden">
+                        <table class="perf-table">
+                            <thead>
+                                <tr>
+                                    <th>Variante</th>
+                                    <th>Iteraciones</th>
+                                    <th>Ventaja</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-gray-300">A: probar múltiplos</td>
+                                    <td>~11.6 millones</td>
+                                    <td class="text-gray-400">Intuitiva</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-gray-300">B: MCD manual</td>
+                                    <td>~60</td>
+                                    <td class="text-gray-400">Enseña Euclides</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-gray-300">C: math.gcd</td>
+                                    <td>~60</td>
+                                    <td class="text-gray-400">Más corta</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="result-box">
+                    <span class="text-gray-400">Resultado (las tres variantes)</span>
+                    <span class="result-value">232792560</span>
+                </div>
+
+                <!-- Conceptos -->
+                <div class="space-y-4">
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Conceptos clave</h2>
+
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>a, b = b, a % b</code></h3>
+                            <p class="text-gray-500 text-sm"><strong>Algoritmo de Euclides.</strong> Reemplaza a por b, y b por el resto. Cuando b es 0, a es el MCD.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>a * b // mcd(a, b)</code></h3>
+                            <p class="text-gray-500 text-sm"><strong>Fórmula del MCM.</strong> El producto dividido por el MCD da el MCM.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>from math import gcd</code></h3>
+                            <p class="text-gray-500 text-sm"><strong>Importar función.</strong> Traemos <code>gcd</code> del módulo <code>math</code> de Python.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">4</div>
+                        <div>
+                            <h3 class="font-medium mb-1">MCM acumulado</h3>
+                            <p class="text-gray-500 text-sm">MCM(1,2,3) = MCM(MCM(1,2), 3). Podemos ir acumulando de dos en dos.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Conceptos de Python aprendidos</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="concept-tag">📦 import</span>
+                        <span class="concept-tag">🔧 math.gcd</span>
+                        <span class="concept-tag">🔄 Algoritmo Euclides</span>
+                        <span class="concept-tag">🎯 Funciones</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEVEL 3: Pythónico -->
+        <section class="level-content" id="level-3">
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">reduce: acumular con función</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        <code>reduce(f, [a,b,c,d])</code> calcula <code>f(f(f(a,b),c),d)</code>.
+                        Perfecto para acumular MCM.
+                    </p>
+                </div>
+
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python</span>
+                        <button class="run-btn" onclick="runCode('code-pythonic')">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea id="code-pythonic" class="code-textarea" spellcheck="false" style="min-height: 180px;">from math import gcd
+from functools import reduce
+
+mcm = lambda a, b: a * b // gcd(a, b)
+
+resultado = reduce(mcm, range(1, 21))
+
+print(resultado)</textarea>
+                    <div class="code-output" id="output-pythonic">Pulsa "Ejecutar" para ver el resultado</div>
+                </div>
+
+                <div class="space-y-4">
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Desglose</h2>
+
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>from functools import reduce</code></h3>
+                            <p class="text-gray-500 text-sm">reduce aplica una función acumulativamente a una secuencia.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>reduce(mcm, range(1, 21))</code></h3>
+                            <p class="text-gray-500 text-sm">Equivale a: mcm(mcm(mcm(1,2),3),4)...20)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-950 border border-gray-900 rounded-xl overflow-hidden">
+                    <table class="perf-table">
+                        <thead>
+                            <tr>
+                                <th>Aspecto</th>
+                                <th>for loop</th>
+                                <th>reduce</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-gray-400">Líneas</td>
+                                <td>4</td>
+                                <td>1</td>
+                            </tr>
+                            <tr>
+                                <td class="text-gray-400">Estilo</td>
+                                <td>Imperativo</td>
+                                <td>Funcional</td>
+                            </tr>
+                            <tr>
+                                <td class="text-gray-400">Legibilidad</td>
+                                <td>Más clara</td>
+                                <td>Más compacta</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="result-box">
+                    <span class="text-gray-400">Resultado</span>
+                    <span class="result-value">232792560</span>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Conceptos aprendidos</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="concept-tag">🔄 reduce</span>
+                        <span class="concept-tag">λ lambda</span>
+                        <span class="concept-tag">📦 functools</span>
+                        <span class="concept-tag">🎭 Programación funcional</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEVEL 4: Matemático -->
+        <section class="level-content" id="level-4">
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">MCM como producto de potencias de primos</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        El MCM de 1 a n es el producto de la <strong class="text-white">mayor potencia</strong>
+                        de cada primo que no exceda n.
+                    </p>
+                </div>
+
+                <div class="space-y-4">
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Primos ≤ 20 y sus mayores potencias</h2>
+
+                    <div class="flex flex-wrap gap-2 justify-center">
+                        <div class="prime-power">
+                            <span class="prime-base">2</span>
+                            <span class="prime-exp">4</span>
+                            <span class="text-gray-500 ml-2">= 16</span>
+                        </div>
+                        <div class="prime-power">
+                            <span class="prime-base">3</span>
+                            <span class="prime-exp">2</span>
+                            <span class="text-gray-500 ml-2">= 9</span>
+                        </div>
+                        <div class="prime-power">
+                            <span class="prime-base">5</span>
+                            <span class="prime-exp">1</span>
+                            <span class="text-gray-500 ml-2">= 5</span>
+                        </div>
+                        <div class="prime-power">
+                            <span class="prime-base">7</span>
+                            <span class="prime-exp">1</span>
+                            <span class="text-gray-500 ml-2">= 7</span>
+                        </div>
+                        <div class="prime-power">
+                            <span class="prime-base">11</span>
+                            <span class="prime-exp">1</span>
+                        </div>
+                        <div class="prime-power">
+                            <span class="prime-base">13</span>
+                            <span class="prime-exp">1</span>
+                        </div>
+                        <div class="prime-power">
+                            <span class="prime-base">17</span>
+                            <span class="prime-exp">1</span>
+                        </div>
+                        <div class="prime-power">
+                            <span class="prime-base">19</span>
+                            <span class="prime-exp">1</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">?</div>
+                    <div>
+                        <h3 class="font-medium mb-1">¿Por qué 2⁴ = 16?</h3>
+                        <p class="text-gray-500 text-sm">Porque 16 ≤ 20 pero 32 > 20. Necesitamos 16 para que 16 divida al MCM.</p>
+                    </div>
+                </div>
+
+                <div class="math-block">
+                    <div class="math-formula">MCM = 2⁴ × 3² × 5 × 7 × 11 × 13 × 17 × 19</div>
+                    <div class="math-description">= 16 × 9 × 5 × 7 × 11 × 13 × 17 × 19 = 232792560</div>
+                </div>
+
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python</span>
+                        <button class="run-btn" onclick="runCode('code-math')">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea id="code-math" class="code-textarea" spellcheck="false" style="min-height: 380px;">def es_primo(n):
+    if n < 2:
+        return False
+    for i in range(2, int(n**0.5) + 1):
+        if n % i == 0:
+            return False
+    return True
+
+def mcm_hasta(n):
+    """MCM de 1 a n usando potencias de primos"""
+    resultado = 1
+
+    for p in range(2, n + 1):
+        if es_primo(p):
+            # Encontrar la mayor potencia de p que no exceda n
+            potencia = p
+            while potencia * p <= n:
+                potencia *= p
+            resultado *= potencia
+            print(f"Primo {p}: mayor potencia ≤ {n} es {potencia}")
+
+    return resultado
+
+print(f"\nMCM(1..20) = {mcm_hasta(20)}")</textarea>
+                    <div class="code-output" id="output-math">Pulsa "Ejecutar" para ver el resultado</div>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Comparativa de rendimiento</h2>
+                    <div class="bg-gray-950 border border-gray-900 rounded-xl overflow-hidden">
+                        <table class="perf-table">
+                            <thead>
+                                <tr>
+                                    <th>Método</th>
+                                    <th>Operaciones</th>
+                                    <th>Complejidad</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-gray-400">Probar múltiplos</td>
+                                    <td>~232 millones</td>
+                                    <td class="text-red-400">O(MCM × n)</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-gray-400">MCM iterativo</td>
+                                    <td>~60</td>
+                                    <td class="text-amber-400">O(n log n)</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-gray-400">Potencias de primos</td>
+                                    <td>~30</td>
+                                    <td class="text-green-400">O(n)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-500">Probar múltiplos</span>
+                        <span class="mono text-gray-600">~232M operaciones</span>
+                    </div>
+                    <div class="perf-bar"><div class="perf-bar-fill perf-slow" style="width: 100%"></div></div>
+
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-500">Potencias de primos</span>
+                        <span class="mono text-gray-600">~30 operaciones</span>
+                    </div>
+                    <div class="perf-bar"><div class="perf-bar-fill perf-fast" style="width: 0.001%"></div></div>
+                </div>
+
+                <div class="result-box">
+                    <span class="text-gray-400">Resultado</span>
+                    <span class="result-value">232792560</span>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Conceptos aprendidos</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="concept-tag">💜 Factorización prima</span>
+                        <span class="concept-tag">📐 Potencias</span>
+                        <span class="concept-tag">🧮 Teoría de números</span>
+                        <span class="concept-tag">⚡ O(n)</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Try with custom n -->
+        <section class="mt-12 pt-8 border-t border-gray-900">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Prueba con otro límite</h2>
+            <div class="flex gap-3 items-center flex-wrap">
+                <span class="text-gray-500">MCM de 1 a</span>
+                <input type="number" id="custom-limit" class="custom-input w-20" value="10" min="1" max="30">
+                <button class="run-btn" onclick="runCustom()">Calcular</button>
+                <span id="custom-result" class="mono text-lg text-green-400"></span>
+            </div>
+        </section>
+
+        <!-- Navigation -->
+        <footer class="mt-16 pt-8 border-t border-gray-900 flex justify-between items-center">
+            <a href="../004/index.html" class="text-gray-500 hover:text-white transition text-sm">← Problema 4: Palíndromo mayor</a>
+            <a href="../006/index.html" class="text-gray-500 hover:text-white transition text-sm">Problema 6: Suma vs cuadrado →</a>
+        </footer>
+    </main>
+
+    <script>
+        // Level tabs
+        document.querySelectorAll('.level-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const level = tab.dataset.level;
+                document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                document.querySelectorAll('.level-content').forEach(c => c.classList.remove('active'));
+                document.getElementById(`level-${level}`).classList.add('active');
+            });
+        });
+
+        // Pyodide
+        let pyodide = null;
+
+        async function initPyodide() {
+            const dot = document.getElementById('pyodide-dot');
+            const text = document.getElementById('pyodide-text');
+            try {
+                pyodide = await loadPyodide();
+                dot.classList.remove('loading');
+                dot.classList.add('ready');
+                text.textContent = 'Python listo';
+            } catch (e) {
+                dot.classList.remove('loading');
+                dot.classList.add('error');
+                text.textContent = 'Error cargando Python';
+            }
+        }
+
+        initPyodide();
+
+        async function runCode(textareaId) {
+            if (!pyodide) { alert('Python aún está cargando.'); return; }
+
+            const textarea = document.getElementById(textareaId);
+            const outputId = 'output-' + textareaId.replace('code-', '');
+            const output = document.getElementById(outputId);
+            const btn = textarea.closest('.code-editor').querySelector('.run-btn');
+
+            btn.disabled = true;
+            btn.classList.add('running');
+            btn.innerHTML = '<svg class="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/></svg> Ejecutando...';
+            output.className = 'code-output';
+            output.textContent = 'Ejecutando...';
+
+            try {
+                pyodide.runPython(`import sys; from io import StringIO; sys.stdout = StringIO()`);
+                pyodide.runPython(textarea.value);
+                const stdout = pyodide.runPython('sys.stdout.getvalue()');
+                output.textContent = stdout || '(sin salida)';
+                output.classList.add('success');
+            } catch (e) {
+                output.textContent = e.message;
+                output.classList.add('error');
+            }
+
+            btn.disabled = false;
+            btn.classList.remove('running');
+            btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Ejecutar';
+        }
+
+        async function runCustom() {
+            if (!pyodide) { alert('Python aún está cargando.'); return; }
+
+            const n = parseInt(document.getElementById('custom-limit').value);
+            const result = document.getElementById('custom-result');
+
+            if (isNaN(n) || n < 1 || n > 30) {
+                result.textContent = 'Entre 1 y 30';
+                result.style.color = '#ef4444';
+                return;
+            }
+
+            try {
+                const code = `
+from math import gcd
+from functools import reduce
+mcm = lambda a, b: a * b // gcd(a, b)
+reduce(mcm, range(1, ${n + 1}))
+`;
+                const res = pyodide.runPython(code);
+                result.textContent = `= ${res.toLocaleString()}`;
+                result.style.color = '#22c55e';
+            } catch (e) {
+                result.textContent = 'Error';
+                result.style.color = '#ef4444';
+            }
+        }
+    </script>
+</body>
+</html>
