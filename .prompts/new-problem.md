@@ -161,30 +161,43 @@ Si se incluye:
 
 ---
 
-### Nivel 4: Optimización/Matemática (SI APORTA)
+### Nivel 4: Matemática Profunda (SI APORTA)
 
-**Incluir si**: Hay mejora significativa en complejidad O insight matemático profundo.
+**Incluir si**: Hay optimización significativa, historia matemática relevante, o insight profundo que merece desarrollo.
 
 **Tipos de Nivel 4:**
 
 | Tipo | Ejemplo | Cuándo usar |
 |------|---------|-------------|
-| Fórmula O(1) | Gauss para suma 1..n | Si existe fórmula cerrada |
-| Memoización | Collatz con caché | Si hay subproblemas repetidos |
-| Programación Dinámica | Caminos en grid | Si hay estructura óptima |
-| Algoritmo específico | Criba de Eratóstenes | Si hay algoritmo clásico |
-| Optimización matemática | Euclides para GCD | Si matemáticas reducen trabajo |
+| **Fórmula O(1)** | Gauss para suma 1..n | Si existe fórmula cerrada |
+| **Memoización** | Collatz con caché | Si hay subproblemas repetidos |
+| **Programación Dinámica** | Caminos en grid | Si hay estructura óptima |
+| **Algoritmo clásico** | Criba de Eratóstenes | Si hay algoritmo histórico |
+| **Historia + Belleza** | La leyenda de Gauss | Si hay historia inspiradora detrás |
+
+**El Nivel 4 "Historia + Belleza":**
+- No siempre es sobre optimización de código
+- A veces la fórmula ya está en Nivel 3, pero merece explicación profunda
+- Incluir: origen histórico, demostración visual, conexiones con otras áreas
+- Ejemplo: Problema 012 - τ(n) está en Nivel 3, pero Gauss merece Nivel 4 propio
 
 **NO incluir si:**
-- No hay optimización real posible (muchos problemas de BigInt en Python)
+- No hay optimización real posible Y no hay historia interesante
 - La "optimización" sería micro-optimización sin valor pedagógico
-- El problema ya es O(1) en Nivel 2
+- El problema ya es O(1) en Nivel 2 y no hay más que contar
 
-Si se incluye:
+**Si se incluye (optimización):**
 - Derivación matemática completa
 - Visualización del algoritmo
 - Tabla de complejidad con barras de rendimiento
 - ID: code-math, output-math
+
+**Si se incluye (historia/belleza):**
+- Contexto histórico (quién, cuándo, por qué)
+- Demostración visual/geométrica
+- Conexión con otras áreas de matemáticas
+- Lección para el pensamiento algorítmico
+- Puede no tener código ejecutable
 
 ---
 
