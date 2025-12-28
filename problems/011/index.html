@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#011 Producto en Cuadrícula — Euler Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    <style>
+        :root {
+            --bg: #000000;
+            --bg-elevated: #0a0a0f;
+            --bg-card: #111118;
+            --border: #1a1a24;
+            --border-hover: #2a2a3a;
+            --text: #e8e8ed;
+            --text-secondary: #8888a0;
+            --text-muted: #505068;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-amber: #f59e0b;
+            --accent-purple: #a855f7;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .serif { font-family: 'Source Serif 4', Georgia, serif; }
+
+        header { position: sticky; top: 0; z-index: 50; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+
+        .level-tabs { display: flex; gap: 2px; background: var(--bg-elevated); padding: 4px; border-radius: 10px; }
+        .level-tab { padding: 8px 16px; font-size: 13px; font-weight: 500; color: var(--text-muted); background: transparent; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-family: 'JetBrains Mono', monospace; }
+        .level-tab:hover { color: var(--text-secondary); }
+        .level-tab.active { background: var(--accent-blue); color: white; }
+        .level-tab[data-level="2"].active { background: var(--accent-green); }
+        .level-tab[data-level="3"].active { background: var(--accent-amber); }
+        .level-tab[data-level="4"].active { background: var(--accent-purple); }
+
+        .level-content { display: none; animation: fadeIn 0.3s ease; }
+        .level-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .code-editor { position: relative; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .code-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: var(--bg-card); border-bottom: 1px solid var(--border); }
+        .code-lang { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent-green); text-transform: uppercase; letter-spacing: 0.5px; }
+        .run-btn { display: flex; align-items: center; gap: 6px; padding: 6px 14px; background: var(--accent-blue); color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .run-btn:hover { filter: brightness(1.1); }
+        .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .run-btn.running { background: var(--accent-amber); }
+        .code-textarea { width: 100%; min-height: 200px; padding: 16px; background: transparent; border: none; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.7; resize: vertical; outline: none; }
+        .code-output { padding: 12px 16px; background: var(--bg-card); border-top: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-secondary); min-height: 40px; }
+        .code-output.success { color: var(--accent-green); }
+        .code-output.error { color: #ef4444; }
+
+        .result-box { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(34, 197, 94, 0.08) 100%); border: 1px solid var(--accent-blue); border-radius: 12px; }
+        .result-value { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 600; color: var(--accent-green); }
+
+        .step-card { display: flex; gap: 16px; padding: 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; transition: border-color 0.2s; }
+        .step-card:hover { border-color: var(--border-hover); }
+        .step-number { flex-shrink: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 50%; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent-blue); }
+
+        .math-block { padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; text-align: center; }
+        .math-formula { font-family: 'Source Serif 4', Georgia, serif; font-size: 20px; color: var(--text); margin-bottom: 8px; }
+        .math-description { font-size: 13px; color: var(--text-muted); }
+
+        .perf-table { width: 100%; border-collapse: collapse; }
+        .perf-table th, .perf-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+        .perf-table th { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+        .perf-table td { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+
+        .concept-tag { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
+
+        .pyodide-status { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--bg-card); border-radius: 8px; font-size: 12px; color: var(--text-muted); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+        .status-dot.loading { background: var(--accent-amber); animation: pulse 1s infinite; }
+        .status-dot.ready { background: var(--accent-green); }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        code:not(.code-textarea) { padding: 2px 8px; background: var(--bg-elevated); border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.9em; color: var(--accent-amber); }
+
+        .variant-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+        .variant-tab { padding: 6px 12px; font-size: 12px; font-weight: 500; color: var(--text-muted); background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .variant-tab:hover { color: var(--text-secondary); border-color: var(--border-hover); }
+        .variant-tab.active { background: var(--accent-green); border-color: var(--accent-green); color: white; }
+        .variant-content { display: none; }
+        .variant-content.active { display: block; }
+
+        .grid-container {
+            overflow-x: auto;
+            padding: 16px;
+            background: var(--bg-elevated);
+            border-radius: 12px;
+        }
+
+        .number-grid {
+            display: grid;
+            grid-template-columns: repeat(20, 1fr);
+            gap: 2px;
+            min-width: 600px;
+        }
+
+        .grid-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            background: var(--bg-card);
+            border-radius: 3px;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+
+        .grid-cell.highlight {
+            background: var(--accent-green);
+            color: white;
+            font-weight: 600;
+            transform: scale(1.1);
+            z-index: 10;
+            position: relative;
+        }
+
+        .grid-cell.zero {
+            color: #ef4444;
+            opacity: 0.5;
+        }
+
+        .direction-demo {
+            display: grid;
+            grid-template-columns: repeat(4, 40px);
+            gap: 4px;
+            justify-content: center;
+        }
+
+        .direction-cell {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 600;
+            background: var(--accent-purple);
+            color: white;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+    <header class="px-6 py-4">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-6">
+                <a href="../../" class="text-sm text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
+                    ← Euler Lab
+                </a>
+                <div class="flex items-center gap-3">
+                    <span class="mono text-lg text-[var(--accent-blue)]">#011</span>
+                    <h1 class="text-lg font-medium">Producto en Cuadrícula</h1>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="pyodide-status">
+                    <div class="status-dot" id="pyodideStatus"></div>
+                    <span id="pyodideText">Cargando Python...</span>
+                </div>
+                <div class="flex gap-2">
+                    <a href="../010/" class="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--border)] hover:border-[var(--border-hover)]">← 010</a>
+                    <a href="../012/" class="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--border)] hover:border-[var(--border-hover)]">012 →</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-8">
+        <!-- Enunciado -->
+        <div class="mb-8 p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 w-10 h-10 flex items-center justify-content-center rounded-lg bg-[var(--accent-blue)]/10 text-[var(--accent-blue)]">
+                    <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <div class="space-y-3">
+                    <h2 class="text-lg font-medium">Largest Product in a Grid</h2>
+                    <p class="text-[var(--text-secondary)] leading-relaxed">
+                        En una cuadrícula de 20×20, encuentra el mayor producto de <strong>4 números adyacentes</strong> en la misma dirección (horizontal, vertical o diagonal).
+                    </p>
+                    <div class="flex items-center gap-6 pt-2">
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-amber)]">●</span>
+                            Matrices 2D
+                        </span>
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-purple)]">●</span>
+                            Vectores de dirección
+                        </span>
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-green)]">●</span>
+                            Búsqueda exhaustiva
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs de niveles -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="level-tabs">
+                <button class="level-tab active" data-level="1">Nivel 1: A mano</button>
+                <button class="level-tab" data-level="2">Nivel 2: Fuerza bruta</button>
+                <button class="level-tab" data-level="3">Nivel 3: Pythónico</button>
+                <button class="level-tab" data-level="4">Nivel 4: Matemático</button>
+            </div>
+        </div>
+
+        <!-- NIVEL 1 -->
+        <div class="level-content active" id="level1">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-blue)] flex items-center justify-center text-sm">1</span>
+                        Entendiendo el Problema
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        Tenemos una cuadrícula 20×20 con 400 números. Debemos encontrar 4 números consecutivos (en línea) cuyo producto sea máximo. Hay 4 direcciones posibles.
+                    </p>
+                </div>
+
+                <!-- Direcciones -->
+                <div class="grid md:grid-cols-4 gap-4">
+                    <div class="p-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl text-center">
+                        <div class="text-2xl mb-2">→</div>
+                        <div class="text-sm text-[var(--text-muted)]">Horizontal</div>
+                    </div>
+                    <div class="p-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl text-center">
+                        <div class="text-2xl mb-2">↓</div>
+                        <div class="text-sm text-[var(--text-muted)]">Vertical</div>
+                    </div>
+                    <div class="p-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl text-center">
+                        <div class="text-2xl mb-2">↘</div>
+                        <div class="text-sm text-[var(--text-muted)]">Diagonal ↘</div>
+                    </div>
+                    <div class="p-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl text-center">
+                        <div class="text-2xl mb-2">↙</div>
+                        <div class="text-sm text-[var(--text-muted)]">Diagonal ↙</div>
+                    </div>
+                </div>
+
+                <!-- La cuadrícula -->
+                <div class="space-y-4">
+                    <h4 class="font-medium">La cuadrícula 20×20 (click para ver el máximo):</h4>
+                    <div class="grid-container">
+                        <div class="number-grid" id="numberGrid"></div>
+                    </div>
+                    <button onclick="highlightMax()" class="px-4 py-2 bg-[var(--accent-green)] text-white rounded-lg text-sm hover:brightness-110">
+                        Mostrar secuencia ganadora
+                    </button>
+                </div>
+
+                <!-- La secuencia ganadora -->
+                <div class="space-y-4">
+                    <h4 class="font-medium">Secuencia ganadora (diagonal ↘):</h4>
+                    <div class="direction-demo">
+                        <div class="direction-cell">89</div>
+                        <div class="direction-cell">94</div>
+                        <div class="direction-cell">97</div>
+                        <div class="direction-cell">87</div>
+                    </div>
+                    <div class="p-4 bg-[var(--bg-card)] rounded-lg text-center">
+                        <p class="mono text-lg">89 × 94 × 97 × 87 = <span class="text-[var(--accent-green)] font-bold">70,600,674</span></p>
+                    </div>
+                </div>
+
+                <!-- Resultado -->
+                <div class="result-box">
+                    <div>
+                        <div class="text-sm text-[var(--text-muted)] mb-1">Respuesta</div>
+                        <div class="result-value">70,600,674</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-[var(--text-muted)] mb-1">Posición</div>
+                        <div class="mono text-lg">Fila 12, Col 6 ↘</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NIVEL 2 -->
+        <div class="level-content" id="level2">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-green)] flex items-center justify-center text-sm">2</span>
+                        Fuerza Bruta - 3 Variantes
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        Recorremos cada celda y probamos las 4 direcciones posibles.
+                    </p>
+                </div>
+
+                <div class="variant-tabs">
+                    <button class="variant-tab active" data-variant="a">Variante A</button>
+                    <button class="variant-tab" data-variant="b">Variante B</button>
+                    <button class="variant-tab" data-variant="c">Variante C</button>
+                </div>
+
+                <!-- Variante A: while True + break -->
+                <div class="variant-content active" id="variant-a">
+                    <div class="space-y-4">
+                        <h4 class="font-medium text-[var(--accent-green)]">Variante A: while True + break</h4>
+                        <p class="text-sm text-[var(--text-secondary)]">Bucles con break para cada dirección.</p>
+                        <div class="code-editor">
+                            <div class="code-header">
+                                <span class="code-lang">Python</span>
+                                <button class="run-btn" onclick="runCode('code2a', 'output2a')">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                                    Ejecutar
+                                </button>
+                            </div>
+                            <textarea class="code-textarea" id="code2a">GRID = """
+08 02 22 97 38 15 00 40 00 75 04 05 07 78 52 12 50 77 91 08
+49 49 99 40 17 81 18 57 60 87 17 40 98 43 69 48 04 56 62 00
+81 49 31 73 55 79 14 29 93 71 40 67 53 88 30 03 49 13 36 65
+52 70 95 23 04 60 11 42 69 24 68 56 01 32 56 71 37 02 36 91
+22 31 16 71 51 67 63 89 41 92 36 54 22 40 40 28 66 33 13 80
+24 47 32 60 99 03 45 02 44 75 33 53 78 36 84 20 35 17 12 50
+32 98 81 28 64 23 67 10 26 38 40 67 59 54 70 66 18 38 64 70
+67 26 20 68 02 62 12 20 95 63 94 39 63 08 40 91 66 49 94 21
+24 55 58 05 66 73 99 26 97 17 78 78 96 83 14 88 34 89 63 72
+21 36 23 09 75 00 76 44 20 45 35 14 00 61 33 97 34 31 33 95
+78 17 53 28 22 75 31 67 15 94 03 80 04 62 16 14 09 53 56 92
+16 39 05 42 96 35 31 47 55 58 88 24 00 17 54 24 36 29 85 57
+86 56 00 48 35 71 89 07 05 44 44 37 44 60 21 58 51 54 17 58
+19 80 81 68 05 94 47 69 28 73 92 13 86 52 17 77 04 89 55 40
+04 52 08 83 97 35 99 16 07 97 57 32 16 26 26 79 33 27 98 66
+88 36 68 87 57 62 20 72 03 46 33 67 46 55 12 32 63 93 53 69
+04 42 16 73 38 25 39 11 24 94 72 18 08 46 29 32 40 62 76 36
+20 69 36 41 72 30 23 88 34 62 99 69 82 67 59 85 74 04 36 16
+20 73 35 29 78 31 90 01 74 31 49 71 48 86 81 16 23 57 05 54
+01 70 54 71 83 51 54 69 16 92 33 48 61 43 52 01 89 19 67 48
+""".strip()
+
+# Parsear la cuadrícula
+grid = []
+for line in GRID.split('\n'):
+    row = [int(x) for x in line.split()]
+    grid.append(row)
+
+SIZE = 20
+LENGTH = 4
+max_product = 0
+
+row = 0
+while True:
+    if row >= SIZE:
+        break
+
+    col = 0
+    while True:
+        if col >= SIZE:
+            break
+
+        # Horizontal →
+        if col <= SIZE - LENGTH:
+            product = 1
+            for i in range(LENGTH):
+                product *= grid[row][col + i]
+            if product > max_product:
+                max_product = product
+
+        # Vertical ↓
+        if row <= SIZE - LENGTH:
+            product = 1
+            for i in range(LENGTH):
+                product *= grid[row + i][col]
+            if product > max_product:
+                max_product = product
+
+        # Diagonal ↘
+        if row <= SIZE - LENGTH and col <= SIZE - LENGTH:
+            product = 1
+            for i in range(LENGTH):
+                product *= grid[row + i][col + i]
+            if product > max_product:
+                max_product = product
+
+        # Diagonal ↙
+        if row <= SIZE - LENGTH and col >= LENGTH - 1:
+            product = 1
+            for i in range(LENGTH):
+                product *= grid[row + i][col - i]
+            if product > max_product:
+                max_product = product
+
+        col += 1
+    row += 1
+
+print(f"Producto máximo: {max_product}")</textarea>
+                            <div class="code-output" id="output2a">// Output aparecerá aquí</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Variante B: while condition -->
+                <div class="variant-content" id="variant-b">
+                    <div class="space-y-4">
+                        <h4 class="font-medium text-[var(--accent-green)]">Variante B: while condición</h4>
+                        <p class="text-sm text-[var(--text-secondary)]">Condiciones directas en los while.</p>
+                        <div class="code-editor">
+                            <div class="code-header">
+                                <span class="code-lang">Python</span>
+                                <button class="run-btn" onclick="runCode('code2b', 'output2b')">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                                    Ejecutar
+                                </button>
+                            </div>
+                            <textarea class="code-textarea" id="code2b">GRID = """
+08 02 22 97 38 15 00 40 00 75 04 05 07 78 52 12 50 77 91 08
+49 49 99 40 17 81 18 57 60 87 17 40 98 43 69 48 04 56 62 00
+81 49 31 73 55 79 14 29 93 71 40 67 53 88 30 03 49 13 36 65
+52 70 95 23 04 60 11 42 69 24 68 56 01 32 56 71 37 02 36 91
+22 31 16 71 51 67 63 89 41 92 36 54 22 40 40 28 66 33 13 80
+24 47 32 60 99 03 45 02 44 75 33 53 78 36 84 20 35 17 12 50
+32 98 81 28 64 23 67 10 26 38 40 67 59 54 70 66 18 38 64 70
+67 26 20 68 02 62 12 20 95 63 94 39 63 08 40 91 66 49 94 21
+24 55 58 05 66 73 99 26 97 17 78 78 96 83 14 88 34 89 63 72
+21 36 23 09 75 00 76 44 20 45 35 14 00 61 33 97 34 31 33 95
+78 17 53 28 22 75 31 67 15 94 03 80 04 62 16 14 09 53 56 92
+16 39 05 42 96 35 31 47 55 58 88 24 00 17 54 24 36 29 85 57
+86 56 00 48 35 71 89 07 05 44 44 37 44 60 21 58 51 54 17 58
+19 80 81 68 05 94 47 69 28 73 92 13 86 52 17 77 04 89 55 40
+04 52 08 83 97 35 99 16 07 97 57 32 16 26 26 79 33 27 98 66
+88 36 68 87 57 62 20 72 03 46 33 67 46 55 12 32 63 93 53 69
+04 42 16 73 38 25 39 11 24 94 72 18 08 46 29 32 40 62 76 36
+20 69 36 41 72 30 23 88 34 62 99 69 82 67 59 85 74 04 36 16
+20 73 35 29 78 31 90 01 74 31 49 71 48 86 81 16 23 57 05 54
+01 70 54 71 83 51 54 69 16 92 33 48 61 43 52 01 89 19 67 48
+""".strip()
+
+grid = [[int(x) for x in line.split()] for line in GRID.split('\n')]
+SIZE = 20
+LENGTH = 4
+max_product = 0
+
+# Direcciones: (dr, dc)
+directions = [(0, 1), (1, 0), (1, 1), (1, -1)]
+
+r = 0
+while r < SIZE:
+    c = 0
+    while c < SIZE:
+        for dr, dc in directions:
+            # Verificar si cabe en la cuadrícula
+            end_r = r + (LENGTH - 1) * dr
+            end_c = c + (LENGTH - 1) * dc
+
+            if 0 <= end_r < SIZE and 0 <= end_c < SIZE:
+                product = 1
+                i = 0
+                while i < LENGTH:
+                    product *= grid[r + i * dr][c + i * dc]
+                    i += 1
+
+                if product > max_product:
+                    max_product = product
+
+        c += 1
+    r += 1
+
+print(f"Producto máximo: {max_product}")</textarea>
+                            <div class="code-output" id="output2b">// Output aparecerá aquí</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Variante C: for range -->
+                <div class="variant-content" id="variant-c">
+                    <div class="space-y-4">
+                        <h4 class="font-medium text-[var(--accent-green)]">Variante C: for range</h4>
+                        <p class="text-sm text-[var(--text-secondary)]">Usando for con range y vectores de dirección.</p>
+                        <div class="code-editor">
+                            <div class="code-header">
+                                <span class="code-lang">Python</span>
+                                <button class="run-btn" onclick="runCode('code2c', 'output2c')">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                                    Ejecutar
+                                </button>
+                            </div>
+                            <textarea class="code-textarea" id="code2c">GRID = """
+08 02 22 97 38 15 00 40 00 75 04 05 07 78 52 12 50 77 91 08
+49 49 99 40 17 81 18 57 60 87 17 40 98 43 69 48 04 56 62 00
+81 49 31 73 55 79 14 29 93 71 40 67 53 88 30 03 49 13 36 65
+52 70 95 23 04 60 11 42 69 24 68 56 01 32 56 71 37 02 36 91
+22 31 16 71 51 67 63 89 41 92 36 54 22 40 40 28 66 33 13 80
+24 47 32 60 99 03 45 02 44 75 33 53 78 36 84 20 35 17 12 50
+32 98 81 28 64 23 67 10 26 38 40 67 59 54 70 66 18 38 64 70
+67 26 20 68 02 62 12 20 95 63 94 39 63 08 40 91 66 49 94 21
+24 55 58 05 66 73 99 26 97 17 78 78 96 83 14 88 34 89 63 72
+21 36 23 09 75 00 76 44 20 45 35 14 00 61 33 97 34 31 33 95
+78 17 53 28 22 75 31 67 15 94 03 80 04 62 16 14 09 53 56 92
+16 39 05 42 96 35 31 47 55 58 88 24 00 17 54 24 36 29 85 57
+86 56 00 48 35 71 89 07 05 44 44 37 44 60 21 58 51 54 17 58
+19 80 81 68 05 94 47 69 28 73 92 13 86 52 17 77 04 89 55 40
+04 52 08 83 97 35 99 16 07 97 57 32 16 26 26 79 33 27 98 66
+88 36 68 87 57 62 20 72 03 46 33 67 46 55 12 32 63 93 53 69
+04 42 16 73 38 25 39 11 24 94 72 18 08 46 29 32 40 62 76 36
+20 69 36 41 72 30 23 88 34 62 99 69 82 67 59 85 74 04 36 16
+20 73 35 29 78 31 90 01 74 31 49 71 48 86 81 16 23 57 05 54
+01 70 54 71 83 51 54 69 16 92 33 48 61 43 52 01 89 19 67 48
+""".strip()
+
+grid = [[int(x) for x in line.split()] for line in GRID.split('\n')]
+SIZE = 20
+LENGTH = 4
+
+def get_product(r, c, dr, dc):
+    """Calcula el producto de 4 números en la dirección dada."""
+    product = 1
+    for i in range(LENGTH):
+        nr, nc = r + i * dr, c + i * dc
+        if not (0 <= nr < SIZE and 0 <= nc < SIZE):
+            return 0
+        product *= grid[nr][nc]
+    return product
+
+# Direcciones: horizontal, vertical, diagonal ↘, diagonal ↙
+directions = [(0, 1), (1, 0), (1, 1), (1, -1)]
+
+max_product = 0
+best_pos = None
+
+for r in range(SIZE):
+    for c in range(SIZE):
+        for dr, dc in directions:
+            p = get_product(r, c, dr, dc)
+            if p > max_product:
+                max_product = p
+                best_pos = (r, c, dr, dc)
+
+print(f"Producto máximo: {max_product}")
+r, c, dr, dc = best_pos
+nums = [grid[r + i*dr][c + i*dc] for i in range(LENGTH)]
+print(f"Números: {nums}")
+print(f"Posición: fila {r}, col {c}, dirección ({dr}, {dc})")</textarea>
+                            <div class="code-output" id="output2c">// Output aparecerá aquí</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Complejidad -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">Análisis de complejidad</h4>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <div class="text-sm text-[var(--text-muted)] mb-1">Tiempo</div>
+                            <div class="mono text-lg">O(n² × k × d)</div>
+                            <p class="text-xs text-[var(--text-muted)] mt-1">n²=400 celdas, k=4 longitud, d=4 direcciones</p>
+                        </div>
+                        <div>
+                            <div class="text-sm text-[var(--text-muted)] mb-1">Espacio</div>
+                            <div class="mono text-lg">O(n²)</div>
+                            <p class="text-xs text-[var(--text-muted)] mt-1">Almacenar la cuadrícula</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NIVEL 3 -->
+        <div class="level-content" id="level3">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-amber)] flex items-center justify-center text-sm">3</span>
+                        Enfoque Pythónico
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        Usando <code>math.prod</code>, generadores, y comprensiones elegantes.
+                    </p>
+                </div>
+
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python</span>
+                        <button class="run-btn" onclick="runCode('code3', 'output3')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code3">from math import prod
+
+GRID = """
+08 02 22 97 38 15 00 40 00 75 04 05 07 78 52 12 50 77 91 08
+49 49 99 40 17 81 18 57 60 87 17 40 98 43 69 48 04 56 62 00
+81 49 31 73 55 79 14 29 93 71 40 67 53 88 30 03 49 13 36 65
+52 70 95 23 04 60 11 42 69 24 68 56 01 32 56 71 37 02 36 91
+22 31 16 71 51 67 63 89 41 92 36 54 22 40 40 28 66 33 13 80
+24 47 32 60 99 03 45 02 44 75 33 53 78 36 84 20 35 17 12 50
+32 98 81 28 64 23 67 10 26 38 40 67 59 54 70 66 18 38 64 70
+67 26 20 68 02 62 12 20 95 63 94 39 63 08 40 91 66 49 94 21
+24 55 58 05 66 73 99 26 97 17 78 78 96 83 14 88 34 89 63 72
+21 36 23 09 75 00 76 44 20 45 35 14 00 61 33 97 34 31 33 95
+78 17 53 28 22 75 31 67 15 94 03 80 04 62 16 14 09 53 56 92
+16 39 05 42 96 35 31 47 55 58 88 24 00 17 54 24 36 29 85 57
+86 56 00 48 35 71 89 07 05 44 44 37 44 60 21 58 51 54 17 58
+19 80 81 68 05 94 47 69 28 73 92 13 86 52 17 77 04 89 55 40
+04 52 08 83 97 35 99 16 07 97 57 32 16 26 26 79 33 27 98 66
+88 36 68 87 57 62 20 72 03 46 33 67 46 55 12 32 63 93 53 69
+04 42 16 73 38 25 39 11 24 94 72 18 08 46 29 32 40 62 76 36
+20 69 36 41 72 30 23 88 34 62 99 69 82 67 59 85 74 04 36 16
+20 73 35 29 78 31 90 01 74 31 49 71 48 86 81 16 23 57 05 54
+01 70 54 71 83 51 54 69 16 92 33 48 61 43 52 01 89 19 67 48
+""".strip()
+
+grid = [[int(x) for x in line.split()] for line in GRID.split('\n')]
+N, K = 20, 4
+
+def sequences():
+    """Generador de todas las secuencias de K números."""
+    dirs = [(0, 1), (1, 0), (1, 1), (1, -1)]
+
+    for r in range(N):
+        for c in range(N):
+            for dr, dc in dirs:
+                # Verificar que la secuencia cabe
+                er, ec = r + (K-1)*dr, c + (K-1)*dc
+                if 0 <= er < N and 0 <= ec < N:
+                    yield [grid[r + i*dr][c + i*dc] for i in range(K)]
+
+# Una línea para encontrar el máximo
+result = max(prod(seq) for seq in sequences())
+
+print(f"Producto máximo: {result}")
+
+# Versión aún más compacta (menos legible)
+print("\nAlternativa one-liner:")
+print(max(
+    prod(grid[r+i*dr][c+i*dc] for i in range(4))
+    for r in range(20) for c in range(20)
+    for dr, dc in [(0,1), (1,0), (1,1), (1,-1)]
+    if 0 <= r+3*dr < 20 and 0 <= c+3*dc < 20
+))</textarea>
+                    <div class="code-output" id="output3">// Output aparecerá aquí</div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="p-5 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                        <h4 class="font-medium mb-3 text-[var(--accent-amber)]">Herramientas usadas</h4>
+                        <ul class="space-y-2 text-sm text-[var(--text-secondary)]">
+                            <li><code>yield</code> — Generador perezoso de secuencias</li>
+                            <li><code>math.prod()</code> — Producto de iterables</li>
+                            <li><code>max(generator)</code> — Máximo sin lista intermedia</li>
+                            <li>Tuplas de direcciones</li>
+                        </ul>
+                    </div>
+                    <div class="p-5 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                        <h4 class="font-medium mb-3 text-[var(--accent-amber)]">Vectores de dirección</h4>
+                        <div class="text-sm mono text-[var(--text-secondary)] bg-[var(--bg-elevated)] p-3 rounded-lg">
+<pre># (dr, dc) = delta row, delta col
+(0, 1)   # → horizontal
+(1, 0)   # ↓ vertical
+(1, 1)   # ↘ diagonal
+(1, -1)  # ↙ anti-diagonal</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NIVEL 4 -->
+        <div class="level-content" id="level4">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-purple)] flex items-center justify-center text-sm">4</span>
+                        Enfoque con NumPy
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        Para cuadrículas grandes, NumPy permite operaciones vectorizadas mucho más rápidas usando convoluciones o slicing avanzado.
+                    </p>
+                </div>
+
+                <!-- Concepto de slicing -->
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div class="math-block">
+                        <div class="math-formula serif">grid[:-3] × grid[1:-2] × grid[2:-1] × grid[3:]</div>
+                        <div class="math-description">Productos verticales vectorizados</div>
+                    </div>
+                    <div class="math-block">
+                        <div class="math-formula serif">O(n²) → O(n²/SIMD)</div>
+                        <div class="math-description">Aceleración por vectorización</div>
+                    </div>
+                </div>
+
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — NumPy vectorizado</span>
+                        <button class="run-btn" onclick="runCode('code4', 'output4')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code4">import numpy as np
+
+GRID = """
+08 02 22 97 38 15 00 40 00 75 04 05 07 78 52 12 50 77 91 08
+49 49 99 40 17 81 18 57 60 87 17 40 98 43 69 48 04 56 62 00
+81 49 31 73 55 79 14 29 93 71 40 67 53 88 30 03 49 13 36 65
+52 70 95 23 04 60 11 42 69 24 68 56 01 32 56 71 37 02 36 91
+22 31 16 71 51 67 63 89 41 92 36 54 22 40 40 28 66 33 13 80
+24 47 32 60 99 03 45 02 44 75 33 53 78 36 84 20 35 17 12 50
+32 98 81 28 64 23 67 10 26 38 40 67 59 54 70 66 18 38 64 70
+67 26 20 68 02 62 12 20 95 63 94 39 63 08 40 91 66 49 94 21
+24 55 58 05 66 73 99 26 97 17 78 78 96 83 14 88 34 89 63 72
+21 36 23 09 75 00 76 44 20 45 35 14 00 61 33 97 34 31 33 95
+78 17 53 28 22 75 31 67 15 94 03 80 04 62 16 14 09 53 56 92
+16 39 05 42 96 35 31 47 55 58 88 24 00 17 54 24 36 29 85 57
+86 56 00 48 35 71 89 07 05 44 44 37 44 60 21 58 51 54 17 58
+19 80 81 68 05 94 47 69 28 73 92 13 86 52 17 77 04 89 55 40
+04 52 08 83 97 35 99 16 07 97 57 32 16 26 26 79 33 27 98 66
+88 36 68 87 57 62 20 72 03 46 33 67 46 55 12 32 63 93 53 69
+04 42 16 73 38 25 39 11 24 94 72 18 08 46 29 32 40 62 76 36
+20 69 36 41 72 30 23 88 34 62 99 69 82 67 59 85 74 04 36 16
+20 73 35 29 78 31 90 01 74 31 49 71 48 86 81 16 23 57 05 54
+01 70 54 71 83 51 54 69 16 92 33 48 61 43 52 01 89 19 67 48
+""".strip()
+
+# Crear array NumPy
+grid = np.array([[int(x) for x in line.split()] for line in GRID.split('\n')])
+
+K = 4  # Longitud de secuencia
+
+def max_product_numpy(g, k):
+    """Encuentra el producto máximo usando operaciones vectorizadas."""
+    n = len(g)
+    max_prod = 0
+
+    # Horizontal: g[:, i] * g[:, i+1] * g[:, i+2] * g[:, i+3]
+    horizontal = g[:, :-k+1] * g[:, 1:-k+2] * g[:, 2:-k+3] * g[:, 3:]
+    max_prod = max(max_prod, horizontal.max())
+
+    # Vertical
+    vertical = g[:-k+1, :] * g[1:-k+2, :] * g[2:-k+3, :] * g[3:, :]
+    max_prod = max(max_prod, vertical.max())
+
+    # Diagonal ↘
+    diag1 = g[:-k+1, :-k+1] * g[1:-k+2, 1:-k+2] * g[2:-k+3, 2:-k+3] * g[3:, 3:]
+    max_prod = max(max_prod, diag1.max())
+
+    # Diagonal ↙
+    diag2 = g[:-k+1, k-1:] * g[1:-k+2, k-2:-1] * g[2:-k+3, 1:-k+2] * g[3:, :-k+1]
+    max_prod = max(max_prod, diag2.max())
+
+    return max_prod
+
+result = max_product_numpy(grid, K)
+print(f"Producto máximo: {result}")
+
+# Encontrar la posición exacta
+def find_max_position(g, k):
+    """Encuentra la posición del producto máximo."""
+    n = len(g)
+    max_prod = 0
+    best = None
+
+    for r in range(n):
+        for c in range(n):
+            for dr, dc in [(0,1), (1,0), (1,1), (1,-1)]:
+                er, ec = r + (k-1)*dr, c + (k-1)*dc
+                if 0 <= er < n and 0 <= ec < n:
+                    p = np.prod([g[r+i*dr, c+i*dc] for i in range(k)])
+                    if p > max_prod:
+                        max_prod = p
+                        best = (r, c, dr, dc)
+
+    return max_prod, best
+
+_, pos = find_max_position(grid, K)
+r, c, dr, dc = pos
+nums = [grid[r+i*dr, c+i*dc] for i in range(K)]
+direction = {(0,1): '→', (1,0): '↓', (1,1): '↘', (1,-1): '↙'}[dr, dc]
+print(f"Números: {nums}")
+print(f"Posición: ({r}, {c}) dirección {direction}")</textarea>
+                    <div class="code-output" id="output4">// Output aparecerá aquí</div>
+                </div>
+
+                <!-- Tabla de rendimiento -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">Comparación de rendimiento</h4>
+                    <table class="perf-table">
+                        <thead>
+                            <tr>
+                                <th>Método</th>
+                                <th>Cuadrícula 20×20</th>
+                                <th>Cuadrícula 1000×1000</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Python puro (loops)</td>
+                                <td>~1 ms</td>
+                                <td>
+                                    ~2 segundos
+                                    <div class="perf-bar"><div class="perf-bar-fill perf-slow" style="width: 100%"></div></div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>NumPy vectorizado</td>
+                                <td>~0.1 ms</td>
+                                <td>
+                                    ~10 ms
+                                    <div class="perf-bar"><div class="perf-bar-fill perf-fast" style="width: 0.5%"></div></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Nota sobre slicing -->
+                <div class="p-5 bg-[var(--accent-purple)]/10 border border-[var(--accent-purple)]/30 rounded-xl">
+                    <h4 class="font-medium mb-2 text-[var(--accent-purple)]">El poder del slicing NumPy</h4>
+                    <p class="text-sm text-[var(--text-secondary)]">
+                        En vez de iterar celda por celda, NumPy nos permite operar sobre <strong>todas las posiciones a la vez</strong>.
+                        <code>g[:, :-3] * g[:, 1:-2] * g[:, 2:-1] * g[:, 3:]</code> calcula todos los productos horizontales en una sola operación vectorizada, aprovechando instrucciones SIMD del procesador.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Grid data
+        const GRID_DATA = `08 02 22 97 38 15 00 40 00 75 04 05 07 78 52 12 50 77 91 08
+49 49 99 40 17 81 18 57 60 87 17 40 98 43 69 48 04 56 62 00
+81 49 31 73 55 79 14 29 93 71 40 67 53 88 30 03 49 13 36 65
+52 70 95 23 04 60 11 42 69 24 68 56 01 32 56 71 37 02 36 91
+22 31 16 71 51 67 63 89 41 92 36 54 22 40 40 28 66 33 13 80
+24 47 32 60 99 03 45 02 44 75 33 53 78 36 84 20 35 17 12 50
+32 98 81 28 64 23 67 10 26 38 40 67 59 54 70 66 18 38 64 70
+67 26 20 68 02 62 12 20 95 63 94 39 63 08 40 91 66 49 94 21
+24 55 58 05 66 73 99 26 97 17 78 78 96 83 14 88 34 89 63 72
+21 36 23 09 75 00 76 44 20 45 35 14 00 61 33 97 34 31 33 95
+78 17 53 28 22 75 31 67 15 94 03 80 04 62 16 14 09 53 56 92
+16 39 05 42 96 35 31 47 55 58 88 24 00 17 54 24 36 29 85 57
+86 56 00 48 35 71 89 07 05 44 44 37 44 60 21 58 51 54 17 58
+19 80 81 68 05 94 47 69 28 73 92 13 86 52 17 77 04 89 55 40
+04 52 08 83 97 35 99 16 07 97 57 32 16 26 26 79 33 27 98 66
+88 36 68 87 57 62 20 72 03 46 33 67 46 55 12 32 63 93 53 69
+04 42 16 73 38 25 39 11 24 94 72 18 08 46 29 32 40 62 76 36
+20 69 36 41 72 30 23 88 34 62 99 69 82 67 59 85 74 04 36 16
+20 73 35 29 78 31 90 01 74 31 49 71 48 86 81 16 23 57 05 54
+01 70 54 71 83 51 54 69 16 92 33 48 61 43 52 01 89 19 67 48`;
+
+        const grid = GRID_DATA.split('\n').map(line => line.split(' ').map(Number));
+
+        // Render grid
+        function renderGrid() {
+            const container = document.getElementById('numberGrid');
+            let html = '';
+            for (let r = 0; r < 20; r++) {
+                for (let c = 0; c < 20; c++) {
+                    const val = grid[r][c];
+                    const isZero = val === 0;
+                    html += `<div class="grid-cell${isZero ? ' zero' : ''}" data-r="${r}" data-c="${c}">${val.toString().padStart(2, '0')}</div>`;
+                }
+            }
+            container.innerHTML = html;
+        }
+
+        // Highlight the winning sequence
+        function highlightMax() {
+            // The winning sequence starts at row 12, col 6, going diagonal ↘
+            // Numbers: 89, 94, 97, 87
+            const positions = [[12, 6], [13, 7], [14, 8], [15, 9]];
+
+            // Remove existing highlights
+            document.querySelectorAll('.grid-cell.highlight').forEach(el => el.classList.remove('highlight'));
+
+            // Add new highlights
+            positions.forEach(([r, c]) => {
+                const cell = document.querySelector(`.grid-cell[data-r="${r}"][data-c="${c}"]`);
+                if (cell) cell.classList.add('highlight');
+            });
+        }
+
+        // Pyodide setup
+        let pyodide = null;
+
+        async function initPyodide() {
+            const status = document.getElementById('pyodideStatus');
+            const text = document.getElementById('pyodideText');
+            status.classList.add('loading');
+
+            try {
+                pyodide = await loadPyodide();
+                await pyodide.loadPackage('numpy');
+                status.classList.remove('loading');
+                status.classList.add('ready');
+                text.textContent = 'Python listo';
+            } catch (e) {
+                text.textContent = 'Error cargando Python';
+                status.style.background = '#ef4444';
+            }
+        }
+
+        async function runCode(inputId, outputId) {
+            const code = document.getElementById(inputId).value;
+            const output = document.getElementById(outputId);
+            const btn = output.parentElement.querySelector('.run-btn');
+
+            if (!pyodide) {
+                output.textContent = 'Esperando Pyodide...';
+                return;
+            }
+
+            btn.classList.add('running');
+            btn.disabled = true;
+            output.textContent = 'Ejecutando...';
+            output.className = 'code-output';
+
+            try {
+                pyodide.runPython(`
+import sys
+from io import StringIO
+sys.stdout = StringIO()
+`);
+                await pyodide.runPythonAsync(code);
+                const stdout = pyodide.runPython('sys.stdout.getvalue()');
+                output.textContent = stdout || '(sin output)';
+                output.classList.add('success');
+            } catch (e) {
+                output.textContent = e.message;
+                output.classList.add('error');
+            }
+
+            btn.classList.remove('running');
+            btn.disabled = false;
+        }
+
+        // Level tabs
+        document.querySelectorAll('.level-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.level-content').forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(`level${tab.dataset.level}`).classList.add('active');
+            });
+        });
+
+        // Variant tabs
+        document.querySelectorAll('.variant-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.variant-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.variant-content').forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(`variant-${tab.dataset.variant}`).classList.add('active');
+            });
+        });
+
+        // Init
+        renderGrid();
+        initPyodide();
+    </script>
+</body>
+</html>
