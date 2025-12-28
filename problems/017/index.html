@@ -36,6 +36,7 @@
         .level-tab:hover { color: var(--text-secondary); }
         .level-tab.active { background: var(--accent-blue); color: white; }
         .level-tab[data-level="2"].active { background: var(--accent-green); }
+        .level-tab[data-level="3"].active { background: var(--accent-purple); }
 
         .level-content { display: none; animation: fadeIn 0.3s ease; }
         .level-content.active { display: block; }
@@ -236,6 +237,7 @@
             <div class="level-tabs">
                 <button class="level-tab active" data-level="1">Nivel 1: Entendimiento</button>
                 <button class="level-tab" data-level="2">Nivel 2: Implementación</button>
+                <button class="level-tab" data-level="3">Nivel 3: Diccionarios a Fondo</button>
             </div>
         </div>
 
@@ -742,6 +744,360 @@ print(f"  Total:  {result} letras")</textarea>
                     <span class="concept-tag"><span class="text-[var(--accent-green)]">✓</span> Diccionarios como tablas de lookup</span>
                     <span class="concept-tag"><span class="text-[var(--accent-green)]">✓</span> Descomposición de problemas</span>
                     <span class="concept-tag"><span class="text-[var(--accent-green)]">✓</span> División entera y módulo</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- NIVEL 3 -->
+        <div class="level-content" id="level3">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-purple)] flex items-center justify-center text-sm">3</span>
+                        Diccionarios: La Estructura de Datos Más Útil
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        Los diccionarios son probablemente la estructura de datos <strong>más usada en Python</strong>.
+                        Entenderlos bien te ahorrará horas de código y dolores de cabeza.
+                    </p>
+                </div>
+
+                <!-- Analogía: La agenda de teléfonos -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-purple)]">Piensa en una Agenda de Teléfonos</h4>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <p class="text-sm text-[var(--text-muted)] mb-3">Agenda física (lista ordenada)</p>
+                            <div class="p-4 bg-[var(--bg-elevated)] rounded-lg text-sm space-y-1 mono">
+                                <p>Ana ......... 555-0101</p>
+                                <p>Carlos ...... 555-0202</p>
+                                <p>Diana ....... 555-0303</p>
+                                <p>Eduardo ..... 555-0404</p>
+                                <p class="text-[var(--text-muted)]">... 500 nombres más ...</p>
+                                <p>Zoe ......... 555-9999</p>
+                            </div>
+                            <p class="text-xs text-[var(--accent-red)] mt-2">
+                                Para encontrar a "María", revisas uno por uno hasta la M
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-[var(--text-muted)] mb-3">Diccionario Python</p>
+                            <div class="p-4 bg-[var(--bg-elevated)] rounded-lg text-sm mono">
+                                <p class="text-[var(--text-muted)]"># Acceso INSTANTÁNEO</p>
+                                <p>agenda = {</p>
+                                <p class="pl-4">"Ana": "555-0101",</p>
+                                <p class="pl-4">"Carlos": "555-0202",</p>
+                                <p class="pl-4 text-[var(--accent-amber)]">"María": "555-0505",</p>
+                                <p class="pl-4">...</p>
+                                <p>}</p>
+                                <p class="mt-2">agenda["María"]  <span class="text-[var(--accent-green)]"># → "555-0505"</span></p>
+                            </div>
+                            <p class="text-xs text-[var(--accent-green)] mt-2">
+                                Encuentra a "María" instantáneamente, sin importar cuántos nombres haya
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cómo funciona: Hash Tables -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-amber)]">¿Cómo es posible que sea instantáneo?</h4>
+                    <p class="text-[var(--text-secondary)] mb-4">
+                        Los diccionarios usan algo llamado <strong>"tabla hash"</strong>. Suena complicado, pero la idea es simple:
+                    </p>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-[var(--bg-elevated)] rounded-lg">
+                            <p class="text-sm font-medium mb-2">Imagina un armario con 1000 cajones numerados</p>
+                            <div class="grid grid-cols-10 gap-1 my-4">
+                                <div class="text-center text-xs p-1 bg-[var(--bg-card)] rounded">0</div>
+                                <div class="text-center text-xs p-1 bg-[var(--bg-card)] rounded">1</div>
+                                <div class="text-center text-xs p-1 bg-[var(--bg-card)] rounded">2</div>
+                                <div class="text-center text-xs p-1 bg-[var(--accent-purple)] text-white rounded">3</div>
+                                <div class="text-center text-xs p-1 bg-[var(--bg-card)] rounded">4</div>
+                                <div class="text-center text-xs p-1 bg-[var(--bg-card)] rounded">5</div>
+                                <div class="text-center text-xs p-1 bg-[var(--bg-card)] rounded">6</div>
+                                <div class="text-center text-xs p-1 bg-[var(--accent-green)] text-white rounded">7</div>
+                                <div class="text-center text-xs p-1 bg-[var(--bg-card)] rounded">8</div>
+                                <div class="text-center text-xs p-1 bg-[var(--bg-card)] rounded">...</div>
+                            </div>
+                        </div>
+                        <div class="space-y-3 text-sm text-[var(--text-secondary)]">
+                            <div class="flex items-start gap-3">
+                                <span class="text-[var(--accent-blue)] font-medium">1.</span>
+                                <p>Cuando guardas <code>"María" → "555-0505"</code>, Python calcula un número mágico (hash) de "María"</p>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <span class="text-[var(--accent-blue)] font-medium">2.</span>
+                                <p>El hash de "María" podría ser, digamos, 347. Python guarda el valor en el cajón 347.</p>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <span class="text-[var(--accent-blue)] font-medium">3.</span>
+                                <p>Cuando preguntas por <code>agenda["María"]</code>, Python calcula el hash otra vez (347), va directo al cajón 347, y te da el valor.</p>
+                            </div>
+                        </div>
+                        <div class="p-3 bg-[var(--accent-green)]/10 rounded-lg text-sm">
+                            <strong class="text-[var(--accent-green)]">¡No busca!</strong> Sabe exactamente dónde está.
+                            Por eso es O(1) - tiempo constante, sin importar si hay 10 o 10 millones de elementos.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comparación visual: 3 formas de resolver el mismo problema -->
+                <div class="space-y-4">
+                    <h4 class="font-medium">Tres formas de convertir 3 → "three"</h4>
+
+                    <!-- Opción 1: if-elif -->
+                    <div class="p-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="font-medium text-[var(--accent-red)]">Opción 1: Cadena de if-elif</span>
+                            <span class="text-xs px-2 py-1 bg-[var(--accent-red)]/20 text-[var(--accent-red)] rounded">O(n) comparaciones</span>
+                        </div>
+                        <div class="p-3 bg-[var(--bg-elevated)] rounded-lg mono text-xs">
+                            <p>def numero_a_palabra(n):</p>
+                            <p class="pl-4">if n == 1: return "one"</p>
+                            <p class="pl-4">elif n == 2: return "two"</p>
+                            <p class="pl-4">elif n == 3: return "three"  <span class="text-[var(--accent-red)]"># ← llega aquí después de 3 comparaciones</span></p>
+                            <p class="pl-4">elif n == 4: return "four"</p>
+                            <p class="pl-4">... <span class="text-[var(--text-muted)]"># 9 ifs para 9 números</span></p>
+                        </div>
+                        <p class="text-xs text-[var(--text-muted)] mt-2">
+                            <strong>Problema:</strong> Para encontrar "nine" hace 9 comparaciones. Imagina con 1000 números.
+                        </p>
+                    </div>
+
+                    <!-- Opción 2: Lista -->
+                    <div class="p-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="font-medium text-[var(--accent-amber)]">Opción 2: Lista (array)</span>
+                            <span class="text-xs px-2 py-1 bg-[var(--accent-amber)]/20 text-[var(--accent-amber)] rounded">O(1) pero limitado</span>
+                        </div>
+                        <div class="p-3 bg-[var(--bg-elevated)] rounded-lg mono text-xs">
+                            <p>palabras = ["", "one", "two", "three", "four", ...]</p>
+                            <p class="mt-2">palabras[3]  <span class="text-[var(--accent-green)]"># → "three" (instantáneo)</span></p>
+                        </div>
+                        <p class="text-xs text-[var(--text-muted)] mt-2">
+                            <strong>Problema:</strong> Solo funciona si las claves son números consecutivos (0, 1, 2, 3...).
+                            ¿Y si quiero mapear 20 → "twenty"? Desperdiciaría 19 posiciones vacías.
+                        </p>
+                    </div>
+
+                    <!-- Opción 3: Diccionario -->
+                    <div class="p-4 bg-[var(--bg-card)] border border-[var(--accent-green)] rounded-xl">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="font-medium text-[var(--accent-green)]">Opción 3: Diccionario</span>
+                            <span class="text-xs px-2 py-1 bg-[var(--accent-green)]/20 text-[var(--accent-green)] rounded">O(1) + flexible</span>
+                        </div>
+                        <div class="p-3 bg-[var(--bg-elevated)] rounded-lg mono text-xs">
+                            <p>palabras = {1: "one", 2: "two", 3: "three", 20: "twenty", 90: "ninety"}</p>
+                            <p class="mt-2">palabras[3]   <span class="text-[var(--accent-green)]"># → "three" (instantáneo)</span></p>
+                            <p>palabras[90]  <span class="text-[var(--accent-green)]"># → "ninety" (también instantáneo)</span></p>
+                        </div>
+                        <p class="text-xs text-[var(--accent-green)] mt-2">
+                            <strong>Mejor de ambos mundos:</strong> Rápido como lista, flexible como if-elif.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Código: Comparación práctica -->
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — Comparando las 3 opciones</span>
+                        <button class="run-btn" onclick="runCode('code3', 'output3')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code3" style="min-height: 400px;">import time
+
+# === OPCIÓN 1: if-elif ===
+def unidad_if(n):
+    if n == 1: return "one"
+    elif n == 2: return "two"
+    elif n == 3: return "three"
+    elif n == 4: return "four"
+    elif n == 5: return "five"
+    elif n == 6: return "six"
+    elif n == 7: return "seven"
+    elif n == 8: return "eight"
+    elif n == 9: return "nine"
+    return ""
+
+# === OPCIÓN 2: Lista ===
+unidades_lista = ["", "one", "two", "three", "four",
+                  "five", "six", "seven", "eight", "nine"]
+
+def unidad_lista(n):
+    return unidades_lista[n]
+
+# === OPCIÓN 3: Diccionario ===
+unidades_dict = {
+    0: "", 1: "one", 2: "two", 3: "three", 4: "four",
+    5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine"
+}
+
+def unidad_dict(n):
+    return unidades_dict[n]
+
+# Verificar que las 3 dan el mismo resultado
+print("¿Dan el mismo resultado?")
+for n in range(1, 10):
+    assert unidad_if(n) == unidad_lista(n) == unidad_dict(n)
+print("✓ Sí, las 3 opciones son equivalentes\n")
+
+# Medir rendimiento (1 millón de lookups)
+REPS = 1_000_000
+
+t1 = time.time()
+for _ in range(REPS):
+    unidad_if(9)  # Peor caso: última comparación
+t_if = time.time() - t1
+
+t2 = time.time()
+for _ in range(REPS):
+    unidad_lista(9)
+t_lista = time.time() - t2
+
+t3 = time.time()
+for _ in range(REPS):
+    unidad_dict(9)
+t_dict = time.time() - t3
+
+print(f"1 millón de lookups para n=9:")
+print(f"  if-elif:     {t_if:.3f}s")
+print(f"  lista:       {t_lista:.3f}s")
+print(f"  diccionario: {t_dict:.3f}s")
+print(f"\nEl diccionario es igual de rápido que la lista,")
+print(f"pero mucho más flexible (las claves no tienen que ser 0,1,2,3...)")</textarea>
+                    <div class="code-output" id="output3">// Output aparecerá aquí</div>
+                </div>
+
+                <!-- Cuándo usar cada estructura -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">¿Cuándo usar cada estructura?</h4>
+                    <table class="breakdown-table">
+                        <thead>
+                            <tr>
+                                <th>Estructura</th>
+                                <th>Usa cuando...</th>
+                                <th>Ejemplo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-[var(--accent-red)]">if-elif</td>
+                                <td class="text-[var(--text-secondary)]">Pocas opciones (2-4) con lógica diferente en cada rama</td>
+                                <td class="text-[var(--text-muted)] text-xs">if edad < 18: ... elif edad < 65: ...</td>
+                            </tr>
+                            <tr>
+                                <td class="text-[var(--accent-amber)]">Lista</td>
+                                <td class="text-[var(--text-secondary)]">Claves son índices consecutivos (0, 1, 2...)</td>
+                                <td class="text-[var(--text-muted)] text-xs">dias = ["Lun", "Mar", "Mie"...]</td>
+                            </tr>
+                            <tr>
+                                <td class="text-[var(--accent-green)]">Diccionario</td>
+                                <td class="text-[var(--text-secondary)]">Claves son arbitrarias (números salteados, strings, etc.)</td>
+                                <td class="text-[var(--text-muted)] text-xs">capitales = {"España": "Madrid", ...}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Lo que PUEDES usar como clave -->
+                <div class="p-5 bg-[var(--accent-purple)]/10 border border-[var(--accent-purple)]/30 rounded-xl">
+                    <h4 class="font-medium mb-2 text-[var(--accent-purple)]">¿Qué puede ser una clave de diccionario?</h4>
+                    <div class="grid md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <p class="text-xs text-[var(--accent-green)] font-medium mb-2">✓ Puede ser clave:</p>
+                            <ul class="list-disc list-inside space-y-1 text-sm text-[var(--text-secondary)]">
+                                <li>Números: <code>1</code>, <code>3.14</code></li>
+                                <li>Strings: <code>"hola"</code></li>
+                                <li>Tuplas: <code>(1, 2)</code></li>
+                                <li>Booleanos: <code>True</code>, <code>False</code></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <p class="text-xs text-[var(--accent-red)] font-medium mb-2">✗ NO puede ser clave:</p>
+                            <ul class="list-disc list-inside space-y-1 text-sm text-[var(--text-secondary)]">
+                                <li>Listas: <code>[1, 2]</code></li>
+                                <li>Diccionarios: <code>{"a": 1}</code></li>
+                                <li>Sets: <code>{1, 2}</code></li>
+                            </ul>
+                            <p class="text-xs text-[var(--text-muted)] mt-2">
+                                (Solo tipos "inmutables" pueden ser claves)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Operaciones comunes -->
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — Operaciones comunes con diccionarios</span>
+                        <button class="run-btn" onclick="runCode('code3b', 'output3b')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code3b" style="min-height: 350px;"># Crear un diccionario
+edades = {"Ana": 25, "Carlos": 30, "Diana": 28}
+
+# Acceder a un valor
+print(f"Edad de Ana: {edades['Ana']}")
+
+# Añadir o modificar
+edades["Eduardo"] = 35  # Añade si no existe
+edades["Ana"] = 26      # Modifica si ya existe
+print(f"Después de cambios: {edades}")
+
+# Verificar si existe una clave
+if "Carlos" in edades:
+    print("Carlos está en el diccionario")
+
+# Acceso seguro con .get() (no da error si no existe)
+print(f"Edad de Zoe: {edades.get('Zoe', 'No encontrado')}")
+
+# Iterar sobre claves y valores
+print("\nTodas las edades:")
+for nombre, edad in edades.items():
+    print(f"  {nombre}: {edad} años")
+
+# Número de elementos
+print(f"\nTotal de personas: {len(edades)}")
+
+# Eliminar una clave
+del edades["Diana"]
+print(f"Después de eliminar Diana: {edades}")</textarea>
+                    <div class="code-output" id="output3b">// Output aparecerá aquí</div>
+                </div>
+
+                <!-- Resumen visual -->
+                <div class="p-6 bg-gradient-to-r from-[var(--accent-purple)]/10 to-[var(--accent-green)]/10 border border-[var(--accent-purple)]/30 rounded-xl">
+                    <h4 class="font-medium mb-4">Resumen: ¿Por qué diccionarios?</h4>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="text-center p-4 bg-[var(--bg-card)] rounded-lg">
+                            <div class="text-2xl mb-2">⚡</div>
+                            <div class="font-medium text-sm">Rápido</div>
+                            <div class="text-xs text-[var(--text-muted)]">O(1) para buscar, añadir, eliminar</div>
+                        </div>
+                        <div class="text-center p-4 bg-[var(--bg-card)] rounded-lg">
+                            <div class="text-2xl mb-2">🔑</div>
+                            <div class="font-medium text-sm">Flexible</div>
+                            <div class="text-xs text-[var(--text-muted)]">Cualquier clave inmutable</div>
+                        </div>
+                        <div class="text-center p-4 bg-[var(--bg-card)] rounded-lg">
+                            <div class="text-2xl mb-2">📖</div>
+                            <div class="font-medium text-sm">Legible</div>
+                            <div class="text-xs text-[var(--text-muted)]">El código se autodocumenta</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conceptos aprendidos -->
+                <div class="flex flex-wrap gap-3">
+                    <span class="concept-tag"><span class="text-[var(--accent-purple)]">✓</span> Hash tables (conceptual)</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-purple)]">✓</span> O(1) vs O(n) lookup</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-purple)]">✓</span> dict vs list vs if-elif</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-purple)]">✓</span> Operaciones de diccionario</span>
                 </div>
             </div>
         </div>
