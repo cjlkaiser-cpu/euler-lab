@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#006 Suma vs cuadrado — Euler Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    <style>
+        :root {
+            --bg: #000000;
+            --bg-elevated: #0a0a0f;
+            --bg-card: #111118;
+            --border: #1a1a24;
+            --border-hover: #2a2a3a;
+            --text: #e8e8ed;
+            --text-secondary: #8888a0;
+            --text-muted: #505068;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-amber: #f59e0b;
+            --accent-purple: #a855f7;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .serif { font-family: 'Source Serif 4', Georgia, serif; }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .level-tabs { display: flex; gap: 2px; background: var(--bg-elevated); padding: 4px; border-radius: 10px; }
+        .level-tab {
+            padding: 8px 16px; font-size: 13px; font-weight: 500; color: var(--text-muted);
+            background: transparent; border: none; border-radius: 6px; cursor: pointer;
+            transition: all 0.2s; font-family: 'JetBrains Mono', monospace;
+        }
+        .level-tab:hover { color: var(--text-secondary); }
+        .level-tab.active { background: var(--accent-blue); color: white; }
+        .level-tab[data-level="2"].active { background: var(--accent-green); }
+        .level-tab[data-level="3"].active { background: var(--accent-amber); }
+        .level-tab[data-level="4"].active { background: var(--accent-purple); }
+
+        .level-content { display: none; animation: fadeIn 0.3s ease; }
+        .level-content.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .code-editor { position: relative; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .code-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: var(--bg-card); border-bottom: 1px solid var(--border); }
+        .code-lang { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent-green); text-transform: uppercase; letter-spacing: 0.5px; }
+        .run-btn { display: flex; align-items: center; gap: 6px; padding: 6px 14px; background: var(--accent-blue); color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif; }
+        .run-btn:hover { filter: brightness(1.1); }
+        .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .run-btn.running { background: var(--accent-amber); }
+        .code-textarea { width: 100%; min-height: 200px; padding: 16px; background: transparent; border: none; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.7; resize: vertical; outline: none; }
+        .code-output { padding: 12px 16px; background: var(--bg-card); border-top: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-secondary); min-height: 40px; }
+        .code-output.success { color: var(--accent-green); }
+        .code-output.error { color: #ef4444; }
+
+        .result-box { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(34, 197, 94, 0.08) 100%); border: 1px solid var(--accent-blue); border-radius: 12px; }
+        .result-value { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 600; color: var(--accent-green); }
+
+        .step-card { display: flex; gap: 16px; padding: 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; transition: border-color 0.2s; }
+        .step-card:hover { border-color: var(--border-hover); }
+        .step-number { flex-shrink: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 50%; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent-blue); }
+
+        .math-block { padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; text-align: center; }
+        .math-formula { font-family: 'Source Serif 4', Georgia, serif; font-size: 20px; color: var(--text); margin-bottom: 8px; }
+        .math-description { font-size: 13px; color: var(--text-muted); }
+
+        .perf-table { width: 100%; border-collapse: collapse; }
+        .perf-table th, .perf-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+        .perf-table th { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+        .perf-table td { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+
+        .perf-bar { height: 6px; background: var(--bg-elevated); border-radius: 3px; overflow: hidden; margin-top: 6px; }
+        .perf-bar-fill { height: 100%; border-radius: 3px; }
+        .perf-fast { background: var(--accent-green); }
+        .perf-slow { background: #ef4444; }
+
+        .concept-tag { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
+        .custom-input { padding: 10px 14px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 14px; outline: none; transition: border-color 0.2s; }
+        .custom-input:focus { border-color: var(--accent-blue); }
+
+        .pyodide-status { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--bg-card); border-radius: 8px; font-size: 12px; color: var(--text-muted); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+        .status-dot.loading { background: var(--accent-amber); animation: pulse 1s infinite; }
+        .status-dot.ready { background: var(--accent-green); }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        code:not(.code-textarea) { padding: 2px 8px; background: var(--bg-elevated); border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.9em; color: var(--accent-amber); }
+
+        .comparison-box {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 16px;
+            align-items: center;
+            padding: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .comparison-item {
+            text-align: center;
+        }
+
+        .comparison-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .comparison-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .comparison-value.blue { color: var(--accent-blue); }
+        .comparison-value.green { color: var(--accent-green); }
+        .comparison-value.purple { color: var(--accent-purple); }
+
+        .comparison-op {
+            font-size: 24px;
+            color: var(--text-muted);
+        }
+
+        .formula-highlight {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(168, 85, 247, 0.15);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 6px;
+            font-family: 'Source Serif 4', Georgia, serif;
+            color: #c084fc;
+        }
+
+        @media (max-width: 640px) {
+            .level-tabs { flex-wrap: wrap; }
+            .level-tab { flex: 1; text-align: center; padding: 8px 12px; font-size: 12px; }
+            .result-box { flex-direction: column; text-align: center; gap: 8px; }
+            .step-card { flex-direction: column; }
+            .comparison-box { grid-template-columns: 1fr; gap: 12px; }
+            .comparison-op { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="max-w-3xl mx-auto px-5 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <nav class="text-xs text-gray-600 mb-1 mono">
+                        <a href="../../index.html" class="hover:text-blue-400 transition">Euler Lab</a>
+                        <span class="mx-1.5 text-gray-800">/</span>
+                        <span class="text-gray-500">#006</span>
+                    </nav>
+                    <h1 class="text-xl font-medium">Suma vs cuadrado</h1>
+                </div>
+                <div class="pyodide-status mono">
+                    <span class="status-dot loading" id="pyodide-dot"></span>
+                    <span id="pyodide-text">Cargando Python...</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-5 py-8">
+        <!-- Problem statement -->
+        <section class="mb-10">
+            <div class="p-6 bg-gray-950 border border-gray-900 rounded-xl">
+                <p class="serif text-lg text-gray-300 leading-relaxed">
+                    La <strong class="text-white">suma de cuadrados</strong> de los primeros diez números es:
+                </p>
+                <p class="mono text-gray-400 my-2 text-center">1² + 2² + ... + 10² = 385</p>
+                <p class="serif text-lg text-gray-300 leading-relaxed">
+                    El <strong class="text-white">cuadrado de la suma</strong> es:
+                </p>
+                <p class="mono text-gray-400 my-2 text-center">(1 + 2 + ... + 10)² = 55² = 3025</p>
+                <p class="serif text-lg text-gray-300 leading-relaxed mt-4">
+                    La diferencia es <strong class="text-white">3025 − 385 = 2640</strong>.
+                </p>
+                <p class="serif text-lg text-gray-300 leading-relaxed mt-4">
+                    Encuentra la diferencia para los primeros <strong class="text-white">100</strong> números naturales.
+                </p>
+            </div>
+        </section>
+
+        <!-- Level tabs -->
+        <nav class="mb-8 flex justify-center">
+            <div class="level-tabs">
+                <button class="level-tab active" data-level="1">A mano</button>
+                <button class="level-tab" data-level="2">Fuerza bruta</button>
+                <button class="level-tab" data-level="3">Pythónico</button>
+                <button class="level-tab" data-level="4">Matemático</button>
+            </div>
+        </nav>
+
+        <!-- LEVEL 1: A mano -->
+        <section class="level-content active" id="level-1">
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Dos cantidades diferentes</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        Es fácil confundir "suma de cuadrados" con "cuadrado de la suma". Son cosas muy distintas:
+                    </p>
+                </div>
+
+                <div class="comparison-box">
+                    <div class="comparison-item">
+                        <div class="comparison-label">Suma de cuadrados</div>
+                        <div class="comparison-value blue">1² + 2² + 3²</div>
+                        <div class="text-gray-500 text-sm mt-2">= 1 + 4 + 9 = 14</div>
+                    </div>
+                    <div class="comparison-op">≠</div>
+                    <div class="comparison-item">
+                        <div class="comparison-label">Cuadrado de la suma</div>
+                        <div class="comparison-value green">(1 + 2 + 3)²</div>
+                        <div class="text-gray-500 text-sm mt-2">= 6² = 36</div>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Verificando el ejemplo (n=10)</h2>
+
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h3 class="font-medium mb-1">Suma de cuadrados</h3>
+                            <p class="text-gray-500 text-sm">1 + 4 + 9 + 16 + 25 + 36 + 49 + 64 + 81 + 100 = <strong class="text-blue-400">385</strong></p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h3 class="font-medium mb-1">Suma de 1 a 10</h3>
+                            <p class="text-gray-500 text-sm">1 + 2 + 3 + ... + 10 = <strong class="text-white">55</strong></p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div>
+                            <h3 class="font-medium mb-1">Cuadrado de la suma</h3>
+                            <p class="text-gray-500 text-sm">55² = <strong class="text-green-400">3025</strong></p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">4</div>
+                        <div>
+                            <h3 class="font-medium mb-1">Diferencia</h3>
+                            <p class="text-gray-500 text-sm">3025 − 385 = <strong class="text-purple-400">2640</strong> ✓</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">¿Por qué el cuadrado de la suma es mayor?</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        Al elevar la suma al cuadrado, obtenemos todos los productos cruzados <code>2×i×j</code>
+                        que no aparecen en la suma de cuadrados.
+                    </p>
+                </div>
+
+                <div class="math-block">
+                    <div class="math-formula">(a + b)² = a² + 2ab + b²</div>
+                    <div class="math-description">El término 2ab hace la diferencia</div>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Conceptos clave</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="concept-tag">📐 Cuadrados</span>
+                        <span class="concept-tag">➕ Sumatorias</span>
+                        <span class="concept-tag">➖ Diferencia</span>
+                        <span class="concept-tag">🔢 Productos cruzados</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEVEL 2: Fuerza bruta -->
+        <section class="level-content" id="level-2">
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">La estrategia</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        Calcular ambas cantidades por separado y restar. Simple y directo.
+                    </p>
+                </div>
+
+                <!-- Variante A -->
+                <div>
+                    <h2 class="text-sm font-medium text-green-400 uppercase tracking-wide mb-3">Variante A: while con contadores</h2>
+                    <p class="text-gray-400 text-sm mb-4">
+                        Dos acumuladores, un bucle while. Muy explícita.
+                    </p>
+                    <div class="code-editor">
+                        <div class="code-header">
+                            <span class="code-lang">Python</span>
+                            <button class="run-btn" onclick="runCode('code-varA')">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                Ejecutar
+                            </button>
+                        </div>
+                        <textarea id="code-varA" class="code-textarea" spellcheck="false" style="min-height: 320px;">suma = 0                    # Para el cuadrado de la suma
+suma_cuadrados = 0          # Para la suma de cuadrados
+i = 1
+
+while i <= 100:
+    suma = suma + i         # Acumular número
+    suma_cuadrados = suma_cuadrados + i * i  # Acumular cuadrado
+    i = i + 1
+
+cuadrado_suma = suma * suma
+diferencia = cuadrado_suma - suma_cuadrados
+
+print(f"Suma: {suma}")
+print(f"Cuadrado de la suma: {cuadrado_suma}")
+print(f"Suma de cuadrados: {suma_cuadrados}")
+print(f"Diferencia: {diferencia}")</textarea>
+                        <div class="code-output" id="output-varA">Pulsa "Ejecutar" para ver el resultado</div>
+                    </div>
+                </div>
+
+                <!-- Variante B -->
+                <div>
+                    <h2 class="text-sm font-medium text-green-400 uppercase tracking-wide mb-3">Variante B: for con range</h2>
+                    <p class="text-gray-400 text-sm mb-4">
+                        Más pythónico usando for y range.
+                    </p>
+                    <div class="code-editor">
+                        <div class="code-header">
+                            <span class="code-lang">Python</span>
+                            <button class="run-btn" onclick="runCode('code-varB')">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                Ejecutar
+                            </button>
+                        </div>
+                        <textarea id="code-varB" class="code-textarea" spellcheck="false" style="min-height: 240px;">suma = 0
+suma_cuadrados = 0
+
+for i in range(1, 101):     # 1 a 100
+    suma += i               # Atajo para suma = suma + i
+    suma_cuadrados += i ** 2  # i ** 2 es i al cuadrado
+
+diferencia = suma ** 2 - suma_cuadrados
+
+print(diferencia)</textarea>
+                        <div class="code-output" id="output-varB">Pulsa "Ejecutar" para ver el resultado</div>
+                    </div>
+                </div>
+
+                <!-- Variante C -->
+                <div>
+                    <h2 class="text-sm font-medium text-green-400 uppercase tracking-wide mb-3">Variante C: dos bucles separados</h2>
+                    <p class="text-gray-400 text-sm mb-4">
+                        Más claro: un bucle para cada cantidad. Menos eficiente pero más legible.
+                    </p>
+                    <div class="code-editor">
+                        <div class="code-header">
+                            <span class="code-lang">Python</span>
+                            <button class="run-btn" onclick="runCode('code-varC')">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                Ejecutar
+                            </button>
+                        </div>
+                        <textarea id="code-varC" class="code-textarea" spellcheck="false" style="min-height: 280px;"># Calcular suma de 1 a 100
+suma = 0
+for i in range(1, 101):
+    suma += i
+
+# Calcular suma de cuadrados
+suma_cuadrados = 0
+for i in range(1, 101):
+    suma_cuadrados += i ** 2
+
+# Resultado
+cuadrado_suma = suma ** 2
+diferencia = cuadrado_suma - suma_cuadrados
+
+print(f"{cuadrado_suma} - {suma_cuadrados} = {diferencia}")</textarea>
+                        <div class="code-output" id="output-varC">Pulsa "Ejecutar" para ver el resultado</div>
+                    </div>
+                </div>
+
+                <!-- Comparativa -->
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">¿Cuál elegir?</h2>
+                    <div class="bg-gray-950 border border-gray-900 rounded-xl overflow-hidden">
+                        <table class="perf-table">
+                            <thead>
+                                <tr>
+                                    <th>Variante</th>
+                                    <th>Bucles</th>
+                                    <th>Ventaja</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-gray-300">A: while</td>
+                                    <td>1 × 100</td>
+                                    <td class="text-gray-400">Muy explícita</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-gray-300">B: for único</td>
+                                    <td>1 × 100</td>
+                                    <td class="text-gray-400">Compacta</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-gray-300">C: for separados</td>
+                                    <td>2 × 100</td>
+                                    <td class="text-gray-400">Más clara</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="result-box">
+                    <span class="text-gray-400">Resultado (las tres variantes)</span>
+                    <span class="result-value">25164150</span>
+                </div>
+
+                <!-- Conceptos -->
+                <div class="space-y-4">
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Conceptos clave</h2>
+
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>i ** 2</code></h3>
+                            <p class="text-gray-500 text-sm"><strong>Exponenciación.</strong> En Python, <code>**</code> es el operador de potencia. <code>i ** 2</code> es i².</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>suma += i</code></h3>
+                            <p class="text-gray-500 text-sm"><strong>Asignación aumentada.</strong> Equivale a <code>suma = suma + i</code>. Más conciso.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>range(1, 101)</code></h3>
+                            <p class="text-gray-500 text-sm">Genera 1, 2, 3... 100. El segundo argumento es exclusivo (no incluye el 101).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Conceptos de Python aprendidos</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="concept-tag">** Exponenciación</span>
+                        <span class="concept-tag">+= Asignación aumentada</span>
+                        <span class="concept-tag">🔁 for range</span>
+                        <span class="concept-tag">📊 Acumuladores</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEVEL 3: Pythónico -->
+        <section class="level-content" id="level-3">
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">sum() con generadores</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        Python tiene <code>sum()</code> integrado. Combinado con generadores, el código es muy expresivo.
+                    </p>
+                </div>
+
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python</span>
+                        <button class="run-btn" onclick="runCode('code-pythonic')">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea id="code-pythonic" class="code-textarea" spellcheck="false" style="min-height: 160px;">n = 100
+
+suma = sum(range(1, n + 1))
+suma_cuadrados = sum(i ** 2 for i in range(1, n + 1))
+
+diferencia = suma ** 2 - suma_cuadrados
+
+print(diferencia)</textarea>
+                    <div class="code-output" id="output-pythonic">Pulsa "Ejecutar" para ver el resultado</div>
+                </div>
+
+                <div class="space-y-4">
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Desglose</h2>
+
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>sum(range(1, n + 1))</code></h3>
+                            <p class="text-gray-500 text-sm">sum() acepta cualquier iterable. range() es iterable. Suma 1+2+...+n directamente.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>sum(i ** 2 for i in range(...))</code></h3>
+                            <p class="text-gray-500 text-sm">Generator expression. Calcula i² para cada i y los suma. Sin crear lista intermedia.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+                    <p class="text-amber-300 text-sm">
+                        <strong>Versión ultra-compacta:</strong>
+                    </p>
+                    <p class="mono text-amber-200 mt-2">
+                        sum(range(1,101))**2 - sum(i**2 for i in range(1,101))
+                    </p>
+                </div>
+
+                <div class="result-box">
+                    <span class="text-gray-400">Resultado</span>
+                    <span class="result-value">25164150</span>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Conceptos aprendidos</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="concept-tag">📊 sum()</span>
+                        <span class="concept-tag">🌊 Generator expression</span>
+                        <span class="concept-tag">🔄 range() como iterable</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEVEL 4: Matemático -->
+        <section class="level-content" id="level-4">
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Fórmulas cerradas</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        Existen fórmulas matemáticas para calcular ambas sumas sin iterar.
+                    </p>
+                </div>
+
+                <div class="math-block">
+                    <div class="math-formula">1 + 2 + 3 + ... + n = <span class="formula-highlight">n(n+1)/2</span></div>
+                    <div class="math-description">Fórmula de Gauss para la suma de naturales</div>
+                </div>
+
+                <div class="math-block">
+                    <div class="math-formula">1² + 2² + ... + n² = <span class="formula-highlight">n(n+1)(2n+1)/6</span></div>
+                    <div class="math-description">Fórmula para la suma de cuadrados</div>
+                </div>
+
+                <div class="space-y-4">
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Verificando con n=10</h2>
+
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h3 class="font-medium mb-1">Suma = 10 × 11 / 2 = 55 ✓</h3>
+                            <p class="text-gray-500 text-sm">Cuadrado: 55² = 3025</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h3 class="font-medium mb-1">Suma de cuadrados = 10 × 11 × 21 / 6 = 385 ✓</h3>
+                            <p class="text-gray-500 text-sm">2n+1 = 21 cuando n = 10</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div>
+                            <h3 class="font-medium mb-1">Diferencia = 3025 − 385 = 2640 ✓</h3>
+                            <p class="text-gray-500 text-sm">Coincide con el enunciado</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python</span>
+                        <button class="run-btn" onclick="runCode('code-math')">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea id="code-math" class="code-textarea" spellcheck="false" style="min-height: 240px;">def diferencia_suma_cuadrado(n):
+    """Calcula (1+2+...+n)² - (1²+2²+...+n²) en O(1)"""
+
+    # Fórmula de Gauss
+    suma = n * (n + 1) // 2
+
+    # Fórmula de suma de cuadrados
+    suma_cuadrados = n * (n + 1) * (2 * n + 1) // 6
+
+    return suma ** 2 - suma_cuadrados
+
+print(f"n=10:  {diferencia_suma_cuadrado(10)}")
+print(f"n=100: {diferencia_suma_cuadrado(100)}")
+print(f"n=1000000: {diferencia_suma_cuadrado(1000000)}")</textarea>
+                    <div class="code-output" id="output-math">Pulsa "Ejecutar" para ver el resultado</div>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Comparativa de rendimiento</h2>
+                    <div class="bg-gray-950 border border-gray-900 rounded-xl overflow-hidden">
+                        <table class="perf-table">
+                            <thead>
+                                <tr>
+                                    <th>Método</th>
+                                    <th>n = 100</th>
+                                    <th>n = 10⁹</th>
+                                    <th>Complejidad</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-gray-400">Bucle</td>
+                                    <td>100 ops</td>
+                                    <td>10⁹ ops</td>
+                                    <td class="text-red-400">O(n)</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-gray-400">Fórmula</td>
+                                    <td>5 ops</td>
+                                    <td>5 ops</td>
+                                    <td class="text-green-400">O(1)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-500">Bucle (n = 10⁹)</span>
+                        <span class="mono text-gray-600">~30 segundos</span>
+                    </div>
+                    <div class="perf-bar"><div class="perf-bar-fill perf-slow" style="width: 100%"></div></div>
+
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-500">Fórmula (n = 10⁹)</span>
+                        <span class="mono text-gray-600">instantáneo</span>
+                    </div>
+                    <div class="perf-bar"><div class="perf-bar-fill perf-fast" style="width: 0.001%"></div></div>
+                </div>
+
+                <div class="result-box">
+                    <span class="text-gray-400">Resultado</span>
+                    <span class="result-value">25164150</span>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Conceptos aprendidos</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="concept-tag">📐 Fórmula de Gauss</span>
+                        <span class="concept-tag">🔢 Suma de cuadrados</span>
+                        <span class="concept-tag">⏱️ O(1)</span>
+                        <span class="concept-tag">🧮 Fórmulas cerradas</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Try with custom n -->
+        <section class="mt-12 pt-8 border-t border-gray-900">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Prueba con otro n</h2>
+            <div class="flex gap-3 items-center flex-wrap">
+                <span class="text-gray-500">n =</span>
+                <input type="number" id="custom-limit" class="custom-input w-28" value="10" min="1" max="1000000000">
+                <button class="run-btn" onclick="runCustom()">Calcular</button>
+                <span id="custom-result" class="mono text-lg text-green-400"></span>
+            </div>
+        </section>
+
+        <!-- Navigation -->
+        <footer class="mt-16 pt-8 border-t border-gray-900 flex justify-between items-center">
+            <a href="../005/index.html" class="text-gray-500 hover:text-white transition text-sm">← Problema 5: MCM 1-20</a>
+            <a href="../007/index.html" class="text-gray-500 hover:text-white transition text-sm">Problema 7: Primo 10001 →</a>
+        </footer>
+    </main>
+
+    <script>
+        // Level tabs
+        document.querySelectorAll('.level-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const level = tab.dataset.level;
+                document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                document.querySelectorAll('.level-content').forEach(c => c.classList.remove('active'));
+                document.getElementById(`level-${level}`).classList.add('active');
+            });
+        });
+
+        // Pyodide
+        let pyodide = null;
+
+        async function initPyodide() {
+            const dot = document.getElementById('pyodide-dot');
+            const text = document.getElementById('pyodide-text');
+            try {
+                pyodide = await loadPyodide();
+                dot.classList.remove('loading');
+                dot.classList.add('ready');
+                text.textContent = 'Python listo';
+            } catch (e) {
+                dot.classList.remove('loading');
+                dot.classList.add('error');
+                text.textContent = 'Error cargando Python';
+            }
+        }
+
+        initPyodide();
+
+        async function runCode(textareaId) {
+            if (!pyodide) { alert('Python aún está cargando.'); return; }
+
+            const textarea = document.getElementById(textareaId);
+            const outputId = 'output-' + textareaId.replace('code-', '');
+            const output = document.getElementById(outputId);
+            const btn = textarea.closest('.code-editor').querySelector('.run-btn');
+
+            btn.disabled = true;
+            btn.classList.add('running');
+            btn.innerHTML = '<svg class="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/></svg> Ejecutando...';
+            output.className = 'code-output';
+            output.textContent = 'Ejecutando...';
+
+            try {
+                pyodide.runPython(`import sys; from io import StringIO; sys.stdout = StringIO()`);
+                pyodide.runPython(textarea.value);
+                const stdout = pyodide.runPython('sys.stdout.getvalue()');
+                output.textContent = stdout || '(sin salida)';
+                output.classList.add('success');
+            } catch (e) {
+                output.textContent = e.message;
+                output.classList.add('error');
+            }
+
+            btn.disabled = false;
+            btn.classList.remove('running');
+            btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Ejecutar';
+        }
+
+        async function runCustom() {
+            if (!pyodide) { alert('Python aún está cargando.'); return; }
+
+            const n = parseInt(document.getElementById('custom-limit').value);
+            const result = document.getElementById('custom-result');
+
+            if (isNaN(n) || n < 1) {
+                result.textContent = 'n debe ser ≥ 1';
+                result.style.color = '#ef4444';
+                return;
+            }
+
+            try {
+                const code = `
+n = ${n}
+suma = n * (n + 1) // 2
+suma_cuadrados = n * (n + 1) * (2 * n + 1) // 6
+suma ** 2 - suma_cuadrados
+`;
+                const res = pyodide.runPython(code);
+                result.textContent = `= ${res.toLocaleString()}`;
+                result.style.color = '#22c55e';
+            } catch (e) {
+                result.textContent = 'Error';
+                result.style.color = '#ef4444';
+            }
+        }
+    </script>
+</body>
+</html>
