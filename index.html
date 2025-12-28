@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Euler Lab - 100 Problemas de Project Euler</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .serif { font-family: 'Source Serif 4', Georgia, serif; }
+
+        .card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card:hover {
+            transform: translateY(-6px);
+        }
+        .card:hover .card-glow {
+            opacity: 1;
+        }
+        .card-glow {
+            position: absolute;
+            inset: -1px;
+            border-radius: 1rem;
+            background: linear-gradient(135deg, var(--glow-from), var(--glow-to));
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: -1;
+            filter: blur(1px);
+        }
+
+        .preview-canvas {
+            image-rendering: pixelated;
+        }
+
+        .problem-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.15em;
+        }
+
+        .difficulty-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        /* Glow colors per category */
+        .cat-numbers { --glow-from: #3b82f6; --glow-to: #1d4ed8; }
+        .cat-sequences { --glow-from: #22c55e; --glow-to: #15803d; }
+        .cat-primes { --glow-from: #a855f7; --glow-to: #7c3aed; }
+        .cat-combinatorics { --glow-from: #f59e0b; --glow-to: #d97706; }
+        .cat-strings { --glow-from: #ec4899; --glow-to: #be185d; }
+
+        .tag-numbers { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+        .tag-sequences { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+        .tag-primes { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+        .tag-combinatorics { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+        .tag-strings { background: rgba(236, 72, 153, 0.15); color: #f472b6; }
+    </style>
+</head>
+<body class="bg-black text-gray-100 min-h-screen">
+    <!-- Header -->
+    <header class="border-b border-gray-900/50 bg-black/80 backdrop-blur-sm sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-xs text-gray-600 mb-1 mono">Parte de <a href="https://github.com/cjlkaiser-cpu" class="hover:text-blue-400 transition">EigenLab</a></p>
+                    <h1 class="text-2xl font-light tracking-tight">
+                        <span class="text-blue-400 font-medium">Euler</span> Lab
+                    </h1>
+                    <p class="text-gray-600 text-sm mono mt-0.5">100 problemas, 4 niveles cada uno</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="text-right">
+                        <div class="text-xs text-gray-600">Progreso</div>
+                        <div class="mono text-sm"><span class="text-blue-400">0</span><span class="text-gray-700">/100</span></div>
+                    </div>
+                    <a href="https://projecteuler.net" target="_blank" class="text-gray-600 hover:text-white transition text-xs mono">
+                        projecteuler.net
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-12">
+        <!-- Hero -->
+        <section class="text-center mb-16">
+            <h2 class="text-4xl font-light mb-4 serif">
+                Matemáticas <span class="text-blue-400">computacionales</span>
+            </h2>
+            <p class="text-gray-500 max-w-2xl mx-auto leading-relaxed">
+                Cada problema tiene 4 niveles de solución: a mano, fuerza bruta, pythónico y matemático.
+                Ejecuta código Python directamente en el navegador.
+            </p>
+        </section>
+
+        <!-- Filters -->
+        <section class="flex justify-center gap-2 mb-10 flex-wrap">
+            <button class="filter-btn active px-3 py-1.5 rounded-full text-xs mono border border-gray-800 bg-gray-900 text-gray-300 hover:border-gray-700 transition" data-filter="all">
+                Todos
+            </button>
+            <button class="filter-btn px-3 py-1.5 rounded-full text-xs mono border border-gray-800 hover:border-blue-500/50 hover:text-blue-400 transition" data-filter="numbers">
+                Números
+            </button>
+            <button class="filter-btn px-3 py-1.5 rounded-full text-xs mono border border-gray-800 hover:border-green-500/50 hover:text-green-400 transition" data-filter="sequences">
+                Secuencias
+            </button>
+            <button class="filter-btn px-3 py-1.5 rounded-full text-xs mono border border-gray-800 hover:border-purple-500/50 hover:text-purple-400 transition" data-filter="primes">
+                Primos
+            </button>
+            <button class="filter-btn px-3 py-1.5 rounded-full text-xs mono border border-gray-800 hover:border-amber-500/50 hover:text-amber-400 transition" data-filter="combinatorics">
+                Combinatoria
+            </button>
+        </section>
+
+        <!-- Problems Grid -->
+        <section class="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5" id="problems-grid">
+
+            <!-- Problem 001 -->
+            <a href="problems/001/index.html" class="block">
+                <article class="card cat-numbers relative bg-gray-950 border border-gray-900/80 rounded-2xl overflow-hidden" data-category="numbers">
+                    <div class="card-glow"></div>
+                    <div class="p-4">
+                        <canvas id="preview-001" class="preview-canvas w-full h-28 bg-black rounded-lg mb-3"></canvas>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="problem-number text-gray-600">#001</span>
+                            <span class="tag-numbers text-[10px] px-2 py-0.5 rounded-full mono">NÚMEROS</span>
+                        </div>
+                        <h3 class="font-medium text-[15px] mb-1 leading-snug">Múltiplos de 3 y 5</h3>
+                        <p class="text-gray-500 text-xs leading-relaxed mb-3">Suma todos los múltiplos de 3 o 5 menores que 1000.</p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex gap-1">
+                                <span class="difficulty-dot bg-green-500"></span>
+                                <span class="difficulty-dot bg-green-500/30"></span>
+                                <span class="difficulty-dot bg-green-500/30"></span>
+                            </div>
+                            <span class="text-[10px] text-gray-600 mono">5%</span>
+                        </div>
+                    </div>
+                </article>
+            </a>
+
+            <!-- Problem 002 -->
+            <a href="problems/002/index.html" class="block">
+                <article class="card cat-sequences relative bg-gray-950 border border-gray-900/80 rounded-2xl overflow-hidden" data-category="sequences">
+                    <div class="card-glow"></div>
+                    <div class="p-4">
+                        <canvas id="preview-002" class="preview-canvas w-full h-28 bg-black rounded-lg mb-3"></canvas>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="problem-number text-gray-600">#002</span>
+                            <span class="tag-sequences text-[10px] px-2 py-0.5 rounded-full mono">SECUENCIAS</span>
+                        </div>
+                        <h3 class="font-medium text-[15px] mb-1 leading-snug">Fibonacci pares</h3>
+                        <p class="text-gray-500 text-xs leading-relaxed mb-3">Suma los términos pares de Fibonacci menores que 4 millones.</p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex gap-1">
+                                <span class="difficulty-dot bg-green-500"></span>
+                                <span class="difficulty-dot bg-green-500/30"></span>
+                                <span class="difficulty-dot bg-green-500/30"></span>
+                            </div>
+                            <span class="text-[10px] text-gray-600 mono">5%</span>
+                        </div>
+                    </div>
+                </article>
+            </a>
+
+            <!-- Problem 003 -->
+            <a href="problems/003/index.html" class="block">
+                <article class="card cat-primes relative bg-gray-950 border border-gray-900/80 rounded-2xl overflow-hidden" data-category="primes">
+                    <div class="card-glow"></div>
+                    <div class="p-4">
+                        <canvas id="preview-003" class="preview-canvas w-full h-28 bg-black rounded-lg mb-3"></canvas>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="problem-number text-gray-600">#003</span>
+                            <span class="tag-primes text-[10px] px-2 py-0.5 rounded-full mono">PRIMOS</span>
+                        </div>
+                        <h3 class="font-medium text-[15px] mb-1 leading-snug">Factor primo mayor</h3>
+                        <p class="text-gray-500 text-xs leading-relaxed mb-3">Encuentra el factor primo más grande de 600851475143.</p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex gap-1">
+                                <span class="difficulty-dot bg-green-500"></span>
+                                <span class="difficulty-dot bg-green-500/30"></span>
+                                <span class="difficulty-dot bg-green-500/30"></span>
+                            </div>
+                            <span class="text-[10px] text-gray-600 mono">5%</span>
+                        </div>
+                    </div>
+                </article>
+            </a>
+
+            <!-- Problem 004 -->
+            <a href="problems/004/index.html" class="block">
+                <article class="card cat-numbers relative bg-gray-950 border border-gray-900/80 rounded-2xl overflow-hidden" data-category="numbers">
+                    <div class="card-glow"></div>
+                    <div class="p-4">
+                        <canvas id="preview-004" class="preview-canvas w-full h-28 bg-black rounded-lg mb-3"></canvas>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="problem-number text-gray-600">#004</span>
+                            <span class="tag-numbers text-[10px] px-2 py-0.5 rounded-full mono">NÚMEROS</span>
+                        </div>
+                        <h3 class="font-medium text-[15px] mb-1 leading-snug">Palíndromo más grande</h3>
+                        <p class="text-gray-500 text-xs leading-relaxed mb-3">Mayor palíndromo producto de dos números de 3 dígitos.</p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex gap-1">
+                                <span class="difficulty-dot bg-green-500"></span>
+                                <span class="difficulty-dot bg-green-500/30"></span>
+                                <span class="difficulty-dot bg-green-500/30"></span>
+                            </div>
+                            <span class="text-[10px] text-gray-600 mono">5%</span>
+                        </div>
+                    </div>
+                </article>
+            </a>
+
+            <!-- Problem 005 -->
+            <a href="problems/005/index.html" class="block">
+                <article class="card cat-numbers relative bg-gray-950 border border-gray-900/80 rounded-2xl overflow-hidden" data-category="numbers">
+                    <div class="card-glow"></div>
+                    <div class="p-4">
+                        <canvas id="preview-005" class="preview-canvas w-full h-28 bg-black rounded-lg mb-3"></canvas>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="problem-number text-gray-600">#005</span>
+                            <span class="tag-numbers text-[10px] px-2 py-0.5 rounded-full mono">NÚMEROS</span>
+                        </div>
+                        <h3 class="font-medium text-[15px] mb-1 leading-snug">Mínimo común múltiplo</h3>
+                        <p class="text-gray-500 text-xs leading-relaxed mb-3">Menor número divisible por todos del 1 al 20.</p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex gap-1">
+                                <span class="difficulty-dot bg-green-500"></span>
+                                <span class="difficulty-dot bg-green-500/30"></span>
+                                <span class="difficulty-dot bg-green-500/30"></span>
+                            </div>
+                            <span class="text-[10px] text-gray-600 mono">5%</span>
+                        </div>
+                    </div>
+                </article>
+            </a>
+
+            <!-- Problem 006 -->
+            <a href="problems/006/index.html" class="block">
+                <article class="card cat-numbers relative bg-gray-950 border border-gray-900/80 rounded-2xl overflow-hidden" data-category="numbers">
+                    <div class="card-glow"></div>
+                    <div class="p-4">
+                        <canvas id="preview-006" class="preview-canvas w-full h-28 bg-black rounded-lg mb-3"></canvas>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="problem-number text-gray-600">#006</span>
+                            <span class="tag-numbers text-[10px] px-2 py-0.5 rounded-full mono">NÚMEROS</span>
+                        </div>
+                        <h3 class="font-medium text-[15px] mb-1 leading-snug">Suma vs cuadrado</h3>
+                        <p class="text-gray-500 text-xs leading-relaxed mb-3">Diferencia entre cuadrado de suma y suma de cuadrados.</p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex gap-1">
+                                <span class="difficulty-dot bg-green-500"></span>
+                                <span class="difficulty-dot bg-green-500/30"></span>
+                                <span class="difficulty-dot bg-green-500/30"></span>
+                            </div>
+                            <span class="text-[10px] text-gray-600 mono">5%</span>
+                        </div>
+                    </div>
+                </article>
+            </a>
+
+            <!-- Problem 007 -->
+            <a href="problems/007/index.html" class="block">
+                <article class="card cat-primes relative bg-gray-950 border border-gray-900/80 rounded-2xl overflow-hidden" data-category="primes">
+                    <div class="card-glow"></div>
+                    <div class="p-4">
+                        <canvas id="preview-007" class="preview-canvas w-full h-28 bg-black rounded-lg mb-3"></canvas>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="problem-number text-gray-600">#007</span>
+                            <span class="tag-primes text-[10px] px-2 py-0.5 rounded-full mono">PRIMOS</span>
+                        </div>
+                        <h3 class="font-medium text-[15px] mb-1 leading-snug">Primo 10001</h3>
+                        <p class="text-gray-500 text-xs leading-relaxed mb-3">Encuentra el primo número 10001.</p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex gap-1">
+                                <span class="difficulty-dot bg-green-500"></span>
+                                <span class="difficulty-dot bg-green-500/30"></span>
+                                <span class="difficulty-dot bg-green-500/30"></span>
+                            </div>
+                            <span class="text-[10px] text-gray-600 mono">5%</span>
+                        </div>
+                    </div>
+                </article>
+            </a>
+
+            <!-- Problem 008 -->
+            <a href="problems/008/index.html" class="block">
+                <article class="card cat-strings relative bg-gray-950 border border-gray-900/80 rounded-2xl overflow-hidden" data-category="strings">
+                    <div class="card-glow"></div>
+                    <div class="p-4">
+                        <canvas id="preview-008" class="preview-canvas w-full h-28 bg-black rounded-lg mb-3"></canvas>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="problem-number text-gray-600">#008</span>
+                            <span class="tag-strings text-[10px] px-2 py-0.5 rounded-full mono">STRINGS</span>
+                        </div>
+                        <h3 class="font-medium text-[15px] mb-1 leading-snug">Producto en serie</h3>
+                        <p class="text-gray-500 text-xs leading-relaxed mb-3">Mayor producto de 13 dígitos adyacentes en un número.</p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex gap-1">
+                                <span class="difficulty-dot bg-green-500"></span>
+                                <span class="difficulty-dot bg-yellow-500"></span>
+                                <span class="difficulty-dot bg-yellow-500/30"></span>
+                            </div>
+                            <span class="text-[10px] text-gray-600 mono">5%</span>
+                        </div>
+                    </div>
+                </article>
+            </a>
+
+            <!-- Problem 009 -->
+            <a href="problems/009/index.html" class="block">
+                <article class="card cat-numbers relative bg-gray-950 border border-gray-900/80 rounded-2xl overflow-hidden" data-category="numbers">
+                    <div class="card-glow"></div>
+                    <div class="p-4">
+                        <canvas id="preview-009" class="preview-canvas w-full h-28 bg-black rounded-lg mb-3"></canvas>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="problem-number text-gray-600">#009</span>
+                            <span class="tag-numbers text-[10px] px-2 py-0.5 rounded-full mono">NÚMEROS</span>
+                        </div>
+                        <h3 class="font-medium text-[15px] mb-1 leading-snug">Triplete pitagórico</h3>
+                        <p class="text-gray-500 text-xs leading-relaxed mb-3">Triplete pitagórico donde a + b + c = 1000.</p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex gap-1">
+                                <span class="difficulty-dot bg-green-500"></span>
+                                <span class="difficulty-dot bg-green-500/30"></span>
+                                <span class="difficulty-dot bg-green-500/30"></span>
+                            </div>
+                            <span class="text-[10px] text-gray-600 mono">5%</span>
+                        </div>
+                    </div>
+                </article>
+            </a>
+
+            <!-- Problem 010 -->
+            <a href="problems/010/index.html" class="block">
+                <article class="card cat-primes relative bg-gray-950 border border-gray-900/80 rounded-2xl overflow-hidden" data-category="primes">
+                    <div class="card-glow"></div>
+                    <div class="p-4">
+                        <canvas id="preview-010" class="preview-canvas w-full h-28 bg-black rounded-lg mb-3"></canvas>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="problem-number text-gray-600">#010</span>
+                            <span class="tag-primes text-[10px] px-2 py-0.5 rounded-full mono">PRIMOS</span>
+                        </div>
+                        <h3 class="font-medium text-[15px] mb-1 leading-snug">Suma de primos</h3>
+                        <p class="text-gray-500 text-xs leading-relaxed mb-3">Suma de todos los primos menores que 2 millones.</p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex gap-1">
+                                <span class="difficulty-dot bg-green-500"></span>
+                                <span class="difficulty-dot bg-green-500/30"></span>
+                                <span class="difficulty-dot bg-green-500/30"></span>
+                            </div>
+                            <span class="text-[10px] text-gray-600 mono">5%</span>
+                        </div>
+                    </div>
+                </article>
+            </a>
+
+        </section>
+
+        <!-- Coming soon -->
+        <section class="mt-16 text-center">
+            <p class="text-gray-700 text-sm">
+                <span class="mono text-gray-600">011-100</span> próximamente
+            </p>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-900/50 mt-20">
+        <div class="max-w-6xl mx-auto px-6 py-8">
+            <div class="flex justify-between items-center text-xs text-gray-600">
+                <p>Problemas de <a href="https://projecteuler.net" target="_blank" class="text-gray-500 hover:text-white transition">Project Euler</a></p>
+                <p class="mono">github.com/cjlkaiser-cpu/euler-lab</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Canvas Animations -->
+    <script>
+        const dpr = window.devicePixelRatio || 1;
+
+        function setupCanvas(id) {
+            const canvas = document.getElementById(id);
+            if (!canvas) return null;
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            return { canvas, ctx, w: rect.width, h: rect.height };
+        }
+
+        // 001: Múltiplos de 3 y 5 - Barras que se iluminan
+        (function() {
+            const c = setupCanvas('preview-001');
+            if (!c) return;
+            const { ctx, w, h } = c;
+            let offset = 0;
+
+            function draw() {
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, w, h);
+
+                const cols = 30;
+                const barW = w / cols - 1;
+
+                for (let i = 1; i <= cols; i++) {
+                    const n = i + offset;
+                    const is3 = n % 3 === 0;
+                    const is5 = n % 5 === 0;
+                    const is15 = n % 15 === 0;
+
+                    let color = '#1a1a24';
+                    if (is15) color = '#7c3aed';
+                    else if (is3) color = '#3b82f6';
+                    else if (is5) color = '#22c55e';
+
+                    const barH = (is3 || is5) ? h * 0.7 : h * 0.3;
+                    const x = (i - 1) * (barW + 1);
+                    const y = h - barH - 10;
+
+                    ctx.fillStyle = color;
+                    ctx.fillRect(x, y, barW, barH);
+
+                    // Number label
+                    if (cols <= 30) {
+                        ctx.fillStyle = '#4b5563';
+                        ctx.font = '8px JetBrains Mono';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(n, x + barW/2, h - 2);
+                    }
+                }
+            }
+
+            draw();
+            setInterval(() => { offset = (offset + 1) % 100; draw(); }, 200);
+        })();
+
+        // 002: Fibonacci - Espiral
+        (function() {
+            const c = setupCanvas('preview-002');
+            if (!c) return;
+            const { ctx, w, h } = c;
+
+            const fib = [1, 1];
+            for (let i = 2; i < 12; i++) fib.push(fib[i-1] + fib[i-2]);
+            let phase = 0;
+
+            function draw() {
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, w, h);
+
+                // Draw fibonacci boxes
+                const scale = 4;
+                let x = w/2, y = h/2;
+                let dir = 0;
+
+                for (let i = 0; i < 8; i++) {
+                    const size = fib[i] * scale;
+                    const isEven = fib[i] % 2 === 0;
+                    const alpha = (i + phase) % 8 < 4 ? 0.8 : 0.3;
+
+                    ctx.strokeStyle = isEven ? `rgba(34, 197, 94, ${alpha})` : `rgba(75, 85, 99, ${alpha * 0.5})`;
+                    ctx.lineWidth = isEven ? 2 : 1;
+                    ctx.strokeRect(x, y, size, size);
+
+                    if (isEven) {
+                        ctx.fillStyle = `rgba(34, 197, 94, ${alpha * 0.1})`;
+                        ctx.fillRect(x, y, size, size);
+                    }
+
+                    // Move to next position
+                    if (dir === 0) x += size;
+                    else if (dir === 1) y += size;
+                    else if (dir === 2) { x -= fib[i+1] * scale; }
+                    else { y -= fib[i+1] * scale; }
+                    dir = (dir + 1) % 4;
+                }
+            }
+
+            draw();
+            setInterval(() => { phase = (phase + 1) % 8; draw(); }, 400);
+        })();
+
+        // 003: Primos - Factorización
+        (function() {
+            const c = setupCanvas('preview-003');
+            if (!c) return;
+            const { ctx, w, h } = c;
+
+            const primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37];
+            let highlight = 0;
+
+            function draw() {
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, w, h);
+
+                // Tree-like factorization
+                ctx.strokeStyle = '#334155';
+                ctx.lineWidth = 1;
+
+                // Central number
+                ctx.fillStyle = '#a855f7';
+                ctx.font = 'bold 14px JetBrains Mono';
+                ctx.textAlign = 'center';
+                ctx.fillText('600851475143', w/2, 20);
+
+                // Factor branches
+                const factors = [71, 839, 1471, 6857];
+                const startY = 35;
+
+                factors.forEach((f, i) => {
+                    const x = 30 + i * ((w - 60) / 3);
+                    const isHighlight = i === highlight;
+
+                    ctx.beginPath();
+                    ctx.moveTo(w/2, 25);
+                    ctx.lineTo(x, startY + 15);
+                    ctx.strokeStyle = isHighlight ? '#a855f7' : '#334155';
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.arc(x, startY + 25, 12, 0, Math.PI * 2);
+                    ctx.fillStyle = isHighlight ? '#a855f7' : '#1e1e2e';
+                    ctx.fill();
+                    ctx.strokeStyle = isHighlight ? '#c084fc' : '#4b5563';
+                    ctx.stroke();
+
+                    ctx.fillStyle = isHighlight ? '#fff' : '#9ca3af';
+                    ctx.font = '9px JetBrains Mono';
+                    ctx.fillText(f, x, startY + 28);
+                });
+
+                // Largest factor indicator
+                ctx.fillStyle = '#22c55e';
+                ctx.font = 'bold 11px JetBrains Mono';
+                ctx.fillText('↑ 6857', w - 35, h - 10);
+            }
+
+            draw();
+            setInterval(() => { highlight = (highlight + 1) % 4; draw(); }, 600);
+        })();
+
+        // 004: Palíndromos
+        (function() {
+            const c = setupCanvas('preview-004');
+            if (!c) return;
+            const { ctx, w, h } = c;
+
+            const palindromes = ['906609', '824428', '793397', '649946'];
+            let current = 0;
+            let charIndex = 0;
+
+            function draw() {
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, w, h);
+
+                const p = palindromes[current];
+                const charW = 18;
+                const startX = (w - p.length * charW) / 2;
+
+                for (let i = 0; i < p.length; i++) {
+                    const mirror = p.length - 1 - i;
+                    const isHighlight = i === charIndex || mirror === charIndex;
+                    const isPair = i <= charIndex && mirror >= p.length - 1 - charIndex;
+
+                    ctx.fillStyle = isPair ? 'rgba(59, 130, 246, 0.2)' : 'transparent';
+                    ctx.fillRect(startX + i * charW - 2, h/2 - 15, charW, 30);
+
+                    ctx.fillStyle = isHighlight ? '#3b82f6' : '#9ca3af';
+                    ctx.font = `${isHighlight ? 'bold ' : ''}16px JetBrains Mono`;
+                    ctx.textAlign = 'center';
+                    ctx.fillText(p[i], startX + i * charW + charW/2, h/2 + 5);
+                }
+
+                // Mirror line
+                ctx.strokeStyle = '#3b82f630';
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(w/2, h/2 - 25);
+                ctx.lineTo(w/2, h/2 + 25);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Formula
+                ctx.fillStyle = '#4b5563';
+                ctx.font = '9px JetBrains Mono';
+                ctx.fillText('913 × 993 = 906609', w/2, h - 12);
+            }
+
+            draw();
+            setInterval(() => {
+                charIndex++;
+                if (charIndex >= 3) {
+                    charIndex = 0;
+                    current = (current + 1) % palindromes.length;
+                }
+                draw();
+            }, 400);
+        })();
+
+        // 005: LCM - Divisibility grid
+        (function() {
+            const c = setupCanvas('preview-005');
+            if (!c) return;
+            const { ctx, w, h } = c;
+
+            let checkNum = 2520;
+            let divisor = 1;
+
+            function draw() {
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, w, h);
+
+                // Number being checked
+                ctx.fillStyle = '#3b82f6';
+                ctx.font = 'bold 16px JetBrains Mono';
+                ctx.textAlign = 'center';
+                ctx.fillText(checkNum.toLocaleString(), w/2, 22);
+
+                // Divisibility grid
+                const cols = 10;
+                const size = 16;
+                const gap = 4;
+                const startX = (w - cols * (size + gap)) / 2;
+                const startY = 38;
+
+                for (let i = 1; i <= 20; i++) {
+                    const row = Math.floor((i - 1) / cols);
+                    const col = (i - 1) % cols;
+                    const x = startX + col * (size + gap);
+                    const y = startY + row * (size + gap);
+
+                    const divides = checkNum % i === 0;
+                    const isChecking = i === divisor;
+
+                    ctx.fillStyle = isChecking ? '#fbbf24' : (divides ? '#22c55e' : '#ef4444');
+                    if (i > divisor && divisor < 20) ctx.fillStyle = '#1e1e2e';
+
+                    ctx.beginPath();
+                    ctx.arc(x + size/2, y + size/2, size/2 - 1, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = (i <= divisor || divisor >= 20) ? '#fff' : '#4b5563';
+                    ctx.font = '8px JetBrains Mono';
+                    ctx.fillText(i, x + size/2, y + size/2 + 3);
+                }
+            }
+
+            draw();
+            setInterval(() => {
+                divisor++;
+                if (divisor > 21) divisor = 1;
+                draw();
+            }, 200);
+        })();
+
+        // 006: Sum difference - Visual comparison
+        (function() {
+            const c = setupCanvas('preview-006');
+            if (!c) return;
+            const { ctx, w, h } = c;
+
+            let n = 3;
+
+            function draw() {
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, w, h);
+
+                const sumOfSquares = Array.from({length: n}, (_, i) => (i+1)**2).reduce((a,b) => a+b, 0);
+                const squareOfSum = Array.from({length: n}, (_, i) => i+1).reduce((a,b) => a+b, 0) ** 2;
+
+                const maxVal = Math.max(sumOfSquares, squareOfSum);
+                const barMaxH = h - 40;
+
+                // Sum of squares (left)
+                const leftH = (sumOfSquares / maxVal) * barMaxH;
+                ctx.fillStyle = '#3b82f6';
+                ctx.fillRect(w * 0.2, h - leftH - 20, 30, leftH);
+
+                ctx.fillStyle = '#60a5fa';
+                ctx.font = '9px JetBrains Mono';
+                ctx.textAlign = 'center';
+                ctx.fillText('Σn²', w * 0.2 + 15, h - 5);
+                ctx.fillText(sumOfSquares, w * 0.2 + 15, h - leftH - 25);
+
+                // Square of sum (right)
+                const rightH = (squareOfSum / maxVal) * barMaxH;
+                ctx.fillStyle = '#22c55e';
+                ctx.fillRect(w * 0.65, h - rightH - 20, 30, rightH);
+
+                ctx.fillStyle = '#4ade80';
+                ctx.fillText('(Σn)²', w * 0.65 + 15, h - 5);
+                ctx.fillText(squareOfSum, w * 0.65 + 15, h - rightH - 25);
+
+                // N indicator
+                ctx.fillStyle = '#fbbf24';
+                ctx.font = 'bold 12px JetBrains Mono';
+                ctx.fillText(`n = ${n}`, w/2, 15);
+
+                // Difference
+                ctx.fillStyle = '#f472b6';
+                ctx.font = '10px JetBrains Mono';
+                ctx.fillText(`Δ = ${squareOfSum - sumOfSquares}`, w/2, h - 5);
+            }
+
+            draw();
+            setInterval(() => { n = n >= 10 ? 1 : n + 1; draw(); }, 500);
+        })();
+
+        // 007: Prime finding
+        (function() {
+            const c = setupCanvas('preview-007');
+            if (!c) return;
+            const { ctx, w, h } = c;
+
+            function isPrime(n) {
+                if (n < 2) return false;
+                for (let i = 2; i * i <= n; i++) if (n % i === 0) return false;
+                return true;
+            }
+
+            let currentNum = 2;
+            let primeCount = 0;
+            const primes = [];
+
+            function draw() {
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, w, h);
+
+                // Progress bar
+                const progress = primeCount / 30;
+                ctx.fillStyle = '#1e1e2e';
+                ctx.fillRect(10, 10, w - 20, 8);
+                ctx.fillStyle = '#a855f7';
+                ctx.fillRect(10, 10, (w - 20) * progress, 8);
+
+                // Current check
+                ctx.fillStyle = isPrime(currentNum) ? '#a855f7' : '#4b5563';
+                ctx.font = 'bold 20px JetBrains Mono';
+                ctx.textAlign = 'center';
+                ctx.fillText(currentNum, w/2, h/2);
+
+                // Found primes
+                ctx.font = '8px JetBrains Mono';
+                ctx.fillStyle = '#c084fc';
+                const last8 = primes.slice(-8);
+                last8.forEach((p, i) => {
+                    ctx.fillText(p, 15 + i * 28, h - 15);
+                });
+
+                // Count
+                ctx.fillStyle = '#22c55e';
+                ctx.font = '10px JetBrains Mono';
+                ctx.textAlign = 'right';
+                ctx.fillText(`#${primeCount}`, w - 10, h - 10);
+            }
+
+            draw();
+            setInterval(() => {
+                currentNum++;
+                if (isPrime(currentNum)) {
+                    primeCount++;
+                    primes.push(currentNum);
+                }
+                if (primeCount > 30) {
+                    currentNum = 2;
+                    primeCount = 0;
+                    primes.length = 0;
+                }
+                draw();
+            }, 80);
+        })();
+
+        // 008: Sliding window
+        (function() {
+            const c = setupCanvas('preview-008');
+            if (!c) return;
+            const { ctx, w, h } = c;
+
+            const digits = '7316717653133062491922511967442657474235534919493496983520312774506326239578318016984801869478851843858615607891129494954595017379583319528532088055111254069874715852386305071569329096329522744304355766896648950445244523161731856403098711121722383113622298934233803081353362766142828064444866452387493035890729629049156044077239071381051585930796086670172427121883998797908792274921901699720888093776657273330010533678812202354218097512545405947522435258490771167055601360483958644670632441572215539753697817977846174064955149290862569321978468622482839722413756570560574902614079729686524145351004748216637048440319989000889524345065854122758866688116427171479924442928230863465674813919123162824586178664583591245665294765456828489128831426076900422421902267105562632111110937054421750694165896040807198403850962455444362981230987879927244284909188845801561660979191338754992005240636899125607176060588611646710940507754100225698315520005593572972571636269561882670428252483600823257530420752963450';
+            let windowStart = 0;
+            const windowSize = 13;
+
+            function draw() {
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, w, h);
+
+                const visibleDigits = 25;
+                const charW = w / visibleDigits;
+
+                for (let i = 0; i < visibleDigits; i++) {
+                    const idx = (windowStart + i) % digits.length;
+                    const inWindow = i >= 5 && i < 5 + windowSize;
+
+                    ctx.fillStyle = inWindow ? 'rgba(236, 72, 153, 0.2)' : 'transparent';
+                    ctx.fillRect(i * charW, h/2 - 15, charW, 30);
+
+                    ctx.fillStyle = inWindow ? '#f472b6' : '#4b5563';
+                    ctx.font = `${inWindow ? 'bold ' : ''}12px JetBrains Mono`;
+                    ctx.textAlign = 'center';
+                    ctx.fillText(digits[idx], i * charW + charW/2, h/2 + 4);
+                }
+
+                // Window bracket
+                ctx.strokeStyle = '#f472b6';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(5 * charW, h/2 - 18);
+                ctx.lineTo(5 * charW, h/2 - 22);
+                ctx.lineTo((5 + windowSize) * charW, h/2 - 22);
+                ctx.lineTo((5 + windowSize) * charW, h/2 - 18);
+                ctx.stroke();
+
+                // Product
+                let product = 1;
+                for (let i = 0; i < windowSize; i++) {
+                    product *= parseInt(digits[(windowStart + 5 + i) % digits.length]);
+                }
+
+                ctx.fillStyle = '#f472b6';
+                ctx.font = '9px JetBrains Mono';
+                ctx.fillText(`producto: ${product.toLocaleString()}`, w/2, h - 10);
+            }
+
+            draw();
+            setInterval(() => { windowStart = (windowStart + 1) % digits.length; draw(); }, 150);
+        })();
+
+        // 009: Pythagorean triple
+        (function() {
+            const c = setupCanvas('preview-009');
+            if (!c) return;
+            const { ctx, w, h } = c;
+
+            let a = 3, b = 4;
+
+            function draw() {
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, w, h);
+
+                const c_val = Math.sqrt(a*a + b*b);
+                const scale = 6;
+                const ox = 30, oy = h - 20;
+
+                // Triangle
+                ctx.beginPath();
+                ctx.moveTo(ox, oy);
+                ctx.lineTo(ox + a * scale, oy);
+                ctx.lineTo(ox + a * scale, oy - b * scale);
+                ctx.closePath();
+                ctx.strokeStyle = '#3b82f6';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Right angle marker
+                ctx.strokeStyle = '#4b5563';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(ox + a * scale - 8, oy - 8, 8, 8);
+
+                // Labels
+                ctx.fillStyle = '#60a5fa';
+                ctx.font = '10px JetBrains Mono';
+                ctx.textAlign = 'center';
+                ctx.fillText(`a=${a}`, ox + a * scale / 2, oy + 12);
+
+                ctx.fillStyle = '#4ade80';
+                ctx.save();
+                ctx.translate(ox + a * scale + 12, oy - b * scale / 2);
+                ctx.rotate(-Math.PI/2);
+                ctx.fillText(`b=${b}`, 0, 0);
+                ctx.restore();
+
+                ctx.fillStyle = '#f472b6';
+                ctx.fillText(`c=${c_val.toFixed(1)}`, ox + a * scale / 2 - 10, oy - b * scale / 2 - 5);
+
+                // Formula
+                ctx.fillStyle = '#fbbf24';
+                ctx.font = '9px JetBrains Mono';
+                ctx.textAlign = 'right';
+                ctx.fillText(`${a}² + ${b}² = ${a*a + b*b}`, w - 10, 15);
+                ctx.fillText(`a+b+c = ${a + b + Math.round(c_val)}`, w - 10, 28);
+            }
+
+            draw();
+            setInterval(() => {
+                a = a >= 12 ? 3 : a + 1;
+                b = a + 1;
+                draw();
+            }, 400);
+        })();
+
+        // 010: Sieve of Eratosthenes
+        (function() {
+            const c = setupCanvas('preview-010');
+            if (!c) return;
+            const { ctx, w, h } = c;
+
+            const limit = 100;
+            const sieve = new Array(limit + 1).fill(true);
+            sieve[0] = sieve[1] = false;
+            let currentPrime = 2;
+            let marking = 0;
+
+            function draw() {
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, w, h);
+
+                const cols = 20;
+                const size = 10;
+                const gap = 2;
+                const startX = (w - cols * (size + gap)) / 2;
+
+                for (let n = 1; n <= limit; n++) {
+                    const row = Math.floor((n - 1) / cols);
+                    const col = (n - 1) % cols;
+                    const x = startX + col * (size + gap);
+                    const y = 5 + row * (size + gap);
+
+                    let color = '#1e1e2e';
+                    if (sieve[n]) color = '#a855f7';
+                    if (!sieve[n] && n > 1) color = '#4b5563';
+                    if (n === currentPrime) color = '#22c55e';
+                    if (marking > 0 && n === currentPrime * marking) color = '#ef4444';
+
+                    ctx.fillStyle = color;
+                    ctx.fillRect(x, y, size, size);
+                }
+
+                // Sum indicator
+                const sum = sieve.reduce((acc, isPrime, n) => isPrime ? acc + n : acc, 0);
+                ctx.fillStyle = '#c084fc';
+                ctx.font = '9px JetBrains Mono';
+                ctx.textAlign = 'center';
+                ctx.fillText(`Σ primos = ${sum}`, w/2, h - 5);
+            }
+
+            draw();
+            setInterval(() => {
+                if (marking === 0) {
+                    // Find next prime
+                    do { currentPrime++; } while (currentPrime <= limit && !sieve[currentPrime]);
+                    if (currentPrime > Math.sqrt(limit)) currentPrime = 2;
+                    marking = 2;
+                } else {
+                    const composite = currentPrime * marking;
+                    if (composite <= limit) {
+                        sieve[composite] = false;
+                        marking++;
+                    } else {
+                        marking = 0;
+                    }
+                }
+                draw();
+            }, 50);
+        })();
+
+        // Filter functionality
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active', 'bg-gray-900', 'text-gray-300'));
+                btn.classList.add('active', 'bg-gray-900', 'text-gray-300');
+
+                const filter = btn.dataset.filter;
+                document.querySelectorAll('#problems-grid article').forEach(card => {
+                    if (filter === 'all' || card.dataset.category === filter) {
+                        card.parentElement.style.display = 'block';
+                    } else {
+                        card.parentElement.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

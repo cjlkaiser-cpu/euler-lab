@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#001 Múltiplos de 3 y 5 — Euler Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    <style>
+        :root {
+            --bg: #000000;
+            --bg-elevated: #0a0a0f;
+            --bg-card: #111118;
+            --border: #1a1a24;
+            --border-hover: #2a2a3a;
+            --text: #e8e8ed;
+            --text-secondary: #8888a0;
+            --text-muted: #505068;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-amber: #f59e0b;
+            --accent-purple: #a855f7;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .serif { font-family: 'Source Serif 4', Georgia, serif; }
+
+        /* Header */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* Level tabs */
+        .level-tabs {
+            display: flex;
+            gap: 2px;
+            background: var(--bg-elevated);
+            padding: 4px;
+            border-radius: 10px;
+        }
+
+        .level-tab {
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .level-tab:hover { color: var(--text-secondary); }
+
+        .level-tab.active {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .level-tab[data-level="2"].active { background: var(--accent-green); }
+        .level-tab[data-level="3"].active { background: var(--accent-amber); }
+        .level-tab[data-level="4"].active { background: var(--accent-purple); }
+
+        /* Content sections */
+        .level-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .level-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Code editor */
+        .code-editor {
+            position: relative;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 16px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .code-lang {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--accent-green);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .run-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .run-btn:hover { filter: brightness(1.1); }
+        .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .run-btn.running { background: var(--accent-amber); }
+
+        .code-textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 16px;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            resize: vertical;
+            outline: none;
+        }
+
+        .code-output {
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--text-secondary);
+            min-height: 40px;
+        }
+
+        .code-output.success { color: var(--accent-green); }
+        .code-output.error { color: #ef4444; }
+
+        /* Result box */
+        .result-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(34, 197, 94, 0.08) 100%);
+            border: 1px solid var(--accent-blue);
+            border-radius: 12px;
+        }
+
+        .result-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--accent-green);
+        }
+
+        /* Step cards */
+        .step-card {
+            display: flex;
+            gap: 16px;
+            padding: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            transition: border-color 0.2s;
+        }
+
+        .step-card:hover { border-color: var(--border-hover); }
+
+        .step-number {
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--accent-blue);
+        }
+
+        /* Math block */
+        .math-block {
+            padding: 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .math-formula {
+            font-family: 'Source Serif 4', Georgia, serif;
+            font-size: 20px;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .math-description {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* Performance table */
+        .perf-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .perf-table th, .perf-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .perf-table th {
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        .perf-table td {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+
+        .perf-bar {
+            height: 6px;
+            background: var(--bg-elevated);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+
+        .perf-bar-fill { height: 100%; border-radius: 3px; }
+        .perf-fast { background: var(--accent-green); }
+        .perf-slow { background: #ef4444; }
+
+        /* Concept tags */
+        .concept-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        /* Custom input */
+        .custom-input {
+            padding: 10px 14px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .custom-input:focus { border-color: var(--accent-blue); }
+
+        /* Pyodide status */
+        .pyodide-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+
+        .status-dot.loading { background: var(--accent-amber); animation: pulse 1s infinite; }
+        .status-dot.ready { background: var(--accent-green); }
+        .status-dot.error { background: #ef4444; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Inline code */
+        code:not(.code-textarea) {
+            padding: 2px 8px;
+            background: var(--bg-elevated);
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            color: var(--accent-amber);
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .level-tabs { flex-wrap: wrap; }
+            .level-tab { flex: 1; text-align: center; padding: 8px 12px; font-size: 12px; }
+            .result-box { flex-direction: column; text-align: center; gap: 8px; }
+            .step-card { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="max-w-3xl mx-auto px-5 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <nav class="text-xs text-gray-600 mb-1 mono">
+                        <a href="../../index.html" class="hover:text-blue-400 transition">Euler Lab</a>
+                        <span class="mx-1.5 text-gray-800">/</span>
+                        <span class="text-gray-500">#001</span>
+                    </nav>
+                    <h1 class="text-xl font-medium">Múltiplos de 3 y 5</h1>
+                </div>
+                <div class="pyodide-status mono">
+                    <span class="status-dot loading" id="pyodide-dot"></span>
+                    <span id="pyodide-text">Cargando Python...</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-5 py-8">
+        <!-- Problem statement -->
+        <section class="mb-10">
+            <div class="p-6 bg-gray-950 border border-gray-900 rounded-xl">
+                <p class="serif text-lg text-gray-300 leading-relaxed">
+                    Si listamos todos los números naturales menores que 10 que son múltiplos de 3 o 5,
+                    obtenemos 3, 5, 6 y 9. La suma de estos múltiplos es <strong class="text-white">23</strong>.
+                </p>
+                <p class="serif text-lg text-gray-300 mt-4">
+                    Encuentra la suma de todos los múltiplos de 3 o 5 menores que <strong class="text-white">1000</strong>.
+                </p>
+            </div>
+        </section>
+
+        <!-- Level tabs -->
+        <nav class="mb-8 flex justify-center">
+            <div class="level-tabs">
+                <button class="level-tab active" data-level="1">A mano</button>
+                <button class="level-tab" data-level="2">Fuerza bruta</button>
+                <button class="level-tab" data-level="3">Pythónico</button>
+                <button class="level-tab" data-level="4">Matemático</button>
+            </div>
+        </nav>
+
+        <!-- LEVEL 1: A mano -->
+        <section class="level-content active" id="level-1">
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Entendiendo el problema</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        Antes de escribir código, resolvamos el caso pequeño del enunciado para verificar que entendemos qué nos piden.
+                    </p>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h3 class="font-medium mb-1">Múltiplos de 3 menores que 10</h3>
+                            <p class="text-gray-500 text-sm"><code>3, 6, 9</code> — Son divisibles por 3 sin dejar resto</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h3 class="font-medium mb-1">Múltiplos de 5 menores que 10</h3>
+                            <p class="text-gray-500 text-sm"><code>5</code> — El 10 no cuenta porque no es menor que 10</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div>
+                            <h3 class="font-medium mb-1">Unión sin repetir</h3>
+                            <p class="text-gray-500 text-sm"><code>3, 5, 6, 9</code> — Ninguno se repite en este caso</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">4</div>
+                        <div>
+                            <h3 class="font-medium mb-1">Suma</h3>
+                            <p class="text-gray-500 text-sm"><code>3 + 5 + 6 + 9 = 23</code> — Coincide con el enunciado</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="math-block">
+                    <div class="math-formula">n mod 3 = 0 → n es divisible por 3</div>
+                    <div class="math-description">El operador módulo (%) devuelve el resto de la división</div>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">¿Por qué necesitamos código?</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        Hay <strong class="text-white">466</strong> números que cumplen la condición entre 1 y 999.
+                        Sumarlos manualmente sería tedioso y propenso a errores.
+                    </p>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Conceptos clave</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="concept-tag">🔢 Divisibilidad</span>
+                        <span class="concept-tag">🔄 Iteración</span>
+                        <span class="concept-tag">❓ Condicionales</span>
+                        <span class="concept-tag">➕ Acumulación</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEVEL 2: Fuerza bruta -->
+        <section class="level-content" id="level-2">
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">La estrategia</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        Recorrer todos los números del 0 al 999, comprobar si cada uno es múltiplo de 3 o de 5,
+                        y si lo es, sumarlo a un acumulador.
+                    </p>
+                </div>
+
+                <div class="p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl mb-6">
+                    <p class="text-blue-300 text-sm">
+                        <strong>Importante:</strong> No hay una única forma "correcta" de escribir esto.
+                        Aquí verás <strong>tres variantes</strong> que hacen exactamente lo mismo. Elige la que te resulte más clara.
+                    </p>
+                </div>
+
+                <!-- Variante A -->
+                <div>
+                    <h2 class="text-sm font-medium text-green-400 uppercase tracking-wide mb-3">Variante A: while True + break</h2>
+                    <p class="text-gray-400 text-sm mb-4">
+                        Un bucle infinito que rompemos manualmente cuando llegamos al límite. Muy explícita, ideal cuando la condición de salida es compleja.
+                    </p>
+                    <div class="code-editor">
+                        <div class="code-header">
+                            <span class="code-lang">Python</span>
+                            <button class="run-btn" onclick="runCode('code-varA')">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                Ejecutar
+                            </button>
+                        </div>
+                        <textarea id="code-varA" class="code-textarea" spellcheck="false" style="min-height: 280px;">suma = 0                        # Acumulador
+i = 0                           # Contador
+
+while True:                     # Bucle infinito
+    if i == 1000:               # ¿Llegamos al límite?
+        break                   # Sí → salimos del bucle
+
+    if i % 3 == 0 or i % 5 == 0:  # ¿Es múltiplo?
+        suma = suma + i         # Sí → lo sumamos
+
+    i = i + 1                   # Siguiente número
+
+print(suma)</textarea>
+                        <div class="code-output" id="output-varA">Pulsa "Ejecutar" para ver el resultado</div>
+                    </div>
+                </div>
+
+                <!-- Variante B -->
+                <div>
+                    <h2 class="text-sm font-medium text-green-400 uppercase tracking-wide mb-3">Variante B: while con condición</h2>
+                    <p class="text-gray-400 text-sm mb-4">
+                        La condición de salida va directamente en el while. Más limpio, sin break. Útil cuando no sabes cuántas vueltas darás.
+                    </p>
+                    <div class="code-editor">
+                        <div class="code-header">
+                            <span class="code-lang">Python</span>
+                            <button class="run-btn" onclick="runCode('code-varB')">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                Ejecutar
+                            </button>
+                        </div>
+                        <textarea id="code-varB" class="code-textarea" spellcheck="false" style="min-height: 220px;">suma = 0                        # Acumulador
+i = 0                           # Contador
+
+while i < 1000:                 # Mientras i sea menor que 1000
+    if i % 3 == 0 or i % 5 == 0:  # ¿Es múltiplo?
+        suma = suma + i         # Sí → lo sumamos
+    i = i + 1                   # Siguiente número
+
+print(suma)</textarea>
+                        <div class="code-output" id="output-varB">Pulsa "Ejecutar" para ver el resultado</div>
+                    </div>
+                </div>
+
+                <!-- Variante C -->
+                <div>
+                    <h2 class="text-sm font-medium text-green-400 uppercase tracking-wide mb-3">Variante C: for con range</h2>
+                    <p class="text-gray-400 text-sm mb-4">
+                        Python gestiona el contador automáticamente. Menos código, menos posibilidad de errores. <strong>La más común</strong> cuando conoces el rango exacto.
+                    </p>
+                    <div class="code-editor">
+                        <div class="code-header">
+                            <span class="code-lang">Python</span>
+                            <button class="run-btn" onclick="runCode('code-varC')">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                Ejecutar
+                            </button>
+                        </div>
+                        <textarea id="code-varC" class="code-textarea" spellcheck="false" style="min-height: 160px;">suma = 0                        # Acumulador
+
+for i in range(1000):           # i va de 0 a 999 automáticamente
+    if i % 3 == 0 or i % 5 == 0:  # ¿Es múltiplo?
+        suma = suma + i         # Sí → lo sumamos
+
+print(suma)</textarea>
+                        <div class="code-output" id="output-varC">Pulsa "Ejecutar" para ver el resultado</div>
+                    </div>
+                </div>
+
+                <!-- Comparativa de variantes -->
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">¿Cuál elegir?</h2>
+                    <div class="bg-gray-950 border border-gray-900 rounded-xl overflow-hidden">
+                        <table class="perf-table">
+                            <thead>
+                                <tr>
+                                    <th>Variante</th>
+                                    <th>Líneas</th>
+                                    <th>Ventaja</th>
+                                    <th>Cuándo usarla</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-gray-300">A: while True + break</td>
+                                    <td>11</td>
+                                    <td class="text-gray-400">Muy explícita</td>
+                                    <td class="text-gray-400">Condición de salida compleja</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-gray-300">B: while con condición</td>
+                                    <td>7</td>
+                                    <td class="text-gray-400">Clara y compacta</td>
+                                    <td class="text-gray-400">No sabes cuántas vueltas darás</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-gray-300">C: for con range</td>
+                                    <td>5</td>
+                                    <td class="text-gray-400">Menos errores</td>
+                                    <td class="text-gray-400">Conoces el rango exacto</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-gray-600 text-sm mt-3">
+                        Las tres dan el mismo resultado. La variante C es la más común en Python para este tipo de problemas.
+                    </p>
+                </div>
+
+                <div class="result-box">
+                    <span class="text-gray-400">Resultado (las tres variantes)</span>
+                    <span class="result-value">233168</span>
+                </div>
+
+                <!-- Conceptos explicados -->
+                <div class="space-y-4">
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Conceptos clave</h2>
+
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>suma = 0</code></h3>
+                            <p class="text-gray-500 text-sm"><strong>Variable acumuladora.</strong> Aquí guardamos la suma parcial. Es como una hoja donde apuntamos el resultado mientras trabajamos.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>while</code> vs <code>for</code></h3>
+                            <p class="text-gray-500 text-sm"><strong>Bucles.</strong> Ambos repiten código. <code>while</code> repite mientras una condición sea verdadera. <code>for</code> recorre una secuencia predefinida.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>range(1000)</code></h3>
+                            <p class="text-gray-500 text-sm"><strong>Generador de secuencia.</strong> Produce los números 0, 1, 2... 999. No incluye el 1000. Nos ahorra gestionar el contador manualmente.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">4</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>i % 3 == 0</code></h3>
+                            <p class="text-gray-500 text-sm"><strong>Operador módulo.</strong> El <code>%</code> devuelve el resto de la división. Si el resto es 0, significa que <code>i</code> es divisible por 3.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">5</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>or</code></h3>
+                            <p class="text-gray-500 text-sm"><strong>Operador lógico.</strong> Basta con que se cumpla UNA de las dos condiciones. Si es múltiplo de 3, entra. Si es de 5, también.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">6</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>suma = suma + i</code></h3>
+                            <p class="text-gray-500 text-sm"><strong>Acumulación.</strong> Tomamos el valor actual de <code>suma</code>, le añadimos <code>i</code>, y guardamos el nuevo valor. También se puede escribir <code>suma += i</code>.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">7</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>break</code></h3>
+                            <p class="text-gray-500 text-sm"><strong>Salida de bucle.</strong> Termina el bucle inmediatamente. Útil cuando la condición de salida es compleja o está en medio del código.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Conceptos de Python aprendidos</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="concept-tag">📦 Variables</span>
+                        <span class="concept-tag">🔁 while loop</span>
+                        <span class="concept-tag">🔄 for loop</span>
+                        <span class="concept-tag">❓ if / else</span>
+                        <span class="concept-tag">% Operador módulo</span>
+                        <span class="concept-tag">🚪 break</span>
+                        <span class="concept-tag">🔢 range()</span>
+                        <span class="concept-tag">🖨️ print()</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEVEL 3: Pythónico -->
+        <section class="level-content" id="level-3">
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Expresividad de Python</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        Python permite expresar la misma lógica de forma más compacta usando generadores y funciones integradas.
+                    </p>
+                </div>
+
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python</span>
+                        <button class="run-btn" onclick="runCode('code-pythonic')">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea id="code-pythonic" class="code-textarea" spellcheck="false">resultado = sum(i for i in range(1000) if i % 3 == 0 or i % 5 == 0)
+
+print(resultado)</textarea>
+                    <div class="code-output" id="output-pythonic">Pulsa "Ejecutar" para ver el resultado</div>
+                </div>
+
+                <div class="space-y-4">
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Desglose</h2>
+
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>range(1000)</code></h3>
+                            <p class="text-gray-500 text-sm">Genera 0, 1, 2... 999 bajo demanda (lazy evaluation).</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>i for i in range(1000) if ...</code></h3>
+                            <p class="text-gray-500 text-sm">Expresión generadora: produce solo los valores que pasan el filtro.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>sum(...)</code></h3>
+                            <p class="text-gray-500 text-sm">Función integrada que suma todos los elementos de un iterable.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-950 border border-gray-900 rounded-xl overflow-hidden">
+                    <table class="perf-table">
+                        <thead>
+                            <tr>
+                                <th>Aspecto</th>
+                                <th>Fuerza bruta</th>
+                                <th>Pythónico</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-gray-400">Iteración</td>
+                                <td><code>for</code> explícito</td>
+                                <td><code>range()</code></td>
+                            </tr>
+                            <tr>
+                                <td class="text-gray-400">Filtrado</td>
+                                <td><code>if</code> con bloque</td>
+                                <td><code>if</code> en generador</td>
+                            </tr>
+                            <tr>
+                                <td class="text-gray-400">Acumulación</td>
+                                <td><code>suma += i</code></td>
+                                <td><code>sum()</code></td>
+                            </tr>
+                            <tr>
+                                <td class="text-gray-400">Líneas</td>
+                                <td>5</td>
+                                <td>1</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="result-box">
+                    <span class="text-gray-400">Resultado</span>
+                    <span class="result-value">233168</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEVEL 4: Matemático -->
+        <section class="level-content" id="level-4">
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Solución O(1)</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        Las soluciones anteriores recorren todos los números. Existe una fórmula que da el resultado
+                        directamente, sin importar si el límite es 1000 o 1.000.000.000.000.
+                    </p>
+                </div>
+
+                <div class="math-block">
+                    <div class="math-formula">1 + 2 + 3 + ... + n = n × (n + 1) / 2</div>
+                    <div class="math-description">Fórmula de Gauss para la suma de los primeros n naturales</div>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Aplicación a múltiplos</h2>
+                    <p class="text-gray-400 leading-relaxed mb-4">
+                        Los múltiplos de 3 menores que 1000 son: 3, 6, 9... 999 = 3×1, 3×2, 3×3... 3×333
+                    </p>
+                    <div class="math-block">
+                        <div class="math-formula">3 + 6 + 9 + ... = 3 × (1 + 2 + ... + 333)</div>
+                        <div class="math-description">Factorizamos y aplicamos Gauss al paréntesis</div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Inclusión-exclusión</h2>
+                    <p class="text-gray-400 leading-relaxed mb-4">
+                        Si sumamos múltiplos de 3 y de 5 por separado, contamos dos veces los múltiplos de 15.
+                        Hay que restarlos una vez.
+                    </p>
+                    <div class="math-block">
+                        <div class="math-formula">Σ(3) + Σ(5) − Σ(15)</div>
+                        <div class="math-description">Principio de inclusión-exclusión</div>
+                    </div>
+                </div>
+
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python</span>
+                        <button class="run-btn" onclick="runCode('code-math')">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea id="code-math" class="code-textarea" spellcheck="false">def suma_multiplos(factor, limite):
+    # ¿Cuántos múltiplos del factor hay menores que el límite?
+    n = (limite - 1) // factor
+    # Fórmula de Gauss multiplicada por el factor
+    return factor * n * (n + 1) // 2
+
+resultado = (
+    suma_multiplos(3, 1000)
+    + suma_multiplos(5, 1000)
+    - suma_multiplos(15, 1000)
+)
+
+print(resultado)</textarea>
+                    <div class="code-output" id="output-math">Pulsa "Ejecutar" para ver el resultado</div>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Comparativa de rendimiento</h2>
+                    <div class="bg-gray-950 border border-gray-900 rounded-xl overflow-hidden">
+                        <table class="perf-table">
+                            <thead>
+                                <tr>
+                                    <th>Método</th>
+                                    <th>Límite 1.000</th>
+                                    <th>Límite 10⁹</th>
+                                    <th>Complejidad</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-gray-400">Fuerza bruta</td>
+                                    <td>~1.000 ops</td>
+                                    <td>~10⁹ ops</td>
+                                    <td class="text-red-400">O(n)</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-gray-400">Pythónico</td>
+                                    <td>~1.000 ops</td>
+                                    <td>~10⁹ ops</td>
+                                    <td class="text-red-400">O(n)</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-gray-400">Matemático</td>
+                                    <td>3 ops</td>
+                                    <td>3 ops</td>
+                                    <td class="text-green-400">O(1)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-500">Fuerza bruta (límite 10⁹)</span>
+                        <span class="mono text-gray-600">~30 segundos</span>
+                    </div>
+                    <div class="perf-bar"><div class="perf-bar-fill perf-slow" style="width: 100%"></div></div>
+
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-500">Matemático (límite 10⁹)</span>
+                        <span class="mono text-gray-600">~0.0001 segundos</span>
+                    </div>
+                    <div class="perf-bar"><div class="perf-bar-fill perf-fast" style="width: 0.5%"></div></div>
+                </div>
+
+                <div class="result-box">
+                    <span class="text-gray-400">Resultado</span>
+                    <span class="result-value">233168</span>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Conceptos aprendidos</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="concept-tag">📐 Fórmula de Gauss</span>
+                        <span class="concept-tag">∩ Inclusión-exclusión</span>
+                        <span class="concept-tag">🎯 Funciones</span>
+                        <span class="concept-tag">⏱️ Complejidad O()</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Try with custom limit -->
+        <section class="mt-12 pt-8 border-t border-gray-900">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Prueba con otro límite</h2>
+            <div class="flex gap-3 items-center flex-wrap">
+                <input type="number" id="custom-limit" class="custom-input w-40" value="10000" min="1" max="1000000000">
+                <button class="run-btn" onclick="runCustom()">Calcular</button>
+                <span id="custom-result" class="mono text-lg text-green-400"></span>
+            </div>
+        </section>
+
+        <!-- Navigation -->
+        <footer class="mt-16 pt-8 border-t border-gray-900 flex justify-between items-center">
+            <a href="../../index.html" class="text-gray-500 hover:text-white transition text-sm">← Volver al índice</a>
+            <a href="../002/index.html" class="text-gray-500 hover:text-white transition text-sm">Problema 2: Fibonacci →</a>
+        </footer>
+    </main>
+
+    <script>
+        // Level tabs
+        document.querySelectorAll('.level-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const level = tab.dataset.level;
+
+                document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                document.querySelectorAll('.level-content').forEach(c => c.classList.remove('active'));
+                document.getElementById(`level-${level}`).classList.add('active');
+            });
+        });
+
+        // Pyodide
+        let pyodide = null;
+
+        async function initPyodide() {
+            const dot = document.getElementById('pyodide-dot');
+            const text = document.getElementById('pyodide-text');
+
+            try {
+                pyodide = await loadPyodide();
+                dot.classList.remove('loading');
+                dot.classList.add('ready');
+                text.textContent = 'Python listo';
+            } catch (e) {
+                dot.classList.remove('loading');
+                dot.classList.add('error');
+                text.textContent = 'Error cargando Python';
+                console.error(e);
+            }
+        }
+
+        initPyodide();
+
+        async function runCode(textareaId) {
+            if (!pyodide) {
+                alert('Python aún está cargando. Espera un momento.');
+                return;
+            }
+
+            const textarea = document.getElementById(textareaId);
+            // Extract output ID: 'code-varA' -> 'output-varA', 'code-pythonic' -> 'output-pythonic'
+            const outputId = 'output-' + textareaId.replace('code-', '');
+            const output = document.getElementById(outputId);
+            const btn = textarea.closest('.code-editor').querySelector('.run-btn');
+
+            btn.disabled = true;
+            btn.classList.add('running');
+            btn.innerHTML = '<svg class="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/></svg> Ejecutando...';
+            output.className = 'code-output';
+            output.textContent = 'Ejecutando...';
+
+            try {
+                // Redirect stdout
+                pyodide.runPython(`
+import sys
+from io import StringIO
+sys.stdout = StringIO()
+`);
+
+                pyodide.runPython(textarea.value);
+
+                const stdout = pyodide.runPython('sys.stdout.getvalue()');
+                output.textContent = stdout || '(sin salida)';
+                output.classList.add('success');
+            } catch (e) {
+                output.textContent = e.message;
+                output.classList.add('error');
+            }
+
+            btn.disabled = false;
+            btn.classList.remove('running');
+            btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Ejecutar';
+        }
+
+        async function runCustom() {
+            if (!pyodide) {
+                alert('Python aún está cargando. Espera un momento.');
+                return;
+            }
+
+            const limit = parseInt(document.getElementById('custom-limit').value);
+            const result = document.getElementById('custom-result');
+
+            if (isNaN(limit) || limit < 1) {
+                result.textContent = 'Introduce un número válido';
+                result.style.color = '#ef4444';
+                return;
+            }
+
+            try {
+                // Use O(1) solution for large numbers
+                const code = `
+def suma_multiplos(factor, limite):
+    n = (limite - 1) // factor
+    return factor * n * (n + 1) // 2
+
+suma_multiplos(3, ${limit}) + suma_multiplos(5, ${limit}) - suma_multiplos(15, ${limit})
+`;
+                const res = pyodide.runPython(code);
+                result.textContent = `= ${res.toLocaleString()}`;
+                result.style.color = '#22c55e';
+            } catch (e) {
+                result.textContent = 'Error: ' + e.message;
+                result.style.color = '#ef4444';
+            }
+        }
+    </script>
+</body>
+</html>
