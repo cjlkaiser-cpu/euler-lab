@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#014 Secuencia Collatz más Larga — Euler Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    <style>
+        :root {
+            --bg: #000000;
+            --bg-elevated: #0a0a0f;
+            --bg-card: #111118;
+            --border: #1a1a24;
+            --border-hover: #2a2a3a;
+            --text: #e8e8ed;
+            --text-secondary: #8888a0;
+            --text-muted: #505068;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-amber: #f59e0b;
+            --accent-purple: #a855f7;
+            --accent-red: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .serif { font-family: 'Source Serif 4', Georgia, serif; }
+
+        header { position: sticky; top: 0; z-index: 50; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+
+        .level-tabs { display: flex; gap: 2px; background: var(--bg-elevated); padding: 4px; border-radius: 10px; }
+        .level-tab { padding: 8px 16px; font-size: 13px; font-weight: 500; color: var(--text-muted); background: transparent; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-family: 'JetBrains Mono', monospace; }
+        .level-tab:hover { color: var(--text-secondary); }
+        .level-tab.active { background: var(--accent-blue); color: white; }
+        .level-tab[data-level="2"].active { background: var(--accent-green); }
+        .level-tab[data-level="3"].active { background: var(--accent-purple); }
+
+        .level-content { display: none; animation: fadeIn 0.3s ease; }
+        .level-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .code-editor { position: relative; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .code-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: var(--bg-card); border-bottom: 1px solid var(--border); }
+        .code-lang { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent-green); text-transform: uppercase; letter-spacing: 0.5px; }
+        .run-btn { display: flex; align-items: center; gap: 6px; padding: 6px 14px; background: var(--accent-blue); color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .run-btn:hover { filter: brightness(1.1); }
+        .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .run-btn.running { background: var(--accent-amber); }
+        .code-textarea { width: 100%; min-height: 200px; padding: 16px; background: transparent; border: none; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.7; resize: vertical; outline: none; }
+        .code-output { padding: 12px 16px; background: var(--bg-card); border-top: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-secondary); min-height: 40px; }
+        .code-output.success { color: var(--accent-green); }
+        .code-output.error { color: #ef4444; }
+
+        .result-box { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(34, 197, 94, 0.08) 100%); border: 1px solid var(--accent-blue); border-radius: 12px; }
+        .result-value { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 600; color: var(--accent-green); }
+
+        .math-block { padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; text-align: center; }
+        .math-formula { font-family: 'Source Serif 4', Georgia, serif; font-size: 20px; color: var(--text); margin-bottom: 8px; }
+        .math-description { font-size: 13px; color: var(--text-muted); }
+
+        .concept-tag { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
+
+        .pyodide-status { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--bg-card); border-radius: 8px; font-size: 12px; color: var(--text-muted); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+        .status-dot.loading { background: var(--accent-amber); animation: pulse 1s infinite; }
+        .status-dot.ready { background: var(--accent-green); }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        code:not(.code-textarea) { padding: 2px 8px; background: var(--bg-elevated); border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.9em; color: var(--accent-amber); }
+
+        .perf-table { width: 100%; border-collapse: collapse; }
+        .perf-table th, .perf-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+        .perf-table th { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+        .perf-table td { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+        .perf-bar { height: 6px; background: var(--bg-elevated); border-radius: 3px; margin-top: 4px; overflow: hidden; }
+        .perf-bar-fill { height: 100%; border-radius: 3px; }
+        .perf-slow { background: linear-gradient(90deg, #ef4444, #f97316); }
+        .perf-fast { background: linear-gradient(90deg, #22c55e, #10b981); }
+
+        .sequence-visual {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            padding: 16px;
+            background: var(--bg-elevated);
+            border-radius: 12px;
+            align-items: center;
+        }
+
+        .seq-num {
+            padding: 4px 8px;
+            background: var(--accent-blue);
+            color: white;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+        }
+
+        .seq-num.even { background: var(--accent-green); }
+        .seq-num.odd { background: var(--accent-amber); }
+        .seq-num.end { background: var(--accent-purple); }
+
+        .seq-arrow {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .tree-visual {
+            padding: 20px;
+            background: var(--bg-elevated);
+            border-radius: 12px;
+            overflow-x: auto;
+        }
+
+        .cache-demo {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 8px;
+            padding: 16px;
+            background: var(--bg-elevated);
+            border-radius: 8px;
+        }
+
+        .cache-item {
+            padding: 8px;
+            background: var(--bg-card);
+            border-radius: 6px;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+        }
+
+        .cache-item .key { color: var(--accent-blue); }
+        .cache-item .value { color: var(--accent-green); }
+        .cache-item.hit { border: 1px solid var(--accent-green); background: rgba(34, 197, 94, 0.1); }
+    </style>
+</head>
+<body>
+    <header class="px-6 py-4">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-6">
+                <a href="../../index.html" class="text-sm text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
+                    ← Euler Lab
+                </a>
+                <div class="flex items-center gap-3">
+                    <span class="mono text-lg text-[var(--accent-blue)]">#014</span>
+                    <h1 class="text-lg font-medium">Secuencia Collatz más Larga</h1>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="pyodide-status">
+                    <div class="status-dot" id="pyodideStatus"></div>
+                    <span id="pyodideText">Cargando Python...</span>
+                </div>
+                <div class="flex gap-2">
+                    <a href="../013/index.html" class="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--border)] hover:border-[var(--border-hover)]">← 013</a>
+                    <a href="../015/index.html" class="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--border)] hover:border-[var(--border-hover)]">015 →</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-8">
+        <!-- Enunciado -->
+        <div class="mb-8 p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 w-10 h-10 flex items-center justify-content-center rounded-lg bg-[var(--accent-blue)]/10 text-[var(--accent-blue)]">
+                    <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <div class="space-y-3">
+                    <h2 class="text-lg font-medium">Longest Collatz Sequence</h2>
+                    <p class="text-[var(--text-secondary)] leading-relaxed">
+                        La secuencia de Collatz sigue estas reglas: si n es <strong class="text-white">par</strong>, divide entre 2;
+                        si n es <strong class="text-white">impar</strong>, multiplica por 3 y suma 1.
+                        <br><br>
+                        ¿Qué número inicial <strong class="text-white">menor que un millón</strong> produce la cadena más larga?
+                    </p>
+                    <div class="flex items-center gap-6 pt-2">
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-amber)]">●</span>
+                            Memoización
+                        </span>
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-purple)]">●</span>
+                            Subproblemas solapados
+                        </span>
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-green)]">●</span>
+                            Caché
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs de niveles -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="level-tabs">
+                <button class="level-tab active" data-level="1">Nivel 1: Entendimiento</button>
+                <button class="level-tab" data-level="2">Nivel 2: Fuerza bruta</button>
+                <button class="level-tab" data-level="3">Nivel 3: Memoización</button>
+            </div>
+        </div>
+
+        <!-- NIVEL 1 -->
+        <div class="level-content active" id="level1">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-blue)] flex items-center justify-center text-sm">1</span>
+                        La Conjetura de Collatz
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        También llamada "problema 3n+1", es uno de los problemas abiertos más famosos de las matemáticas.
+                        <strong>Nadie ha demostrado</strong> que siempre llegue a 1, pero tampoco se ha encontrado un contraejemplo.
+                    </p>
+                </div>
+
+                <!-- Las reglas -->
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="math-block">
+                        <div class="math-formula serif">n → n / 2</div>
+                        <div class="math-description">Si n es <span class="text-[var(--accent-green)]">par</span></div>
+                    </div>
+                    <div class="math-block">
+                        <div class="math-formula serif">n → 3n + 1</div>
+                        <div class="math-description">Si n es <span class="text-[var(--accent-amber)]">impar</span></div>
+                    </div>
+                </div>
+
+                <!-- Ejemplo visual: secuencia de 13 -->
+                <div class="space-y-4">
+                    <h4 class="font-medium">Ejemplo: Secuencia comenzando en 13</h4>
+                    <div class="sequence-visual" id="seq13">
+                        <!-- Se llena con JavaScript -->
+                    </div>
+                    <p class="text-sm text-[var(--text-muted)]">
+                        <span class="text-[var(--accent-amber)]">●</span> Impar (×3+1)
+                        <span class="ml-4 text-[var(--accent-green)]">●</span> Par (÷2)
+                        <span class="ml-4 text-[var(--accent-purple)]">●</span> Fin
+                    </p>
+                </div>
+
+                <!-- Por qué es difícil -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-blue)]">¿Por qué es un problema abierto?</h4>
+                    <div class="space-y-3 text-[var(--text-secondary)]">
+                        <p>
+                            La secuencia es <strong>caótica</strong>. Números cercanos pueden tener comportamientos muy diferentes:
+                        </p>
+                        <div class="grid md:grid-cols-2 gap-4 mt-4">
+                            <div class="p-3 bg-[var(--bg-elevated)] rounded-lg">
+                                <span class="mono text-[var(--accent-blue)]">26</span> → 11 pasos
+                            </div>
+                            <div class="p-3 bg-[var(--bg-elevated)] rounded-lg">
+                                <span class="mono text-[var(--accent-amber)]">27</span> → 111 pasos (¡10x más!)
+                            </div>
+                        </div>
+                        <p class="text-sm text-[var(--text-muted)] mt-4">
+                            Erdős ofreció $500 por una demostración. Dijo: "Las matemáticas aún no están listas para este tipo de problemas."
+                        </p>
+                    </div>
+                </div>
+
+                <!-- El problema de subproblemas solapados -->
+                <div class="space-y-4">
+                    <h4 class="font-medium text-[var(--accent-purple)]">El Problema: Trabajo Repetido</h4>
+                    <p class="text-[var(--text-secondary)]">
+                        Si calculamos las secuencias para 13, 26, 40, 80... ¡repetimos mucho trabajo!
+                    </p>
+                </div>
+
+                <div class="tree-visual">
+                    <svg viewBox="0 0 600 200" class="w-full">
+                        <!-- Nodos -->
+                        <g font-family="JetBrains Mono" font-size="12" text-anchor="middle">
+                            <!-- Nivel 1 -->
+                            <circle cx="100" cy="30" r="20" fill="#3b82f6"/>
+                            <text x="100" y="34" fill="white">13</text>
+
+                            <circle cx="300" cy="30" r="20" fill="#3b82f6"/>
+                            <text x="300" y="34" fill="white">26</text>
+
+                            <circle cx="500" cy="30" r="20" fill="#3b82f6"/>
+                            <text x="500" y="34" fill="white">80</text>
+
+                            <!-- Nivel 2 -->
+                            <circle cx="100" cy="90" r="20" fill="#f59e0b"/>
+                            <text x="100" y="94" fill="white">40</text>
+
+                            <circle cx="300" cy="90" r="20" fill="#22c55e"/>
+                            <text x="300" y="94" fill="white">13</text>
+
+                            <circle cx="500" cy="90" r="20" fill="#22c55e"/>
+                            <text x="500" y="94" fill="white">40</text>
+
+                            <!-- Nivel 3 -->
+                            <circle cx="100" cy="150" r="20" fill="#22c55e"/>
+                            <text x="100" y="154" fill="white">20</text>
+
+                            <circle cx="300" cy="150" r="20" fill="#f59e0b"/>
+                            <text x="300" y="154" fill="white">40</text>
+
+                            <circle cx="500" cy="150" r="20" fill="#22c55e"/>
+                            <text x="500" y="154" fill="white">20</text>
+
+                            <!-- Flechas -->
+                            <defs>
+                                <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                    <path d="M0,0 L0,6 L9,3 z" fill="#505068"/>
+                                </marker>
+                            </defs>
+
+                            <line x1="100" y1="50" x2="100" y2="65" stroke="#505068" marker-end="url(#arrow)"/>
+                            <line x1="300" y1="50" x2="300" y2="65" stroke="#505068" marker-end="url(#arrow)"/>
+                            <line x1="500" y1="50" x2="500" y2="65" stroke="#505068" marker-end="url(#arrow)"/>
+
+                            <line x1="100" y1="110" x2="100" y2="125" stroke="#505068" marker-end="url(#arrow)"/>
+                            <line x1="300" y1="110" x2="300" y2="125" stroke="#505068" marker-end="url(#arrow)"/>
+                            <line x1="500" y1="110" x2="500" y2="125" stroke="#505068" marker-end="url(#arrow)"/>
+
+                            <!-- Conexiones de repetición -->
+                            <path d="M 120 90 Q 200 60 280 90" stroke="#ef4444" stroke-width="2" fill="none" stroke-dasharray="4"/>
+                            <path d="M 120 150 Q 300 180 480 150" stroke="#ef4444" stroke-width="2" fill="none" stroke-dasharray="4"/>
+                        </g>
+
+                        <!-- Leyenda -->
+                        <text x="200" y="195" font-size="10" fill="#ef4444" font-family="Inter">← Trabajo repetido</text>
+                    </svg>
+                </div>
+
+                <div class="p-5 bg-[var(--accent-purple)]/10 border border-[var(--accent-purple)]/30 rounded-xl">
+                    <h4 class="font-medium mb-2 text-[var(--accent-purple)]">El Insight: Memoización</h4>
+                    <p class="text-sm text-[var(--text-secondary)]">
+                        Si ya calculamos que <code>collatz(40) = 9 pasos</code>, ¿por qué calcularlo de nuevo?
+                        <br><br>
+                        <strong>Memoización</strong> = guardar resultados para no recalcular.
+                        Es la base de la <em>programación dinámica</em>.
+                    </p>
+                </div>
+
+                <!-- Resultado -->
+                <div class="result-box">
+                    <div>
+                        <div class="text-sm text-[var(--text-muted)] mb-1">Número inicial</div>
+                        <div class="result-value">837,799</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-[var(--text-muted)] mb-1">Longitud de cadena</div>
+                        <div class="mono text-lg">525 pasos</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NIVEL 2 -->
+        <div class="level-content" id="level2">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-green)] flex items-center justify-center text-sm">2</span>
+                        Fuerza Bruta (Sin Caché)
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        La solución directa: para cada número del 1 al 999,999, calcular la longitud de su secuencia completa.
+                        <strong class="text-[var(--accent-red)]">Problema</strong>: repetimos muchísimos cálculos.
+                    </p>
+                </div>
+
+                <!-- Código fuerza bruta -->
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — Fuerza bruta (lento)</span>
+                        <button class="run-btn" onclick="runCode('code2', 'output2')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code2">def collatz_length(n):
+    """
+    Calcula la longitud de la secuencia Collatz para n.
+    SIN memoización - recalcula todo cada vez.
+    """
+    length = 1  # Contamos el número inicial
+
+    while n != 1:
+        if n % 2 == 0:
+            n = n // 2      # Par: dividir entre 2
+        else:
+            n = 3 * n + 1   # Impar: multiplicar por 3 y sumar 1
+        length += 1
+
+    return length
+
+# Para demostrar, usamos un límite pequeño (10,000 en vez de 1,000,000)
+# porque sin caché es MUY lento
+LIMIT = 10_000
+
+max_length = 0
+max_start = 0
+
+for start in range(1, LIMIT):
+    length = collatz_length(start)
+    if length > max_length:
+        max_length = length
+        max_start = start
+
+print(f"Límite: {LIMIT:,}")
+print(f"Número con cadena más larga: {max_start}")
+print(f"Longitud de la cadena: {max_length}")
+print()
+print("⚠️ Con 1,000,000 esto tardaría ~30 segundos")
+print("   porque recalculamos los mismos valores miles de veces")</textarea>
+                    <div class="code-output" id="output2">// Output aparecerá aquí</div>
+                </div>
+
+                <!-- Explicación del problema -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-red)]">¿Por qué es lento?</h4>
+                    <p class="text-[var(--text-secondary)] mb-4">
+                        Cuando calculamos <code>collatz_length(26)</code>, pasamos por 40, 20, 10, 5, 16, 8, 4, 2, 1.
+                        <br><br>
+                        Pero cuando calculamos <code>collatz_length(40)</code>, ¡repetimos exactamente lo mismo desde 40!
+                    </p>
+                    <div class="p-4 bg-[var(--bg-elevated)] rounded-lg mono text-sm">
+                        <p class="text-[var(--text-muted)]"># Trabajo repetido:</p>
+                        <p>collatz(26): 26 → 13 → <span class="text-[var(--accent-red)]">40 → 20 → 10 → 5 → 16 → 8 → 4 → 2 → 1</span></p>
+                        <p>collatz(40): <span class="text-[var(--accent-red)]">40 → 20 → 10 → 5 → 16 → 8 → 4 → 2 → 1</span></p>
+                        <p>collatz(80): 80 → <span class="text-[var(--accent-red)]">40 → 20 → 10 → 5 → 16 → 8 → 4 → 2 → 1</span></p>
+                    </div>
+                </div>
+
+                <!-- Complejidad -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">Análisis de complejidad</h4>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <div class="text-sm text-[var(--text-muted)] mb-1">Tiempo</div>
+                            <div class="mono text-lg">O(n × L)</div>
+                            <p class="text-xs text-[var(--text-muted)] mt-1">n números × L pasos promedio por secuencia</p>
+                        </div>
+                        <div>
+                            <div class="text-sm text-[var(--text-muted)] mb-1">Espacio</div>
+                            <div class="mono text-lg">O(1)</div>
+                            <p class="text-xs text-[var(--text-muted)] mt-1">Solo variables locales</p>
+                        </div>
+                    </div>
+                    <p class="text-sm text-[var(--text-muted)] mt-4">
+                        L puede ser muy grande (hasta ~500 para n < 1M) y muchas secuencias comparten sufijos.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- NIVEL 3 -->
+        <div class="level-content" id="level3">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-purple)] flex items-center justify-center text-sm">3</span>
+                        Memoización: Recordar para no Repetir
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        La idea es simple: cuando calculemos <code>collatz(40) = 9</code>, lo guardamos.
+                        La próxima vez que lleguemos a 40, devolvemos 9 directamente.
+                    </p>
+                </div>
+
+                <!-- Qué es memoización -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-purple)]">¿Qué es la Memoización?</h4>
+                    <div class="space-y-4 text-[var(--text-secondary)]">
+                        <p>
+                            <strong>Memoización</strong> viene de "memo" (memorando). Es una técnica de optimización que:
+                        </p>
+                        <ol class="list-decimal list-inside space-y-2 ml-4">
+                            <li>Guarda el resultado de funciones costosas</li>
+                            <li>Devuelve el resultado guardado cuando se llama con los mismos argumentos</li>
+                        </ol>
+                        <p class="mt-4">
+                            Es útil cuando una función:
+                        </p>
+                        <ul class="list-disc list-inside space-y-1 ml-4 text-sm">
+                            <li>Es <strong>pura</strong> (mismo input → mismo output)</li>
+                            <li>Se llama <strong>muchas veces</strong> con los mismos argumentos</li>
+                            <li>Es <strong>costosa</strong> de calcular</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Visualización del caché -->
+                <div class="space-y-4">
+                    <h4 class="font-medium">Así funciona el caché:</h4>
+                    <div class="cache-demo">
+                        <div class="cache-item">
+                            <div class="key">1</div>
+                            <div class="value">→ 1</div>
+                        </div>
+                        <div class="cache-item">
+                            <div class="key">2</div>
+                            <div class="value">→ 2</div>
+                        </div>
+                        <div class="cache-item hit">
+                            <div class="key">4</div>
+                            <div class="value">→ 3</div>
+                        </div>
+                        <div class="cache-item">
+                            <div class="key">8</div>
+                            <div class="value">→ 4</div>
+                        </div>
+                        <div class="cache-item hit">
+                            <div class="key">16</div>
+                            <div class="value">→ 5</div>
+                        </div>
+                        <div class="cache-item">
+                            <div class="key">5</div>
+                            <div class="value">→ 6</div>
+                        </div>
+                        <div class="cache-item">
+                            <div class="key">10</div>
+                            <div class="value">→ 7</div>
+                        </div>
+                        <div class="cache-item hit">
+                            <div class="key">20</div>
+                            <div class="value">→ 8</div>
+                        </div>
+                        <div class="cache-item hit">
+                            <div class="key">40</div>
+                            <div class="value">→ 9</div>
+                        </div>
+                        <div class="cache-item">
+                            <div class="key">13</div>
+                            <div class="value">→ 10</div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-[var(--text-muted)]">
+                        <span class="text-[var(--accent-green)]">■</span> Cache hits: cuando calculamos 26, llegamos a 40 y ya sabemos que son 9 pasos más.
+                    </p>
+                </div>
+
+                <!-- Implementación con dict manual -->
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — Con diccionario (caché manual)</span>
+                        <button class="run-btn" onclick="runCode('code3a', 'output3a')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code3a"># Caché: diccionario que guarda {número: longitud_secuencia}
+cache = {1: 1}  # Caso base: collatz(1) = 1 paso
+
+def collatz_length_memo(n):
+    """
+    Calcula la longitud de la secuencia Collatz con memoización.
+    Si ya calculamos este número, devolvemos el resultado guardado.
+    """
+    # ¿Ya lo calculamos?
+    if n in cache:
+        return cache[n]
+
+    # Calcular el siguiente número en la secuencia
+    if n % 2 == 0:
+        next_n = n // 2
+    else:
+        next_n = 3 * n + 1
+
+    # La longitud es 1 + longitud del resto de la secuencia
+    length = 1 + collatz_length_memo(next_n)
+
+    # Guardar en caché para futuras consultas
+    cache[n] = length
+
+    return length
+
+# Ahora podemos usar el límite completo
+LIMIT = 1_000_000
+
+max_length = 0
+max_start = 0
+
+for start in range(1, LIMIT):
+    length = collatz_length_memo(start)
+    if length > max_length:
+        max_length = length
+        max_start = start
+
+print(f"Número con cadena más larga: {max_start:,}")
+print(f"Longitud de la cadena: {max_length}")
+print(f"\nEntradas en caché: {len(cache):,}")
+print(f"(Sin caché habríamos calculado millones de pasos extra)")</textarea>
+                    <div class="code-output" id="output3a">// Output aparecerá aquí</div>
+                </div>
+
+                <!-- Implementación con @cache -->
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — Con @cache (forma pythónica)</span>
+                        <button class="run-btn" onclick="runCode('code3b', 'output3b')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code3b">from functools import cache
+
+@cache  # ¡Magia! Python guarda automáticamente los resultados
+def collatz_length(n):
+    """
+    Con @cache, Python automáticamente:
+    1. Revisa si ya llamamos a collatz_length(n)
+    2. Si sí, devuelve el resultado guardado
+    3. Si no, calcula, guarda, y devuelve
+    """
+    if n == 1:
+        return 1
+
+    if n % 2 == 0:
+        return 1 + collatz_length(n // 2)
+    else:
+        return 1 + collatz_length(3 * n + 1)
+
+# Encontrar el máximo
+LIMIT = 1_000_000
+
+max_start = max(range(1, LIMIT), key=collatz_length)
+max_length = collatz_length(max_start)
+
+print(f"Número con cadena más larga: {max_start:,}")
+print(f"Longitud de la cadena: {max_length}")
+
+# Ver estadísticas del caché
+info = collatz_length.cache_info()
+print(f"\nEstadísticas del caché:")
+print(f"  Hits (reutilizados): {info.hits:,}")
+print(f"  Misses (calculados): {info.misses:,}")
+print(f"  Hit ratio: {info.hits / (info.hits + info.misses) * 100:.1f}%")</textarea>
+                    <div class="code-output" id="output3b">// Output aparecerá aquí</div>
+                </div>
+
+                <!-- Comparación de rendimiento -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">Comparación de rendimiento</h4>
+                    <table class="perf-table">
+                        <thead>
+                            <tr>
+                                <th>Método</th>
+                                <th>Tiempo (1M números)</th>
+                                <th>Memoria</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Sin caché</td>
+                                <td>
+                                    ~30 segundos
+                                    <div class="perf-bar"><div class="perf-bar-fill perf-slow" style="width: 100%"></div></div>
+                                </td>
+                                <td>O(1)</td>
+                            </tr>
+                            <tr>
+                                <td>Con memoización</td>
+                                <td>
+                                    ~0.5 segundos
+                                    <div class="perf-bar"><div class="perf-bar-fill perf-fast" style="width: 1.6%"></div></div>
+                                </td>
+                                <td>O(n) caché</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="text-sm text-[var(--text-muted)] mt-4">
+                        La memoización es un <strong>trade-off</strong>: usamos más memoria para ahorrar tiempo.
+                        En este caso, ~2MB de caché nos ahorra ~30 segundos.
+                    </p>
+                </div>
+
+                <!-- Cuándo usar memoización -->
+                <div class="p-5 bg-[var(--accent-purple)]/10 border border-[var(--accent-purple)]/30 rounded-xl">
+                    <h4 class="font-medium mb-2 text-[var(--accent-purple)]">¿Cuándo usar memoización?</h4>
+                    <div class="text-sm text-[var(--text-secondary)] space-y-2">
+                        <p><strong>✓ Usar cuando:</strong></p>
+                        <ul class="list-disc list-inside ml-4 space-y-1">
+                            <li>La función es <strong>pura</strong> (sin efectos secundarios)</li>
+                            <li>Se llama con los <strong>mismos argumentos</strong> múltiples veces</li>
+                            <li>El cálculo es <strong>costoso</strong></li>
+                            <li>Tienes <strong>memoria suficiente</strong> para el caché</li>
+                        </ul>
+                        <p class="mt-3"><strong>✗ No usar cuando:</strong></p>
+                        <ul class="list-disc list-inside ml-4 space-y-1">
+                            <li>Cada llamada tiene argumentos <strong>únicos</strong></li>
+                            <li>El cálculo es <strong>trivial</strong> (O(1))</li>
+                            <li>La memoria es <strong>limitada</strong></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- @cache vs @lru_cache -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">@cache vs @lru_cache</h4>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="p-4 bg-[var(--bg-elevated)] rounded-lg">
+                            <p class="font-medium text-[var(--accent-green)] mb-2">@cache</p>
+                            <p class="text-sm text-[var(--text-secondary)]">
+                                Guarda <strong>todo</strong> para siempre.
+                                Ideal cuando la memoria no es problema.
+                            </p>
+                            <code class="text-xs mt-2 block">from functools import cache</code>
+                        </div>
+                        <div class="p-4 bg-[var(--bg-elevated)] rounded-lg">
+                            <p class="font-medium text-[var(--accent-amber)] mb-2">@lru_cache(maxsize=N)</p>
+                            <p class="text-sm text-[var(--text-secondary)]">
+                                Guarda los últimos N resultados (Least Recently Used).
+                                Ideal cuando la memoria es limitada.
+                            </p>
+                            <code class="text-xs mt-2 block">from functools import lru_cache</code>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conceptos aprendidos -->
+                <div class="flex flex-wrap gap-3">
+                    <span class="concept-tag"><span class="text-[var(--accent-purple)]">✓</span> Memoización</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-purple)]">✓</span> @cache decorator</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-purple)]">✓</span> Trade-off tiempo/memoria</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-purple)]">✓</span> Subproblemas solapados</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Generar secuencia Collatz
+        function collatzSequence(n) {
+            const seq = [n];
+            while (n !== 1) {
+                if (n % 2 === 0) {
+                    n = n / 2;
+                } else {
+                    n = 3 * n + 1;
+                }
+                seq.push(n);
+            }
+            return seq;
+        }
+
+        // Render secuencia visual
+        function renderSequence(containerId, start) {
+            const seq = collatzSequence(start);
+            const container = document.getElementById(containerId);
+
+            container.innerHTML = seq.map((n, i) => {
+                let cls = 'seq-num';
+                if (n === 1) cls += ' end';
+                else if (n % 2 === 0) cls += ' even';
+                else cls += ' odd';
+
+                const arrow = i < seq.length - 1 ? '<span class="seq-arrow">→</span>' : '';
+                return `<span class="${cls}">${n}</span>${arrow}`;
+            }).join('');
+        }
+
+        // Pyodide setup
+        let pyodide = null;
+
+        async function initPyodide() {
+            const status = document.getElementById('pyodideStatus');
+            const text = document.getElementById('pyodideText');
+            status.classList.add('loading');
+
+            try {
+                pyodide = await loadPyodide();
+                status.classList.remove('loading');
+                status.classList.add('ready');
+                text.textContent = 'Python listo';
+            } catch (e) {
+                text.textContent = 'Error cargando Python';
+                status.style.background = '#ef4444';
+            }
+        }
+
+        async function runCode(inputId, outputId) {
+            const code = document.getElementById(inputId).value;
+            const output = document.getElementById(outputId);
+            const btn = output.parentElement.querySelector('.run-btn');
+
+            if (!pyodide) {
+                output.textContent = 'Esperando Pyodide...';
+                return;
+            }
+
+            btn.classList.add('running');
+            btn.disabled = true;
+            output.textContent = 'Ejecutando...';
+            output.className = 'code-output';
+
+            try {
+                pyodide.runPython(`
+import sys
+from io import StringIO
+sys.stdout = StringIO()
+`);
+                await pyodide.runPythonAsync(code);
+                const stdout = pyodide.runPython('sys.stdout.getvalue()');
+                output.textContent = stdout || '(sin output)';
+                output.classList.add('success');
+            } catch (e) {
+                output.textContent = e.message;
+                output.classList.add('error');
+            }
+
+            btn.classList.remove('running');
+            btn.disabled = false;
+        }
+
+        // Level tabs
+        document.querySelectorAll('.level-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.level-content').forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(`level${tab.dataset.level}`).classList.add('active');
+            });
+        });
+
+        // Init
+        renderSequence('seq13', 13);
+        initPyodide();
+    </script>
+</body>
+</html>
