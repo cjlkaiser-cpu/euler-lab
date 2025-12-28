@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#016 Suma de Dígitos de una Potencia — Euler Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    <style>
+        :root {
+            --bg: #000000;
+            --bg-elevated: #0a0a0f;
+            --bg-card: #111118;
+            --border: #1a1a24;
+            --border-hover: #2a2a3a;
+            --text: #e8e8ed;
+            --text-secondary: #8888a0;
+            --text-muted: #505068;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-amber: #f59e0b;
+            --accent-purple: #a855f7;
+            --accent-red: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .serif { font-family: 'Source Serif 4', Georgia, serif; }
+
+        header { position: sticky; top: 0; z-index: 50; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+
+        .level-tabs { display: flex; gap: 2px; background: var(--bg-elevated); padding: 4px; border-radius: 10px; }
+        .level-tab { padding: 8px 16px; font-size: 13px; font-weight: 500; color: var(--text-muted); background: transparent; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-family: 'JetBrains Mono', monospace; }
+        .level-tab:hover { color: var(--text-secondary); }
+        .level-tab.active { background: var(--accent-blue); color: white; }
+        .level-tab[data-level="2"].active { background: var(--accent-green); }
+
+        .level-content { display: none; animation: fadeIn 0.3s ease; }
+        .level-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .code-editor { position: relative; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .code-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: var(--bg-card); border-bottom: 1px solid var(--border); }
+        .code-lang { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent-green); text-transform: uppercase; letter-spacing: 0.5px; }
+        .run-btn { display: flex; align-items: center; gap: 6px; padding: 6px 14px; background: var(--accent-blue); color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .run-btn:hover { filter: brightness(1.1); }
+        .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .run-btn.running { background: var(--accent-amber); }
+        .code-textarea { width: 100%; min-height: 200px; padding: 16px; background: transparent; border: none; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.7; resize: vertical; outline: none; }
+        .code-output { padding: 12px 16px; background: var(--bg-card); border-top: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-secondary); min-height: 40px; }
+        .code-output.success { color: var(--accent-green); }
+        .code-output.error { color: #ef4444; }
+
+        .result-box { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(34, 197, 94, 0.08) 100%); border: 1px solid var(--accent-blue); border-radius: 12px; }
+        .result-value { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 600; color: var(--accent-green); }
+
+        .math-block { padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; text-align: center; }
+        .math-formula { font-family: 'Source Serif 4', Georgia, serif; font-size: 20px; color: var(--text); margin-bottom: 8px; }
+        .math-description { font-size: 13px; color: var(--text-muted); }
+
+        .concept-tag { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
+
+        .pyodide-status { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--bg-card); border-radius: 8px; font-size: 12px; color: var(--text-muted); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+        .status-dot.loading { background: var(--accent-amber); animation: pulse 1s infinite; }
+        .status-dot.ready { background: var(--accent-green); }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        code:not(.code-textarea) { padding: 2px 8px; background: var(--bg-elevated); border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.9em; color: var(--accent-amber); }
+
+        .big-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            line-height: 1.6;
+            word-break: break-all;
+            padding: 16px;
+            background: var(--bg-elevated);
+            border-radius: 8px;
+            color: var(--text-secondary);
+        }
+
+        .big-number .digit {
+            display: inline;
+        }
+
+        .digit-highlight {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        .power-visual {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 16px;
+            background: var(--bg-elevated);
+            border-radius: 12px;
+        }
+
+        .power-step {
+            padding: 6px 12px;
+            background: var(--bg-card);
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+        }
+
+        .power-step.small { font-size: 11px; }
+        .power-step.overflow { background: var(--accent-red); color: white; }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .lang-card {
+            padding: 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .lang-card.success { border-color: var(--accent-green); }
+        .lang-card.fail { border-color: var(--accent-red); }
+
+        .lang-name {
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .lang-result {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <header class="px-6 py-4">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-6">
+                <a href="../../index.html" class="text-sm text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
+                    ← Euler Lab
+                </a>
+                <div class="flex items-center gap-3">
+                    <span class="mono text-lg text-[var(--accent-blue)]">#016</span>
+                    <h1 class="text-lg font-medium">Suma de Dígitos de una Potencia</h1>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="pyodide-status">
+                    <div class="status-dot" id="pyodideStatus"></div>
+                    <span id="pyodideText">Cargando Python...</span>
+                </div>
+                <div class="flex gap-2">
+                    <a href="../015/index.html" class="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--border)] hover:border-[var(--border-hover)]">← 015</a>
+                    <a href="../017/index.html" class="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--border)] hover:border-[var(--border-hover)]">017 →</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-8">
+        <!-- Enunciado -->
+        <div class="mb-8 p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 w-10 h-10 flex items-center justify-content-center rounded-lg bg-[var(--accent-blue)]/10 text-[var(--accent-blue)]">
+                    <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <div class="space-y-3">
+                    <h2 class="text-lg font-medium">Power Digit Sum</h2>
+                    <p class="text-[var(--text-secondary)] leading-relaxed">
+                        2<sup>15</sup> = 32768 y la suma de sus dígitos es 3 + 2 + 7 + 6 + 8 = <strong class="text-white">26</strong>.
+                        <br><br>
+                        ¿Cuál es la suma de los dígitos de <strong class="text-white">2<sup>1000</sup></strong>?
+                    </p>
+                    <div class="flex items-center gap-6 pt-2">
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-green)]">●</span>
+                            BigInt
+                        </span>
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-amber)]">●</span>
+                            Manipulación de dígitos
+                        </span>
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-purple)]">●</span>
+                            Potencias
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs de niveles -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="level-tabs">
+                <button class="level-tab active" data-level="1">Nivel 1: Entendimiento</button>
+                <button class="level-tab" data-level="2">Nivel 2: Implementación</button>
+            </div>
+        </div>
+
+        <!-- NIVEL 1 -->
+        <div class="level-content active" id="level1">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-blue)] flex items-center justify-center text-sm">1</span>
+                        ¿Qué tan grande es 2<sup>1000</sup>?
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        Empecemos por entender la magnitud del número que estamos manejando.
+                        Las potencias de 2 crecen <strong>exponencialmente</strong>.
+                    </p>
+                </div>
+
+                <!-- Crecimiento de potencias -->
+                <div class="space-y-4">
+                    <h4 class="font-medium">El crecimiento exponencial:</h4>
+                    <div class="power-visual">
+                        <div class="power-step">2¹ = 2</div>
+                        <div class="power-step">2² = 4</div>
+                        <div class="power-step">2³ = 8</div>
+                        <div class="power-step">2⁴ = 16</div>
+                        <div class="power-step">2⁵ = 32</div>
+                        <div class="power-step">2¹⁰ = 1,024</div>
+                        <div class="power-step small">2²⁰ = 1,048,576</div>
+                        <div class="power-step small">2³⁰ ≈ 1 billón</div>
+                        <div class="power-step small">2⁶⁴ ≈ 1.8×10¹⁹</div>
+                        <div class="power-step small overflow">2¹⁰⁰⁰ = ???</div>
+                    </div>
+                </div>
+
+                <!-- El número completo -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-purple)]">2<sup>1000</sup> tiene 302 dígitos</h4>
+                    <div class="big-number" id="bigNumber">
+                        <!-- Se llena con JavaScript -->
+                    </div>
+                    <p class="text-sm text-[var(--text-muted)] mt-4">
+                        Para ponerlo en perspectiva: hay aproximadamente 10⁸⁰ átomos en el universo observable.
+                        2¹⁰⁰⁰ ≈ 10³⁰¹ es un número <em>astronómicamente</em> mayor.
+                    </p>
+                </div>
+
+                <!-- El ejemplo paso a paso -->
+                <div class="space-y-4">
+                    <h4 class="font-medium">Ejemplo: suma de dígitos de 2<sup>15</sup></h4>
+                    <div class="p-4 bg-[var(--bg-elevated)] rounded-lg">
+                        <div class="mono text-lg mb-4">
+                            2<sup>15</sup> = <span class="digit-highlight">3</span><span class="digit-highlight">2</span><span class="digit-highlight">7</span><span class="digit-highlight">6</span><span class="digit-highlight">8</span>
+                        </div>
+                        <div class="mono text-sm text-[var(--text-secondary)]">
+                            Suma = 3 + 2 + 7 + 6 + 8 = <span class="text-[var(--accent-green)]">26</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- El problema en otros lenguajes -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-red)]">El Problema: Overflow</h4>
+                    <p class="text-[var(--text-secondary)] mb-4">
+                        En la mayoría de lenguajes, los enteros tienen un tamaño fijo (32 o 64 bits).
+                        Un <code>int64</code> solo puede almacenar hasta 2⁶³ - 1 ≈ 9.2×10¹⁸.
+                    </p>
+                    <div class="comparison-grid">
+                        <div class="lang-card fail">
+                            <div class="lang-name">
+                                <span class="text-[var(--accent-red)]">✗</span>
+                                C / C++
+                            </div>
+                            <div class="lang-result">
+                                <code>long long</code> máximo: 2⁶³<br>
+                                2¹⁰⁰⁰ → overflow
+                            </div>
+                        </div>
+                        <div class="lang-card fail">
+                            <div class="lang-name">
+                                <span class="text-[var(--accent-red)]">✗</span>
+                                Java
+                            </div>
+                            <div class="lang-result">
+                                <code>long</code> máximo: 2⁶³<br>
+                                Necesita <code>BigInteger</code>
+                            </div>
+                        </div>
+                        <div class="lang-card fail">
+                            <div class="lang-name">
+                                <span class="text-[var(--accent-red)]">✗</span>
+                                JavaScript
+                            </div>
+                            <div class="lang-result">
+                                <code>Number</code>: solo 53 bits precisos<br>
+                                Necesita <code>BigInt</code>
+                            </div>
+                        </div>
+                        <div class="lang-card success">
+                            <div class="lang-name">
+                                <span class="text-[var(--accent-green)]">✓</span>
+                                Python
+                            </div>
+                            <div class="lang-result">
+                                Enteros de precisión arbitraria<br>
+                                <code>2**1000</code> funciona directamente
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- El algoritmo -->
+                <div class="p-5 bg-[var(--accent-green)]/10 border border-[var(--accent-green)]/30 rounded-xl">
+                    <h4 class="font-medium mb-2 text-[var(--accent-green)]">El Algoritmo</h4>
+                    <ol class="list-decimal list-inside space-y-2 text-sm text-[var(--text-secondary)]">
+                        <li>Calcular 2¹⁰⁰⁰ (Python lo hace automáticamente con precisión infinita)</li>
+                        <li>Convertir el número a string para acceder a cada dígito</li>
+                        <li>Sumar los dígitos (convertidos de vuelta a int)</li>
+                    </ol>
+                </div>
+
+                <!-- Resultado -->
+                <div class="result-box">
+                    <div>
+                        <div class="text-sm text-[var(--text-muted)] mb-1">Suma de dígitos de 2¹⁰⁰⁰</div>
+                        <div class="result-value">1366</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-[var(--text-muted)] mb-1">Dígitos en 2¹⁰⁰⁰</div>
+                        <div class="mono text-lg">302</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NIVEL 2 -->
+        <div class="level-content" id="level2">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-green)] flex items-center justify-center text-sm">2</span>
+                        Implementación en Python
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        En Python, este problema es casi trivial gracias a los enteros de precisión arbitraria.
+                        Pero entendamos <em>exactamente</em> qué está pasando.
+                    </p>
+                </div>
+
+                <!-- Código principal -->
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — Solución directa</span>
+                        <button class="run-btn" onclick="runCode('code2', 'output2')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code2"># Paso 1: Calcular 2^1000
+# Python maneja enteros de tamaño arbitrario automáticamente
+power = 2 ** 1000
+
+# Paso 2: Convertir a string para acceder a cada dígito
+digits_str = str(power)
+
+# Paso 3: Sumar los dígitos
+# - Iteramos sobre cada carácter del string
+# - Lo convertimos a int
+# - Sumamos todo
+digit_sum = sum(int(d) for d in digits_str)
+
+print(f"2^1000 tiene {len(digits_str)} dígitos")
+print(f"Suma de dígitos: {digit_sum}")
+
+# Verificar con el ejemplo del problema
+print(f"\nVerificación: 2^15 = {2**15}")
+print(f"Suma de dígitos de 2^15: {sum(int(d) for d in str(2**15))}")</textarea>
+                    <div class="code-output" id="output2">// Output aparecerá aquí</div>
+                </div>
+
+                <!-- Desglose del one-liner -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">Desglose del Generator Expression</h4>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-[var(--bg-elevated)] rounded-lg mono text-sm">
+                            <p class="text-[var(--accent-green)]">sum(int(d) for d in str(2**1000))</p>
+                        </div>
+                        <div class="space-y-3 text-sm text-[var(--text-secondary)]">
+                            <div class="flex items-start gap-3">
+                                <span class="text-[var(--accent-blue)] font-medium">1.</span>
+                                <div>
+                                    <code>2**1000</code> → calcula la potencia (Python BigInt)
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <span class="text-[var(--accent-blue)] font-medium">2.</span>
+                                <div>
+                                    <code>str(...)</code> → convierte a string "107150860..."
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <span class="text-[var(--accent-blue)] font-medium">3.</span>
+                                <div>
+                                    <code>for d in ...</code> → itera sobre cada carácter: "1", "0", "7", ...
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <span class="text-[var(--accent-blue)] font-medium">4.</span>
+                                <div>
+                                    <code>int(d)</code> → convierte cada carácter a entero: 1, 0, 7, ...
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <span class="text-[var(--accent-blue)] font-medium">5.</span>
+                                <div>
+                                    <code>sum(...)</code> → suma todos los valores generados
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Por qué generator y no lista -->
+                <div class="p-5 bg-[var(--accent-amber)]/10 border border-[var(--accent-amber)]/30 rounded-xl">
+                    <h4 class="font-medium mb-2 text-[var(--accent-amber)]">¿Por qué Generator y no Lista?</h4>
+                    <p class="text-sm text-[var(--text-secondary)] mb-3">
+                        Observa la diferencia:
+                    </p>
+                    <div class="grid md:grid-cols-2 gap-4 mono text-xs">
+                        <div class="p-3 bg-[var(--bg-elevated)] rounded-lg">
+                            <p class="text-[var(--accent-red)]"># Lista (crea 302 elementos en memoria)</p>
+                            <p>sum([int(d) for d in str(2**1000)])</p>
+                        </div>
+                        <div class="p-3 bg-[var(--bg-elevated)] rounded-lg">
+                            <p class="text-[var(--accent-green)]"># Generator (genera uno a uno)</p>
+                            <p>sum(int(d) for d in str(2**1000))</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-[var(--text-muted)] mt-3">
+                        Para 302 dígitos la diferencia es mínima, pero es un buen hábito usar generators
+                        cuando no necesitas la lista completa.
+                    </p>
+                </div>
+
+                <!-- Variante con bucle explícito -->
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — Con bucle explícito</span>
+                        <button class="run-btn" onclick="runCode('code2b', 'output2b')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code2b">def power_digit_sum(base, exponent):
+    """
+    Calcula la suma de dígitos de base^exponent.
+
+    Esta versión usa un bucle explícito para mayor claridad.
+    """
+    # Calcular la potencia
+    number = base ** exponent
+
+    # Sumar dígitos uno por uno
+    total = 0
+    for digit_char in str(number):
+        digit_value = int(digit_char)
+        total += digit_value
+
+    return total
+
+# Resolver el problema
+result = power_digit_sum(2, 1000)
+print(f"Suma de dígitos de 2^1000: {result}")
+
+# Probar con otros valores
+print("\nOtras potencias de 2:")
+for exp in [10, 15, 100, 500]:
+    print(f"  2^{exp}: suma = {power_digit_sum(2, exp)}")</textarea>
+                    <div class="code-output" id="output2b">// Output aparecerá aquí</div>
+                </div>
+
+                <!-- Alternativa sin convertir a string -->
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — Sin convertir a string (matemático)</span>
+                        <button class="run-btn" onclick="runCode('code2c', 'output2c')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code2c">def digit_sum_math(n):
+    """
+    Suma de dígitos usando operaciones matemáticas.
+
+    En vez de convertir a string, extraemos dígitos con:
+    - n % 10  → último dígito
+    - n // 10 → elimina el último dígito
+    """
+    total = 0
+
+    while n > 0:
+        last_digit = n % 10    # Extraer último dígito
+        total += last_digit    # Sumarlo
+        n = n // 10            # Eliminar último dígito
+
+    return total
+
+# Resolver el problema
+power = 2 ** 1000
+result = digit_sum_math(power)
+print(f"Suma de dígitos de 2^1000: {result}")
+
+# Demostrar cómo funciona con un número pequeño
+print("\n--- Demostración con 32768 ---")
+n = 32768
+while n > 0:
+    print(f"n = {n:>5}, último dígito = {n % 10}")
+    n = n // 10</textarea>
+                    <div class="code-output" id="output2c">// Output aparecerá aquí</div>
+                </div>
+
+                <!-- Comparación de métodos -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">Comparación de Métodos</h4>
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-[var(--text-muted)]">
+                                <th class="text-left pb-3">Método</th>
+                                <th class="text-left pb-3">Legibilidad</th>
+                                <th class="text-left pb-3">Rendimiento</th>
+                            </tr>
+                        </thead>
+                        <tbody class="mono text-xs">
+                            <tr class="border-t border-[var(--border)]">
+                                <td class="py-3">sum(int(d) for d in str(n))</td>
+                                <td class="text-[var(--accent-green)]">Excelente</td>
+                                <td>Bueno</td>
+                            </tr>
+                            <tr class="border-t border-[var(--border)]">
+                                <td class="py-3">Bucle con for</td>
+                                <td class="text-[var(--accent-green)]">Excelente</td>
+                                <td>Bueno</td>
+                            </tr>
+                            <tr class="border-t border-[var(--border)]">
+                                <td class="py-3">n % 10, n // 10</td>
+                                <td>Medio</td>
+                                <td class="text-[var(--accent-green)]">Mejor</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="text-xs text-[var(--text-muted)] mt-4">
+                        Para este problema, cualquier método es suficientemente rápido.
+                        Prefiere el que te resulte más claro.
+                    </p>
+                </div>
+
+                <!-- Cómo lo haría Python internamente -->
+                <div class="p-5 bg-[var(--accent-purple)]/10 border border-[var(--accent-purple)]/30 rounded-xl">
+                    <h4 class="font-medium mb-2 text-[var(--accent-purple)]">¿Cómo maneja Python números tan grandes?</h4>
+                    <p class="text-sm text-[var(--text-secondary)]">
+                        Python usa una representación interna llamada <strong>"arbitrary-precision integers"</strong>:
+                    </p>
+                    <ul class="list-disc list-inside space-y-1 ml-4 text-sm text-[var(--text-muted)] mt-2">
+                        <li>Almacena el número como un array de "dígitos" en base 2³⁰</li>
+                        <li>Cada "dígito" cabe en un entero de 32 bits</li>
+                        <li>Para 2¹⁰⁰⁰ necesita ~34 de estos "dígitos"</li>
+                        <li>Las operaciones (suma, multiplicación) trabajan dígito por dígito</li>
+                    </ul>
+                    <p class="text-xs text-[var(--text-muted)] mt-3">
+                        Esto es más lento que enteros nativos, pero permite manejar números de cualquier tamaño.
+                    </p>
+                </div>
+
+                <!-- Conceptos aprendidos -->
+                <div class="flex flex-wrap gap-3">
+                    <span class="concept-tag"><span class="text-[var(--accent-green)]">✓</span> Enteros de precisión arbitraria</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-green)]">✓</span> Generator expressions</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-green)]">✓</span> Extracción de dígitos (str vs %10)</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Mostrar 2^1000
+        function showBigNumber() {
+            const container = document.getElementById('bigNumber');
+            const num = "10715086071862673209484250490600018105614048117055336074437503883703510511249361224931983788156958581275946729175531468251871452856923140435984577574698574803934567774824230985421074605062371141877954182153046474983581941267398767559165543946077062914571196477686542167660429831652624386837205668069376";
+
+            // Resaltar algunos dígitos
+            let html = '';
+            for (let i = 0; i < num.length; i++) {
+                if (i < 10 || i >= num.length - 10) {
+                    html += `<span class="digit-highlight">${num[i]}</span>`;
+                } else {
+                    html += num[i];
+                }
+            }
+            container.innerHTML = html;
+        }
+
+        // Pyodide setup
+        let pyodide = null;
+
+        async function initPyodide() {
+            const status = document.getElementById('pyodideStatus');
+            const text = document.getElementById('pyodideText');
+            status.classList.add('loading');
+
+            try {
+                pyodide = await loadPyodide();
+                status.classList.remove('loading');
+                status.classList.add('ready');
+                text.textContent = 'Python listo';
+            } catch (e) {
+                text.textContent = 'Error cargando Python';
+                status.style.background = '#ef4444';
+            }
+        }
+
+        async function runCode(inputId, outputId) {
+            const code = document.getElementById(inputId).value;
+            const output = document.getElementById(outputId);
+            const btn = output.parentElement.querySelector('.run-btn');
+
+            if (!pyodide) {
+                output.textContent = 'Esperando Pyodide...';
+                return;
+            }
+
+            btn.classList.add('running');
+            btn.disabled = true;
+            output.textContent = 'Ejecutando...';
+            output.className = 'code-output';
+
+            try {
+                pyodide.runPython(`
+import sys
+from io import StringIO
+sys.stdout = StringIO()
+`);
+                await pyodide.runPythonAsync(code);
+                const stdout = pyodide.runPython('sys.stdout.getvalue()');
+                output.textContent = stdout || '(sin output)';
+                output.classList.add('success');
+            } catch (e) {
+                output.textContent = e.message;
+                output.classList.add('error');
+            }
+
+            btn.classList.remove('running');
+            btn.disabled = false;
+        }
+
+        // Level tabs
+        document.querySelectorAll('.level-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.level-content').forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(`level${tab.dataset.level}`).classList.add('active');
+            });
+        });
+
+        // Init
+        showBigNumber();
+        initPyodide();
+    </script>
+</body>
+</html>
