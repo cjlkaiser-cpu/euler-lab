@@ -1,375 +1,270 @@
-# Euler Lab - Guía de Automatización
+# Euler Lab - Guía de Desarrollo
 
-100 problemas de Project Euler resueltos pedagógicamente con 4 niveles de profundidad.
+100 problemas de Project Euler como **excusa para enseñar programación y matemáticas**.
 
-## Filosofía
+## Filosofía Central
 
-Cada problema enseña **programación progresivamente**:
-- Nivel 1: Entender el problema sin código
-- Nivel 2: Múltiples formas de resolverlo (variantes)
-- Nivel 3: Código idiomático de Python
-- Nivel 4: Matemáticas y optimización
+> **El objetivo NO es resolver problemas. Es ENSEÑAR conceptos.**
 
-## Estructura de archivos
+Cada problema introduce o profundiza en un concepto específico:
+- Un problema de Collatz enseña **memoización**
+- Un problema de caminos enseña **combinatoria y DP**
+- Un problema de factorial enseña **BigInt y límites numéricos**
 
-```
-euler-lab/
-├── index.html              # Índice con cards animadas
-├── shared/
-│   ├── styles.css          # (futuro) Estilos extraídos
-│   └── pyodide-runner.js   # (futuro) Lógica Pyodide
-├── problems/
-│   ├── 001/index.html      # Múltiplos de 3 y 5
-│   ├── 002/index.html      # Fibonacci pares
-│   └── .../
-├── README.md
-└── CLAUDE.md               # Este archivo
-```
+### Principios pedagógicos
 
-## Los 4 niveles
-
-### Nivel 1: A mano
-**Objetivo**: Entender el problema antes de programar.
-
-Contenido:
-- Resolver el caso pequeño del enunciado paso a paso
-- Verificar que entendemos qué nos piden
-- Identificar conceptos matemáticos clave
-- Explicar por qué necesitamos código
-
-Elementos HTML:
-- `step-card` con pasos numerados
-- `math-block` para fórmulas
-- `concept-tag` para conceptos clave
-
-### Nivel 2: Fuerza bruta
-**Objetivo**: Mostrar que hay múltiples formas válidas de resolver el mismo problema.
-
-**IMPORTANTE**: Siempre incluir mínimo 3 variantes:
-- **Variante A**: `while True` + `break` (explícita, ideal para condiciones complejas)
-- **Variante B**: `while` con condición (más limpia, sin break)
-- **Variante C**: `for` con `range` (la más común en Python)
-
-Cada variante tiene:
-- Su propio `code-editor` con ID único (`code-varA`, `code-varB`, `code-varC`)
-- Su propio `output` con ID correspondiente (`output-varA`, `output-varB`, `output-varC`)
-- Explicación de cuándo usar cada una
-- Tabla comparativa al final
-
-Conceptos a explicar línea por línea:
-- Variables y acumuladores
-- Bucles (`while`, `for`)
-- Condicionales (`if`)
-- Operadores (`%`, `or`, `and`)
-- `break`, `continue`, `range()`
-
-### Nivel 3: Pythónico
-**Objetivo**: Código idiomático de Python.
-
-Mostrar:
-- Generator expressions
-- List comprehensions
-- Funciones built-in (`sum`, `any`, `all`, `max`, `min`)
-- Comparativa con fuerza bruta (líneas, legibilidad)
-
-### Nivel 4: Matemático
-**Objetivo**: Solución óptima O(1) cuando es posible.
-
-Contenido:
-- Fórmulas matemáticas con explicación
-- Derivación paso a paso
-- Comparativa de rendimiento (tabla + barras visuales)
-- Complejidad algorítmica
+1. **Profundidad sobre amplitud**: Mejor explicar un concepto a fondo que mencionar varios superficialmente
+2. **El "por qué" antes del "cómo"**: Explicar por qué funciona, no solo mostrar que funciona
+3. **Visualización**: Diagramas, animaciones, ejemplos paso a paso
+4. **Conexión con el mundo real**: ¿Dónde se usa esto fuera de Euler?
 
 ---
 
-## Componentes HTML reutilizables
+## Estructura de Niveles (Flexible: 2-4)
 
-### Header de problema
-```html
-<header>
-    <div class="max-w-3xl mx-auto px-5 py-4">
-        <div class="flex items-center justify-between">
-            <div>
-                <nav class="text-xs text-gray-600 mb-1 mono">
-                    <a href="../../index.html" class="hover:text-blue-400 transition">Euler Lab</a>
-                    <span class="mx-1.5 text-gray-800">/</span>
-                    <span class="text-gray-500">#XXX</span>
-                </nav>
-                <h1 class="text-xl font-medium">TÍTULO DEL PROBLEMA</h1>
-            </div>
-            <div class="pyodide-status mono">
-                <span class="status-dot loading" id="pyodide-dot"></span>
-                <span id="pyodide-text">Cargando Python...</span>
-            </div>
-        </div>
-    </div>
-</header>
+### Nivel 1: Entendimiento (SIEMPRE)
+
+**Objetivo**: Asegurar que se entiende el problema antes de escribir código.
+
+Contenido:
+- Resolver el caso pequeño del enunciado **a mano**
+- Visualización del problema (diagramas, grids, árboles...)
+- Identificar el **concepto central** que enseña este problema
+- Anticipar dificultades y casos borde
+- Mostrar la respuesta final (spoiler intencional - el valor está en el camino)
+
+Elementos típicos:
+- `step-card` con pasos numerados
+- Visualizaciones interactivas (Canvas, SVG)
+- `concept-tag` para los conceptos clave
+- `result-box` con la respuesta
+
+### Nivel 2: Implementación Directa (SIEMPRE)
+
+**Objetivo**: Primera solución funcional, clara y bien explicada.
+
+**Variantes (incluir 2-3 si aportan valor pedagógico)**:
+- Variante A: `while True` + `break`
+- Variante B: `while` con condición
+- Variante C: `for` con `range` o función
+
+**Cuándo NO incluir 3 variantes**:
+- Si el problema es trivial en Python (ej: `sum(int(d) for d in str(2**1000))`)
+- Si las variantes serían artificialmente diferentes
+- Si solo hay una forma natural de hacerlo
+
+**Profundizar en cada concepto**:
+```
+❌ Mal:  "Usamos un bucle for"
+✓ Bien: "El bucle for en Python es diferente a otros lenguajes.
+         No es un contador, es un iterador sobre una secuencia.
+         range(10) genera los números 0-9 bajo demanda (lazy)."
 ```
 
-### Enunciado del problema
-```html
-<section class="mb-10">
-    <div class="p-6 bg-gray-950 border border-gray-900 rounded-xl">
-        <p class="serif text-lg text-gray-300 leading-relaxed">
-            DESCRIPCIÓN DEL PROBLEMA con <strong class="text-white">valores destacados</strong>.
-        </p>
-    </div>
-</section>
+Incluir siempre:
+- Comentarios explicativos en el código
+- Complejidad temporal y espacial
+- Por qué esta solución es "fuerza bruta" (qué la hace ineficiente)
+
+### Nivel 3: Solución Elegante (SI APORTA)
+
+**Incluir si**: Hay una forma significativamente más pythónica/elegante.
+
+**NO incluir si**: Sería básicamente lo mismo con syntax sugar.
+
+Ejemplos de cuándo SÍ:
+- Usar `math.prod()` vs bucle manual
+- Generator expression vs lista completa
+- `itertools` para combinaciones
+- Comprehensions anidadas para matrices
+
+Ejemplos de cuándo NO:
+- `sum(range(n))` vs bucle - demasiado trivial
+- Cambiar `for` por `while` - no es más elegante
+
+### Nivel 4: Optimización/Matemática (SI APORTA)
+
+**Incluir si**: Hay una mejora significativa en complejidad o un insight matemático profundo.
+
+**Tipos de Nivel 4**:
+
+| Tipo | Ejemplo | Cuándo usar |
+|------|---------|-------------|
+| **Fórmula O(1)** | Gauss para suma 1..n | Si existe fórmula cerrada |
+| **Memoización** | Collatz con caché | Si hay subproblemas repetidos |
+| **Programación Dinámica** | Caminos en grid | Si hay estructura óptima |
+| **Algoritmo específico** | Criba de Eratóstenes | Si hay algoritmo clásico |
+| **Optimización matemática** | Euclides para GCD | Si matemáticas reducen trabajo |
+
+**NO incluir si**:
+- No hay optimización real posible
+- La "optimización" sería micro-optimización sin valor pedagógico
+
+---
+
+## Conceptos por Rango de Problemas
+
+### Problemas 001-010: Fundamentos
+- Variables y tipos básicos
+- Bucles (`for`, `while`)
+- Condicionales
+- Funciones básicas (`sum`, `max`, `range`)
+- Divisibilidad, primos básicos
+- Fórmulas matemáticas clásicas (Gauss, Pitágoras)
+
+### Problemas 011-020: Estructuras de Datos
+- **Listas 2D / Matrices** (011, 018)
+- **Strings como secuencias** (013, 017)
+- **BigInt / Números grandes** (013, 016, 020)
+- **Memoización / Caché** (014)
+- **Programación Dinámica** (015, 018)
+- **Fechas y calendario** (019)
+- **Divisores y factorización** (012)
+
+### Problemas 021-030: (Por definir)
+- Recursión avanzada
+- Grafos básicos
+- Optimización
+- ...
+
+---
+
+## Plantilla de Decisión por Problema
+
+Antes de crear un problema, responder:
+
+```
+1. ¿Cuál es el CONCEPTO CENTRAL que enseña?
+   → Este concepto debe explicarse a fondo
+
+2. ¿Tiene solución O(1) o fórmula cerrada?
+   → Sí: Incluir Nivel 4 matemático
+   → No: ¿Hay optimización algorítmica relevante?
+
+3. ¿Hay forma pythónica significativamente diferente?
+   → Sí: Incluir Nivel 3
+   → No: Saltarlo
+
+4. ¿Las variantes de Nivel 2 aportan valor?
+   → Sí: Incluir 2-3 variantes
+   → No: Una sola implementación bien explicada
+
+5. ¿Qué visualización ayudaría a entender?
+   → Grid, árbol, gráfico, animación paso a paso...
 ```
 
-### Tabs de niveles
-```html
-<nav class="mb-8 flex justify-center">
-    <div class="level-tabs">
-        <button class="level-tab active" data-level="1">A mano</button>
-        <button class="level-tab" data-level="2">Fuerza bruta</button>
-        <button class="level-tab" data-level="3">Pythónico</button>
-        <button class="level-tab" data-level="4">Matemático</button>
-    </div>
-</nav>
-```
+---
 
-### Step card (pasos numerados)
-```html
-<div class="step-card">
-    <div class="step-number">1</div>
-    <div>
-        <h3 class="font-medium mb-1">Título del paso</h3>
-        <p class="text-gray-500 text-sm">Explicación con <code>código inline</code></p>
-    </div>
-</div>
-```
+## Mapeo Problemas 011-020
 
-### Math block (fórmulas)
-```html
-<div class="math-block">
-    <div class="math-formula">n × (n + 1) / 2</div>
-    <div class="math-description">Descripción de la fórmula</div>
-</div>
-```
+| # | Título | Concepto Central | Niveles | Nivel 3/4 es... |
+|---|--------|------------------|---------|-----------------|
+| 011 | Producto en grid | Matrices 2D, direcciones | 3 | Numpy vectorizado |
+| 012 | Número triangular | Divisores, τ(n) | 3 | Fórmula τ(n) |
+| 013 | Suma grande | BigInt, strings numéricos | 2 | (trivial en Python) |
+| 014 | Collatz | Memoización | 3 | Memoización/caché |
+| 015 | Caminos grid | Combinatoria, DP | 3 | C(40,20) directo |
+| 016 | Dígitos 2^1000 | BigInt | 2 | (trivial en Python) |
+| 017 | Letras en números | Strings, diccionarios | 2-3 | Diccionario elegante |
+| 018 | Ruta máxima | Programación Dinámica | 3 | DP bottom-up |
+| 019 | Domingos | Fechas, módulo | 2-3 | Fórmula de Zeller |
+| 020 | Dígitos 100! | BigInt, factorial | 2 | (trivial en Python) |
 
-### Code editor
-```html
-<div class="code-editor">
-    <div class="code-header">
-        <span class="code-lang">Python</span>
-        <button class="run-btn" onclick="runCode('code-ID')">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-            Ejecutar
-        </button>
-    </div>
-    <textarea id="code-ID" class="code-textarea" spellcheck="false">CÓDIGO PYTHON</textarea>
-    <div class="code-output" id="output-ID">Pulsa "Ejecutar" para ver el resultado</div>
-</div>
-```
+---
 
-**IDs de código por nivel**:
-- Nivel 2: `code-varA`, `code-varB`, `code-varC` (y sus outputs)
-- Nivel 3: `code-pythonic`
-- Nivel 4: `code-math`
+## Componentes HTML
 
 ### Result box
 ```html
 <div class="result-box">
-    <span class="text-gray-400">Resultado</span>
-    <span class="result-value">NÚMERO</span>
-</div>
-```
-
-### Concept tags
-```html
-<div class="flex flex-wrap gap-2">
-    <span class="concept-tag">📦 Variables</span>
-    <span class="concept-tag">🔁 while loop</span>
-    <span class="concept-tag">🔄 for loop</span>
-</div>
-```
-
-### Performance table
-```html
-<div class="bg-gray-950 border border-gray-900 rounded-xl overflow-hidden">
-    <table class="perf-table">
-        <thead>
-            <tr><th>Método</th><th>Complejidad</th></tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td class="text-gray-400">Fuerza bruta</td>
-                <td class="text-red-400">O(n)</td>
-            </tr>
-            <tr>
-                <td class="text-gray-400">Matemático</td>
-                <td class="text-green-400">O(1)</td>
-            </tr>
-        </tbody>
-    </table>
-</div>
-```
-
-### Footer de navegación
-```html
-<footer class="mt-16 pt-8 border-t border-gray-900 flex justify-between items-center">
-    <a href="../XXX/index.html" class="text-gray-500 hover:text-white transition text-sm">← Problema anterior</a>
-    <a href="../XXX/index.html" class="text-gray-500 hover:text-white transition text-sm">Problema siguiente →</a>
-</footer>
-```
-
----
-
-## JavaScript requerido
-
-### Tabs de niveles
-```javascript
-document.querySelectorAll('.level-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-        const level = tab.dataset.level;
-        document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        document.querySelectorAll('.level-content').forEach(c => c.classList.remove('active'));
-        document.getElementById(`level-${level}`).classList.add('active');
-    });
-});
-```
-
-### Pyodide (ejecutar Python)
-```javascript
-let pyodide = null;
-
-async function initPyodide() {
-    const dot = document.getElementById('pyodide-dot');
-    const text = document.getElementById('pyodide-text');
-    try {
-        pyodide = await loadPyodide();
-        dot.classList.remove('loading');
-        dot.classList.add('ready');
-        text.textContent = 'Python listo';
-    } catch (e) {
-        dot.classList.remove('loading');
-        dot.classList.add('error');
-        text.textContent = 'Error cargando Python';
-    }
-}
-
-initPyodide();
-
-async function runCode(textareaId) {
-    if (!pyodide) {
-        alert('Python aún está cargando.');
-        return;
-    }
-
-    const textarea = document.getElementById(textareaId);
-    const outputId = 'output-' + textareaId.replace('code-', '');
-    const output = document.getElementById(outputId);
-    const btn = textarea.closest('.code-editor').querySelector('.run-btn');
-
-    btn.disabled = true;
-    btn.classList.add('running');
-    output.textContent = 'Ejecutando...';
-
-    try {
-        pyodide.runPython(`
-import sys
-from io import StringIO
-sys.stdout = StringIO()
-`);
-        pyodide.runPython(textarea.value);
-        const stdout = pyodide.runPython('sys.stdout.getvalue()');
-        output.textContent = stdout || '(sin salida)';
-        output.classList.add('success');
-    } catch (e) {
-        output.textContent = e.message;
-        output.classList.add('error');
-    }
-
-    btn.disabled = false;
-    btn.classList.remove('running');
-}
-```
-
----
-
-## Índice principal (index.html)
-
-### Card de problema
-```html
-<a href="problems/XXX/index.html" class="card group relative p-0.5 rounded-2xl bg-gradient-to-br from-transparent to-transparent hover:from-COLOR hover:to-COLOR-dark transition-all duration-300 cat-CATEGORY">
-    <div class="card-glow"></div>
-    <div class="relative bg-black rounded-[14px] p-5 h-full">
-        <div class="flex justify-between items-start mb-4">
-            <span class="problem-number text-gray-600 uppercase">#XXX</span>
-            <div class="flex gap-1">
-                <span class="difficulty-dot bg-COLOR"></span>
-                <!-- 1-5 dots según dificultad -->
-            </div>
-        </div>
-        <canvas class="preview-canvas w-full h-24 rounded-lg mb-4 bg-gray-950"></canvas>
-        <h3 class="text-white font-medium mb-1">TÍTULO</h3>
-        <p class="text-gray-600 text-sm">DESCRIPCIÓN CORTA</p>
-        <span class="inline-block mt-3 text-xs px-2 py-0.5 rounded-full tag-CATEGORY">CATEGORÍA</span>
+    <div>
+        <div class="text-sm text-[var(--text-muted)] mb-1">Respuesta</div>
+        <div class="result-value">NÚMERO</div>
     </div>
-</a>
+    <div class="text-right">
+        <div class="text-sm text-[var(--text-muted)] mb-1">Info adicional</div>
+        <div class="mono text-lg">DATO</div>
+    </div>
+</div>
 ```
 
-### Categorías y colores
+### Concept box (para explicar conceptos a fondo)
+```html
+<div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+    <h4 class="font-medium mb-4 text-[var(--accent-purple)]">¿Qué es la Memoización?</h4>
+    <p class="text-[var(--text-secondary)] mb-4">
+        Explicación detallada del concepto...
+    </p>
+    <div class="bg-[var(--bg-elevated)] p-4 rounded-lg mono text-sm">
+        <pre>Ejemplo de código ilustrativo</pre>
+    </div>
+</div>
+```
 
-| Categoría | Clase CSS | Color principal |
-|-----------|-----------|-----------------|
-| Números | `cat-numbers`, `tag-numbers` | `#3b82f6` (blue) |
-| Secuencias | `cat-sequences`, `tag-sequences` | `#22c55e` (green) |
-| Primos | `cat-primes`, `tag-primes` | `#a855f7` (purple) |
-| Combinatoria | `cat-combinatorics`, `tag-combinatorics` | `#f59e0b` (amber) |
-| Strings | `cat-strings`, `tag-strings` | `#ec4899` (pink) |
+### Comparison table
+```html
+<table class="perf-table">
+    <thead>
+        <tr>
+            <th>Método</th>
+            <th>Complejidad</th>
+            <th>Tiempo (n=1M)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Sin caché</td>
+            <td>O(n × k)</td>
+            <td>
+                ~30 segundos
+                <div class="perf-bar"><div class="perf-bar-fill perf-slow" style="width: 100%"></div></div>
+            </td>
+        </tr>
+        <tr>
+            <td>Con memoización</td>
+            <td>O(n)</td>
+            <td>
+                ~0.5 segundos
+                <div class="perf-bar"><div class="perf-bar-fill perf-fast" style="width: 1.6%"></div></div>
+            </td>
+        </tr>
+    </tbody>
+</table>
+```
 
 ---
 
-## Lista de problemas 001-010
+## Estilo de Explicaciones
 
-| # | Título | Categoría | Dificultad |
-|---|--------|-----------|------------|
-| 001 | Múltiplos de 3 y 5 | Números | 1 |
-| 002 | Fibonacci pares | Secuencias | 1 |
-| 003 | Factor primo mayor | Primos | 1 |
-| 004 | Palíndromo más grande | Números | 2 |
-| 005 | Mínimo común múltiplo | Números | 1 |
-| 006 | Suma vs cuadrado | Números | 1 |
-| 007 | Primo 10001 | Primos | 2 |
-| 008 | Producto en serie | Strings | 2 |
-| 009 | Triplete pitagórico | Números | 1 |
-| 010 | Suma de primos | Primos | 2 |
+### ❌ Evitar
+- "Ahora hacemos un bucle" (sin explicar por qué)
+- Código sin contexto
+- Asumir conocimiento previo sin verificar
+- Saltar del problema a la solución
 
----
+### ✓ Preferir
+- "Necesitamos recorrer todos los números porque..."
+- Construir la solución paso a paso
+- Explicar cada decisión de diseño
+- Mostrar qué pasa si no hacemos X
 
-## Instrucciones para Claude
+### Ejemplo de buena explicación
 
-Al crear un nuevo problema:
+```
+❌ "Usamos memoización para acelerar"
 
-1. **Crear directorio**: `problems/XXX/index.html`
+✓ "Sin memoización, calcular collatz(13) requiere calcular:
+   13 → 40 → 20 → 10 → 5 → 16 → 8 → 4 → 2 → 1
 
-2. **Copiar estructura** de `problems/001/index.html` como base
+   Pero si después calculamos collatz(40), repetimos TODO
+   el trabajo desde 40 en adelante.
 
-3. **Personalizar**:
-   - Título en `<title>` y `<h1>`
-   - Número en breadcrumb
-   - Enunciado del problema
-   - Los 4 niveles con contenido específico
+   Con memoización, guardamos que collatz(40) = 8 pasos,
+   y la próxima vez lo consultamos en O(1).
 
-4. **Nivel 2 - Variantes**:
-   - Siempre 3 variantes mínimo
-   - Adaptar al tipo de problema (no todos usan `range`)
-   - Explicar cuándo usar cada variante
-
-5. **Nivel 4 - Matemático**:
-   - Si no hay fórmula cerrada, mostrar optimización algorítmica
-   - Siempre incluir tabla de complejidad
-
-6. **Actualizar index.html**:
-   - Añadir card del nuevo problema
-   - Actualizar canvas animation si es necesario
-
-7. **Actualizar navegación**:
-   - Links anterior/siguiente en footer
+   Esto convierte O(n × k) en O(n), donde k es la longitud
+   promedio de secuencia."
+```
 
 ---
 
@@ -384,4 +279,4 @@ Al crear un nuevo problema:
 - HTML5 + Tailwind CSS (CDN)
 - JavaScript vanilla
 - Pyodide v0.24.1 (Python en browser)
-- Source Serif 4 + Inter + JetBrains Mono
+- Fuentes: Source Serif 4, Inter, JetBrains Mono
