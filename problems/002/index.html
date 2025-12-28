@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#002 Fibonacci pares — Euler Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    <style>
+        :root {
+            --bg: #000000;
+            --bg-elevated: #0a0a0f;
+            --bg-card: #111118;
+            --border: #1a1a24;
+            --border-hover: #2a2a3a;
+            --text: #e8e8ed;
+            --text-secondary: #8888a0;
+            --text-muted: #505068;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-amber: #f59e0b;
+            --accent-purple: #a855f7;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .serif { font-family: 'Source Serif 4', Georgia, serif; }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .level-tabs {
+            display: flex;
+            gap: 2px;
+            background: var(--bg-elevated);
+            padding: 4px;
+            border-radius: 10px;
+        }
+
+        .level-tab {
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .level-tab:hover { color: var(--text-secondary); }
+
+        .level-tab.active {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .level-tab[data-level="2"].active { background: var(--accent-green); }
+        .level-tab[data-level="3"].active { background: var(--accent-amber); }
+        .level-tab[data-level="4"].active { background: var(--accent-purple); }
+
+        .level-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .level-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .code-editor {
+            position: relative;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 16px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .code-lang {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--accent-green);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .run-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .run-btn:hover { filter: brightness(1.1); }
+        .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .run-btn.running { background: var(--accent-amber); }
+
+        .code-textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 16px;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            resize: vertical;
+            outline: none;
+        }
+
+        .code-output {
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--text-secondary);
+            min-height: 40px;
+        }
+
+        .code-output.success { color: var(--accent-green); }
+        .code-output.error { color: #ef4444; }
+
+        .result-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(34, 197, 94, 0.08) 100%);
+            border: 1px solid var(--accent-blue);
+            border-radius: 12px;
+        }
+
+        .result-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--accent-green);
+        }
+
+        .step-card {
+            display: flex;
+            gap: 16px;
+            padding: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            transition: border-color 0.2s;
+        }
+
+        .step-card:hover { border-color: var(--border-hover); }
+
+        .step-number {
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--accent-blue);
+        }
+
+        .math-block {
+            padding: 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .math-formula {
+            font-family: 'Source Serif 4', Georgia, serif;
+            font-size: 20px;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .math-description {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .perf-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .perf-table th, .perf-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .perf-table th {
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        .perf-table td {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+
+        .perf-bar {
+            height: 6px;
+            background: var(--bg-elevated);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+
+        .perf-bar-fill { height: 100%; border-radius: 3px; }
+        .perf-fast { background: var(--accent-green); }
+        .perf-slow { background: #ef4444; }
+
+        .concept-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .custom-input {
+            padding: 10px 14px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .custom-input:focus { border-color: var(--accent-blue); }
+
+        .pyodide-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+
+        .status-dot.loading { background: var(--accent-amber); animation: pulse 1s infinite; }
+        .status-dot.ready { background: var(--accent-green); }
+        .status-dot.error { background: #ef4444; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        code:not(.code-textarea) {
+            padding: 2px 8px;
+            background: var(--bg-elevated);
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            color: var(--accent-amber);
+        }
+
+        .fib-sequence {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .fib-num {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+        }
+
+        .fib-even {
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .fib-odd {
+            background: var(--bg-elevated);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        @media (max-width: 640px) {
+            .level-tabs { flex-wrap: wrap; }
+            .level-tab { flex: 1; text-align: center; padding: 8px 12px; font-size: 12px; }
+            .result-box { flex-direction: column; text-align: center; gap: 8px; }
+            .step-card { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="max-w-3xl mx-auto px-5 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <nav class="text-xs text-gray-600 mb-1 mono">
+                        <a href="../../index.html" class="hover:text-blue-400 transition">Euler Lab</a>
+                        <span class="mx-1.5 text-gray-800">/</span>
+                        <span class="text-gray-500">#002</span>
+                    </nav>
+                    <h1 class="text-xl font-medium">Fibonacci pares</h1>
+                </div>
+                <div class="pyodide-status mono">
+                    <span class="status-dot loading" id="pyodide-dot"></span>
+                    <span id="pyodide-text">Cargando Python...</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-5 py-8">
+        <!-- Problem statement -->
+        <section class="mb-10">
+            <div class="p-6 bg-gray-950 border border-gray-900 rounded-xl">
+                <p class="serif text-lg text-gray-300 leading-relaxed">
+                    Cada término de la secuencia de Fibonacci se genera sumando los dos anteriores.
+                    Empezando con <strong class="text-white">1</strong> y <strong class="text-white">2</strong>,
+                    los primeros 10 términos son:
+                </p>
+                <div class="fib-sequence my-4">
+                    <span class="fib-num fib-odd">1</span>
+                    <span class="fib-num fib-even">2</span>
+                    <span class="fib-num fib-odd">3</span>
+                    <span class="fib-num fib-odd">5</span>
+                    <span class="fib-num fib-even">8</span>
+                    <span class="fib-num fib-odd">13</span>
+                    <span class="fib-num fib-odd">21</span>
+                    <span class="fib-num fib-even">34</span>
+                    <span class="fib-num fib-odd">55</span>
+                    <span class="fib-num fib-odd">89</span>
+                    <span class="text-gray-600">...</span>
+                </div>
+                <p class="serif text-lg text-gray-300">
+                    Encuentra la suma de los términos <strong class="text-white">pares</strong>
+                    cuyo valor no exceda <strong class="text-white">4.000.000</strong>.
+                </p>
+            </div>
+        </section>
+
+        <!-- Level tabs -->
+        <nav class="mb-8 flex justify-center">
+            <div class="level-tabs">
+                <button class="level-tab active" data-level="1">A mano</button>
+                <button class="level-tab" data-level="2">Fuerza bruta</button>
+                <button class="level-tab" data-level="3">Pythónico</button>
+                <button class="level-tab" data-level="4">Matemático</button>
+            </div>
+        </nav>
+
+        <!-- LEVEL 1: A mano -->
+        <section class="level-content active" id="level-1">
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Entendiendo Fibonacci</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        La secuencia de Fibonacci es una de las más famosas en matemáticas. Cada número es la suma de los dos anteriores.
+                    </p>
+                </div>
+
+                <div class="math-block">
+                    <div class="math-formula">F(n) = F(n-1) + F(n-2)</div>
+                    <div class="math-description">Con F(1) = 1 y F(2) = 2</div>
+                </div>
+
+                <div class="space-y-4">
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Construyendo la secuencia</h2>
+
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h3 class="font-medium mb-1">Empezamos con 1 y 2</h3>
+                            <p class="text-gray-500 text-sm">Estos son los dos primeros términos dados</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h3 class="font-medium mb-1">1 + 2 = 3</h3>
+                            <p class="text-gray-500 text-sm">El tercer término es la suma de los dos anteriores</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div>
+                            <h3 class="font-medium mb-1">2 + 3 = 5, luego 3 + 5 = 8...</h3>
+                            <p class="text-gray-500 text-sm">Seguimos sumando: <code>1, 2, 3, 5, 8, 13, 21, 34...</code></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Identificando los pares</h2>
+
+                    <div class="step-card">
+                        <div class="step-number">4</div>
+                        <div>
+                            <h3 class="font-medium mb-1">¿Cuáles son pares?</h3>
+                            <p class="text-gray-500 text-sm">De los primeros 10: <code>2, 8, 34</code> son divisibles por 2</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">5</div>
+                        <div>
+                            <h3 class="font-medium mb-1">Patrón: cada 3 términos</h3>
+                            <p class="text-gray-500 text-sm">Los pares aparecen en posiciones 2, 5, 8, 11... (cada 3 términos)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Verificación manual</h2>
+                    <p class="text-gray-400 leading-relaxed mb-4">
+                        Si sumamos los pares menores que 100: <code>2 + 8 + 34 = 44</code>
+                    </p>
+                    <p class="text-gray-400 leading-relaxed">
+                        Hay muchos términos pares menores que 4 millones. Necesitamos código.
+                    </p>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Conceptos clave</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="concept-tag">🐰 Secuencia Fibonacci</span>
+                        <span class="concept-tag">🔢 Números pares</span>
+                        <span class="concept-tag">➕ Acumulación</span>
+                        <span class="concept-tag">🔄 Recurrencia</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEVEL 2: Fuerza bruta -->
+        <section class="level-content" id="level-2">
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">La estrategia</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        Generar términos de Fibonacci uno a uno, comprobar si son pares, y sumarlos mientras no excedan 4 millones.
+                    </p>
+                </div>
+
+                <div class="p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl mb-6">
+                    <p class="text-blue-300 text-sm">
+                        <strong>Importante:</strong> No hay una única forma "correcta" de escribir esto.
+                        Aquí verás <strong>tres variantes</strong> que hacen exactamente lo mismo. Elige la que te resulte más clara.
+                    </p>
+                </div>
+
+                <!-- Variante A -->
+                <div>
+                    <h2 class="text-sm font-medium text-green-400 uppercase tracking-wide mb-3">Variante A: while True + break</h2>
+                    <p class="text-gray-400 text-sm mb-4">
+                        Un bucle infinito que rompemos cuando el término excede el límite. Muy explícita, muestra claramente cuándo paramos.
+                    </p>
+                    <div class="code-editor">
+                        <div class="code-header">
+                            <span class="code-lang">Python</span>
+                            <button class="run-btn" onclick="runCode('code-varA')">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                Ejecutar
+                            </button>
+                        </div>
+                        <textarea id="code-varA" class="code-textarea" spellcheck="false" style="min-height: 340px;">suma = 0                        # Acumulador para pares
+a = 1                           # Primer término
+b = 2                           # Segundo término
+
+while True:                     # Bucle infinito
+    if a > 4000000:             # ¿Excede el límite?
+        break                   # Sí → salimos
+
+    if a % 2 == 0:              # ¿Es par?
+        suma = suma + a         # Sí → lo sumamos
+
+    # Generar siguiente término
+    siguiente = a + b           # Suma de los dos anteriores
+    a = b                       # El segundo pasa a ser primero
+    b = siguiente               # El nuevo pasa a ser segundo
+
+print(suma)</textarea>
+                        <div class="code-output" id="output-varA">Pulsa "Ejecutar" para ver el resultado</div>
+                    </div>
+                </div>
+
+                <!-- Variante B -->
+                <div>
+                    <h2 class="text-sm font-medium text-green-400 uppercase tracking-wide mb-3">Variante B: while con condición</h2>
+                    <p class="text-gray-400 text-sm mb-4">
+                        La condición de salida va directamente en el while. Más limpia, sin break.
+                    </p>
+                    <div class="code-editor">
+                        <div class="code-header">
+                            <span class="code-lang">Python</span>
+                            <button class="run-btn" onclick="runCode('code-varB')">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                Ejecutar
+                            </button>
+                        </div>
+                        <textarea id="code-varB" class="code-textarea" spellcheck="false" style="min-height: 280px;">suma = 0                        # Acumulador para pares
+a = 1                           # Primer término
+b = 2                           # Segundo término
+
+while a <= 4000000:             # Mientras no exceda el límite
+    if a % 2 == 0:              # ¿Es par?
+        suma = suma + a         # Sí → lo sumamos
+
+    # Generar siguiente término
+    a, b = b, a + b             # Asignación múltiple (pythónica)
+
+print(suma)</textarea>
+                        <div class="code-output" id="output-varB">Pulsa "Ejecutar" para ver el resultado</div>
+                    </div>
+                </div>
+
+                <!-- Variante C -->
+                <div>
+                    <h2 class="text-sm font-medium text-green-400 uppercase tracking-wide mb-3">Variante C: con función generadora</h2>
+                    <p class="text-gray-400 text-sm mb-4">
+                        Separamos la generación de Fibonacci en una función. Más modular y reutilizable.
+                    </p>
+                    <div class="code-editor">
+                        <div class="code-header">
+                            <span class="code-lang">Python</span>
+                            <button class="run-btn" onclick="runCode('code-varC')">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                Ejecutar
+                            </button>
+                        </div>
+                        <textarea id="code-varC" class="code-textarea" spellcheck="false" style="min-height: 300px;">def fibonacci_hasta(limite):
+    """Genera términos de Fibonacci hasta el límite"""
+    a, b = 1, 2
+    resultado = []
+    while a <= limite:
+        resultado.append(a)
+        a, b = b, a + b
+    return resultado
+
+# Obtener todos los Fibonacci hasta 4 millones
+todos = fibonacci_hasta(4000000)
+
+# Filtrar pares y sumar
+suma = 0
+for num in todos:
+    if num % 2 == 0:
+        suma = suma + num
+
+print(suma)</textarea>
+                        <div class="code-output" id="output-varC">Pulsa "Ejecutar" para ver el resultado</div>
+                    </div>
+                </div>
+
+                <!-- Comparativa de variantes -->
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">¿Cuál elegir?</h2>
+                    <div class="bg-gray-950 border border-gray-900 rounded-xl overflow-hidden">
+                        <table class="perf-table">
+                            <thead>
+                                <tr>
+                                    <th>Variante</th>
+                                    <th>Líneas</th>
+                                    <th>Ventaja</th>
+                                    <th>Cuándo usarla</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-gray-300">A: while True + break</td>
+                                    <td>14</td>
+                                    <td class="text-gray-400">Muy explícita</td>
+                                    <td class="text-gray-400">Cuando quieres ver cada paso</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-gray-300">B: while con condición</td>
+                                    <td>9</td>
+                                    <td class="text-gray-400">Compacta</td>
+                                    <td class="text-gray-400">Uso general</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-gray-300">C: con función</td>
+                                    <td>14</td>
+                                    <td class="text-gray-400">Modular</td>
+                                    <td class="text-gray-400">Cuando necesitas reutilizar</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="result-box">
+                    <span class="text-gray-400">Resultado (las tres variantes)</span>
+                    <span class="result-value">4613732</span>
+                </div>
+
+                <!-- Conceptos explicados -->
+                <div class="space-y-4">
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Conceptos clave</h2>
+
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>a, b = 1, 2</code></h3>
+                            <p class="text-gray-500 text-sm"><strong>Asignación múltiple.</strong> Python permite asignar varios valores en una línea. Los dos términos iniciales de Fibonacci.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>a, b = b, a + b</code></h3>
+                            <p class="text-gray-500 text-sm"><strong>Swap pythónico.</strong> Avanza la secuencia: <code>a</code> toma el valor de <code>b</code>, y <code>b</code> toma <code>a + b</code>. Todo en una línea, sin variable temporal.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>a % 2 == 0</code></h3>
+                            <p class="text-gray-500 text-sm"><strong>Test de paridad.</strong> Si el resto de dividir por 2 es 0, el número es par.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">4</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>def fibonacci_hasta(limite):</code></h3>
+                            <p class="text-gray-500 text-sm"><strong>Definir función.</strong> Encapsulamos lógica para reutilizarla. <code>limite</code> es un parámetro.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">5</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>resultado.append(a)</code></h3>
+                            <p class="text-gray-500 text-sm"><strong>Añadir a lista.</strong> El método <code>append</code> agrega un elemento al final de la lista.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Conceptos de Python aprendidos</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="concept-tag">📦 Variables</span>
+                        <span class="concept-tag">🔁 while loop</span>
+                        <span class="concept-tag">🔀 Asignación múltiple</span>
+                        <span class="concept-tag">🎯 Funciones</span>
+                        <span class="concept-tag">📋 Listas</span>
+                        <span class="concept-tag">% Operador módulo</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEVEL 3: Pythónico -->
+        <section class="level-content" id="level-3">
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Generadores en Python</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        Un <strong class="text-white">generador</strong> produce valores bajo demanda usando <code>yield</code>.
+                        No guarda todos los valores en memoria, los genera uno a uno.
+                    </p>
+                </div>
+
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python</span>
+                        <button class="run-btn" onclick="runCode('code-pythonic')">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea id="code-pythonic" class="code-textarea" spellcheck="false" style="min-height: 240px;">def fibonacci():
+    """Generador infinito de Fibonacci"""
+    a, b = 1, 2
+    while True:
+        yield a
+        a, b = b, a + b
+
+# Usar el generador con filtro y suma
+from itertools import takewhile
+
+fibs = takewhile(lambda x: x <= 4000000, fibonacci())
+resultado = sum(f for f in fibs if f % 2 == 0)
+
+print(resultado)</textarea>
+                    <div class="code-output" id="output-pythonic">Pulsa "Ejecutar" para ver el resultado</div>
+                </div>
+
+                <div class="space-y-4">
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Desglose</h2>
+
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>yield a</code></h3>
+                            <p class="text-gray-500 text-sm">"Produce" un valor y pausa la función. La próxima vez que se pida un valor, continúa desde aquí.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>takewhile(condición, iterable)</code></h3>
+                            <p class="text-gray-500 text-sm">De <code>itertools</code>. Toma elementos mientras la condición sea verdadera. Cuando falla, para.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>lambda x: x <= 4000000</code></h3>
+                            <p class="text-gray-500 text-sm">Función anónima. Devuelve <code>True</code> si x no excede 4 millones.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">4</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>sum(f for f in fibs if f % 2 == 0)</code></h3>
+                            <p class="text-gray-500 text-sm">Generator expression con filtro. Suma solo los pares.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-950 border border-gray-900 rounded-xl overflow-hidden">
+                    <table class="perf-table">
+                        <thead>
+                            <tr>
+                                <th>Aspecto</th>
+                                <th>Fuerza bruta</th>
+                                <th>Pythónico</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-gray-400">Generación</td>
+                                <td>Manual con while</td>
+                                <td><code>yield</code> + generador</td>
+                            </tr>
+                            <tr>
+                                <td class="text-gray-400">Límite</td>
+                                <td>Condición en while</td>
+                                <td><code>takewhile</code></td>
+                            </tr>
+                            <tr>
+                                <td class="text-gray-400">Filtrado</td>
+                                <td><code>if</code> con bloque</td>
+                                <td><code>if</code> en generador</td>
+                            </tr>
+                            <tr>
+                                <td class="text-gray-400">Memoria</td>
+                                <td>O(1) o O(n)</td>
+                                <td>O(1) siempre</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="result-box">
+                    <span class="text-gray-400">Resultado</span>
+                    <span class="result-value">4613732</span>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Conceptos aprendidos</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="concept-tag">🌊 yield (generadores)</span>
+                        <span class="concept-tag">🔧 itertools</span>
+                        <span class="concept-tag">λ lambda</span>
+                        <span class="concept-tag">📝 Generator expressions</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEVEL 4: Matemático -->
+        <section class="level-content" id="level-4">
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Patrón de los pares</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        Observación clave: en Fibonacci, <strong class="text-white">cada tercer término es par</strong>.
+                    </p>
+                </div>
+
+                <div class="fib-sequence mb-6">
+                    <span class="fib-num fib-odd">1</span>
+                    <span class="fib-num fib-even">2</span>
+                    <span class="fib-num fib-odd">3</span>
+                    <span class="fib-num fib-odd">5</span>
+                    <span class="fib-num fib-even">8</span>
+                    <span class="fib-num fib-odd">13</span>
+                    <span class="fib-num fib-odd">21</span>
+                    <span class="fib-num fib-even">34</span>
+                    <span class="fib-num fib-odd">55</span>
+                    <span class="fib-num fib-odd">89</span>
+                    <span class="fib-num fib-even">144</span>
+                    <span class="text-gray-600">...</span>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Recurrencia de pares</h2>
+                    <p class="text-gray-400 leading-relaxed mb-4">
+                        Si llamamos E(n) al n-ésimo Fibonacci par, existe una recurrencia directa:
+                    </p>
+                    <div class="math-block">
+                        <div class="math-formula">E(n) = 4 × E(n-1) + E(n-2)</div>
+                        <div class="math-description">Con E(1) = 2 y E(2) = 8</div>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Demostración</h2>
+
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h3 class="font-medium mb-1">Verificamos con los primeros términos</h3>
+                            <p class="text-gray-500 text-sm">E(3) = 4×8 + 2 = 34 ✓</p>
+                            <p class="text-gray-500 text-sm">E(4) = 4×34 + 8 = 144 ✓</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h3 class="font-medium mb-1">Ventaja</h3>
+                            <p class="text-gray-500 text-sm">No necesitamos generar los impares ni comprobar paridad. Saltamos directamente de par en par.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python</span>
+                        <button class="run-btn" onclick="runCode('code-math')">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea id="code-math" class="code-textarea" spellcheck="false" style="min-height: 200px;">def suma_fib_pares(limite):
+    """Suma Fibonacci pares usando la recurrencia E(n) = 4*E(n-1) + E(n-2)"""
+    suma = 0
+    e1, e2 = 2, 8             # Primeros dos Fibonacci pares
+
+    while e1 <= limite:
+        suma += e1
+        e1, e2 = e2, 4*e2 + e1  # Siguiente par
+
+    return suma
+
+print(suma_fib_pares(4000000))</textarea>
+                    <div class="code-output" id="output-math">Pulsa "Ejecutar" para ver el resultado</div>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Comparativa de rendimiento</h2>
+                    <div class="bg-gray-950 border border-gray-900 rounded-xl overflow-hidden">
+                        <table class="perf-table">
+                            <thead>
+                                <tr>
+                                    <th>Método</th>
+                                    <th>Iteraciones (4M)</th>
+                                    <th>Iteraciones (10¹⁸)</th>
+                                    <th>Complejidad</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-gray-400">Fuerza bruta</td>
+                                    <td>33</td>
+                                    <td>~87</td>
+                                    <td class="text-amber-400">O(log n)</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-gray-400">Solo pares</td>
+                                    <td>11</td>
+                                    <td>~29</td>
+                                    <td class="text-green-400">O(log n / 3)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-gray-600 text-sm mt-3">
+                        Fibonacci crece exponencialmente, así que incluso la fuerza bruta es O(log n).
+                        Pero la versión matemática hace 3× menos iteraciones.
+                    </p>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-500">Fuerza bruta (todos los Fibonacci)</span>
+                        <span class="mono text-gray-600">33 iteraciones</span>
+                    </div>
+                    <div class="perf-bar"><div class="perf-bar-fill perf-slow" style="width: 100%"></div></div>
+
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-500">Matemático (solo pares)</span>
+                        <span class="mono text-gray-600">11 iteraciones</span>
+                    </div>
+                    <div class="perf-bar"><div class="perf-bar-fill perf-fast" style="width: 33%"></div></div>
+                </div>
+
+                <div class="result-box">
+                    <span class="text-gray-400">Resultado</span>
+                    <span class="result-value">4613732</span>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Conceptos aprendidos</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="concept-tag">🔄 Recurrencias</span>
+                        <span class="concept-tag">📈 Crecimiento exponencial</span>
+                        <span class="concept-tag">🎯 Optimización</span>
+                        <span class="concept-tag">🔍 Reconocer patrones</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Try with custom limit -->
+        <section class="mt-12 pt-8 border-t border-gray-900">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Prueba con otro límite</h2>
+            <div class="flex gap-3 items-center flex-wrap">
+                <input type="number" id="custom-limit" class="custom-input w-48" value="100" min="1">
+                <button class="run-btn" onclick="runCustom()">Calcular</button>
+                <span id="custom-result" class="mono text-lg text-green-400"></span>
+            </div>
+        </section>
+
+        <!-- Navigation -->
+        <footer class="mt-16 pt-8 border-t border-gray-900 flex justify-between items-center">
+            <a href="../001/index.html" class="text-gray-500 hover:text-white transition text-sm">← Problema 1: Múltiplos de 3 y 5</a>
+            <a href="../003/index.html" class="text-gray-500 hover:text-white transition text-sm">Problema 3: Factor primo mayor →</a>
+        </footer>
+    </main>
+
+    <script>
+        // Level tabs
+        document.querySelectorAll('.level-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const level = tab.dataset.level;
+
+                document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                document.querySelectorAll('.level-content').forEach(c => c.classList.remove('active'));
+                document.getElementById(`level-${level}`).classList.add('active');
+            });
+        });
+
+        // Pyodide
+        let pyodide = null;
+
+        async function initPyodide() {
+            const dot = document.getElementById('pyodide-dot');
+            const text = document.getElementById('pyodide-text');
+
+            try {
+                pyodide = await loadPyodide();
+                dot.classList.remove('loading');
+                dot.classList.add('ready');
+                text.textContent = 'Python listo';
+            } catch (e) {
+                dot.classList.remove('loading');
+                dot.classList.add('error');
+                text.textContent = 'Error cargando Python';
+                console.error(e);
+            }
+        }
+
+        initPyodide();
+
+        async function runCode(textareaId) {
+            if (!pyodide) {
+                alert('Python aún está cargando. Espera un momento.');
+                return;
+            }
+
+            const textarea = document.getElementById(textareaId);
+            const outputId = 'output-' + textareaId.replace('code-', '');
+            const output = document.getElementById(outputId);
+            const btn = textarea.closest('.code-editor').querySelector('.run-btn');
+
+            btn.disabled = true;
+            btn.classList.add('running');
+            btn.innerHTML = '<svg class="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/></svg> Ejecutando...';
+            output.className = 'code-output';
+            output.textContent = 'Ejecutando...';
+
+            try {
+                pyodide.runPython(`
+import sys
+from io import StringIO
+sys.stdout = StringIO()
+`);
+
+                pyodide.runPython(textarea.value);
+
+                const stdout = pyodide.runPython('sys.stdout.getvalue()');
+                output.textContent = stdout || '(sin salida)';
+                output.classList.add('success');
+            } catch (e) {
+                output.textContent = e.message;
+                output.classList.add('error');
+            }
+
+            btn.disabled = false;
+            btn.classList.remove('running');
+            btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Ejecutar';
+        }
+
+        async function runCustom() {
+            if (!pyodide) {
+                alert('Python aún está cargando. Espera un momento.');
+                return;
+            }
+
+            const limit = parseInt(document.getElementById('custom-limit').value);
+            const result = document.getElementById('custom-result');
+
+            if (isNaN(limit) || limit < 1) {
+                result.textContent = 'Introduce un número válido';
+                result.style.color = '#ef4444';
+                return;
+            }
+
+            try {
+                const code = `
+def suma_fib_pares(limite):
+    suma = 0
+    e1, e2 = 2, 8
+    while e1 <= limite:
+        suma += e1
+        e1, e2 = e2, 4*e2 + e1
+    return suma
+
+suma_fib_pares(${limit})
+`;
+                const res = pyodide.runPython(code);
+                result.textContent = `= ${res.toLocaleString()}`;
+                result.style.color = '#22c55e';
+            } catch (e) {
+                result.textContent = 'Error: ' + e.message;
+                result.style.color = '#ef4444';
+            }
+        }
+    </script>
+</body>
+</html>
