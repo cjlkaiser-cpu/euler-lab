@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#008 Producto en Serie — Euler Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    <style>
+        :root {
+            --bg: #000000;
+            --bg-elevated: #0a0a0f;
+            --bg-card: #111118;
+            --border: #1a1a24;
+            --border-hover: #2a2a3a;
+            --text: #e8e8ed;
+            --text-secondary: #8888a0;
+            --text-muted: #505068;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-amber: #f59e0b;
+            --accent-purple: #a855f7;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .serif { font-family: 'Source Serif 4', Georgia, serif; }
+
+        header { position: sticky; top: 0; z-index: 50; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+
+        .level-tabs { display: flex; gap: 2px; background: var(--bg-elevated); padding: 4px; border-radius: 10px; }
+        .level-tab { padding: 8px 16px; font-size: 13px; font-weight: 500; color: var(--text-muted); background: transparent; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-family: 'JetBrains Mono', monospace; }
+        .level-tab:hover { color: var(--text-secondary); }
+        .level-tab.active { background: var(--accent-blue); color: white; }
+        .level-tab[data-level="2"].active { background: var(--accent-green); }
+        .level-tab[data-level="3"].active { background: var(--accent-amber); }
+        .level-tab[data-level="4"].active { background: var(--accent-purple); }
+
+        .level-content { display: none; animation: fadeIn 0.3s ease; }
+        .level-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .code-editor { position: relative; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .code-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: var(--bg-card); border-bottom: 1px solid var(--border); }
+        .code-lang { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent-green); text-transform: uppercase; letter-spacing: 0.5px; }
+        .run-btn { display: flex; align-items: center; gap: 6px; padding: 6px 14px; background: var(--accent-blue); color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .run-btn:hover { filter: brightness(1.1); }
+        .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .run-btn.running { background: var(--accent-amber); }
+        .code-textarea { width: 100%; min-height: 200px; padding: 16px; background: transparent; border: none; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.7; resize: vertical; outline: none; }
+        .code-output { padding: 12px 16px; background: var(--bg-card); border-top: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-secondary); min-height: 40px; }
+        .code-output.success { color: var(--accent-green); }
+        .code-output.error { color: #ef4444; }
+
+        .result-box { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(34, 197, 94, 0.08) 100%); border: 1px solid var(--accent-blue); border-radius: 12px; }
+        .result-value { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 600; color: var(--accent-green); }
+
+        .step-card { display: flex; gap: 16px; padding: 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; transition: border-color 0.2s; }
+        .step-card:hover { border-color: var(--border-hover); }
+        .step-number { flex-shrink: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 50%; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent-blue); }
+
+        .math-block { padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; text-align: center; }
+        .math-formula { font-family: 'Source Serif 4', Georgia, serif; font-size: 20px; color: var(--text); margin-bottom: 8px; }
+        .math-description { font-size: 13px; color: var(--text-muted); }
+
+        .perf-table { width: 100%; border-collapse: collapse; }
+        .perf-table th, .perf-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+        .perf-table th { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+        .perf-table td { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+
+        .perf-bar { height: 6px; background: var(--bg-elevated); border-radius: 3px; overflow: hidden; margin-top: 6px; }
+        .perf-bar-fill { height: 100%; border-radius: 3px; }
+        .perf-fast { background: var(--accent-green); }
+        .perf-slow { background: #ef4444; }
+
+        .concept-tag { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
+        .custom-input { padding: 10px 14px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 14px; outline: none; }
+        .custom-input:focus { border-color: var(--accent-blue); }
+
+        .pyodide-status { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--bg-card); border-radius: 8px; font-size: 12px; color: var(--text-muted); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+        .status-dot.loading { background: var(--accent-amber); animation: pulse 1s infinite; }
+        .status-dot.ready { background: var(--accent-green); }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        code:not(.code-textarea) { padding: 2px 8px; background: var(--bg-elevated); border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.9em; color: var(--accent-amber); }
+
+        .digit-grid {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            line-height: 1.8;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            word-break: break-all;
+            padding: 16px;
+            background: var(--bg-elevated);
+            border-radius: 8px;
+        }
+
+        .digit-grid .highlight {
+            background: var(--accent-green);
+            color: var(--bg);
+            padding: 2px 1px;
+            border-radius: 2px;
+            font-weight: 600;
+        }
+
+        .digit-grid .zero {
+            color: #ef4444;
+            opacity: 0.6;
+        }
+
+        .window-demo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 16px;
+            background: var(--bg-elevated);
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        .window-digit {
+            width: 28px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            border-radius: 4px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+
+        .window-digit.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+            font-weight: 600;
+        }
+
+        .window-digit.zero {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        .variant-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+        .variant-tab { padding: 6px 12px; font-size: 12px; font-weight: 500; color: var(--text-muted); background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .variant-tab:hover { color: var(--text-secondary); border-color: var(--border-hover); }
+        .variant-tab.active { background: var(--accent-green); border-color: var(--accent-green); color: white; }
+        .variant-content { display: none; }
+        .variant-content.active { display: block; }
+    </style>
+</head>
+<body>
+    <header class="px-6 py-4">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-6">
+                <a href="../../" class="text-sm text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
+                    ← Euler Lab
+                </a>
+                <div class="flex items-center gap-3">
+                    <span class="mono text-lg text-[var(--accent-blue)]">#008</span>
+                    <h1 class="text-lg font-medium">Producto en Serie</h1>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="pyodide-status">
+                    <div class="status-dot" id="pyodideStatus"></div>
+                    <span id="pyodideText">Cargando Python...</span>
+                </div>
+                <div class="flex gap-2">
+                    <a href="../007/" class="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--border)] hover:border-[var(--border-hover)]">← 007</a>
+                    <a href="../009/" class="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--border)] hover:border-[var(--border-hover)]">009 →</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-8">
+        <!-- Enunciado -->
+        <div class="mb-8 p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 w-10 h-10 flex items-center justify-content-center rounded-lg bg-[var(--accent-blue)]/10 text-[var(--accent-blue)]">
+                    <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <div class="space-y-3">
+                    <h2 class="text-lg font-medium">Largest Product in a Series</h2>
+                    <p class="text-[var(--text-secondary)] leading-relaxed">
+                        El número de 1000 dígitos contiene patrones de dígitos consecutivos. Encuentra los <strong>13 dígitos adyacentes</strong> que al multiplicarse dan el <strong>producto más grande</strong>.
+                    </p>
+                    <div class="flex items-center gap-6 pt-2">
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-amber)]">●</span>
+                            Ventana deslizante
+                        </span>
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-purple)]">●</span>
+                            Optimización con ceros
+                        </span>
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-green)]">●</span>
+                            Strings como secuencias
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs de niveles -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="level-tabs">
+                <button class="level-tab active" data-level="1">Nivel 1: A mano</button>
+                <button class="level-tab" data-level="2">Nivel 2: Fuerza bruta</button>
+                <button class="level-tab" data-level="3">Nivel 3: Pythónico</button>
+                <button class="level-tab" data-level="4">Nivel 4: Matemático</button>
+            </div>
+        </div>
+
+        <!-- NIVEL 1 -->
+        <div class="level-content active" id="level1">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-blue)] flex items-center justify-center text-sm">1</span>
+                        Entendiendo el Problema
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        Tenemos un número gigante de 1000 dígitos. Debemos encontrar 13 dígitos consecutivos cuyo producto sea máximo. La clave: <strong>un solo cero arruina todo el producto</strong>.
+                    </p>
+                </div>
+
+                <!-- El número de 1000 dígitos -->
+                <div class="space-y-4">
+                    <h4 class="font-medium text-[var(--text-secondary)]">El número de 1000 dígitos:</h4>
+                    <div class="digit-grid" id="digitGrid">
+                        73167176531330624919225119674426574742355349194934
+                        96983520312774506326239578318016984801869478851843
+                        85861560789112949495459501737958331952853208805511
+                        12540698747158523863050715693290963295227443043557
+                        66896648950445244523161731856403098711121722383113
+                        62229893423380308135336276614282806444486645238749
+                        30358907296290491560440772390713810515859307960866
+                        70172427121883998797908792274921901699720888093776
+                        65727333001053367881220235421809751254540594752243
+                        52584907711670556013604839586446706324415722155397
+                        53697817977846174064955149290862569321978468622482
+                        83972241375657056057490261407972968652414535100474
+                        82166370484403199890008895243450658541227588666881
+                        16427171479924442928230863465674813919123162824586
+                        17866458359124566529476545682848912883142607690042
+                        24219022671055626321111109370544217506941658960408
+                        07198403850962455444362981230987879927244284909188
+                        84580156166097919133875499200524063689912560717606
+                        05886116467109405077541002256983155200055935729725
+                        71636269561882670428252483600823257530420752963450
+                    </div>
+                </div>
+
+                <!-- Pasos manuales -->
+                <div class="space-y-4">
+                    <h4 class="font-medium">Estrategia manual:</h4>
+                    <div class="grid gap-4">
+                        <div class="step-card">
+                            <div class="step-number">1</div>
+                            <div>
+                                <p class="font-medium mb-1">Identificar los ceros</p>
+                                <p class="text-sm text-[var(--text-secondary)]">Cualquier ventana con un cero tiene producto = 0. Marcamos los ceros en rojo para evitarlos.</p>
+                            </div>
+                        </div>
+                        <div class="step-card">
+                            <div class="step-number">2</div>
+                            <div>
+                                <p class="font-medium mb-1">Buscar dígitos grandes consecutivos</p>
+                                <p class="text-sm text-[var(--text-secondary)]">Queremos 9s, 8s, 7s consecutivos. <code>9 × 9 × 9 = 729</code> vs <code>2 × 2 × 2 = 8</code></p>
+                            </div>
+                        </div>
+                        <div class="step-card">
+                            <div class="step-number">3</div>
+                            <div>
+                                <p class="font-medium mb-1">Calcular productos candidatos</p>
+                                <p class="text-sm text-[var(--text-secondary)]">Probamos algunas secuencias prometedoras: 9781797784617...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Demostración visual de ventana -->
+                <div class="space-y-4">
+                    <h4 class="font-medium">Ventana deslizante visual:</h4>
+                    <div class="window-demo" id="windowDemo">
+                        <!-- Se llena con JS -->
+                    </div>
+                    <div class="flex gap-4">
+                        <button onclick="slideWindow(-1)" class="px-4 py-2 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-sm hover:border-[var(--border-hover)]">← Anterior</button>
+                        <button onclick="slideWindow(1)" class="px-4 py-2 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-sm hover:border-[var(--border-hover)]">Siguiente →</button>
+                        <button onclick="goToMax()" class="px-4 py-2 bg-[var(--accent-green)] text-white rounded-lg text-sm hover:brightness-110">Ir al máximo</button>
+                    </div>
+                    <div class="p-4 bg-[var(--bg-card)] rounded-lg">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-[var(--text-muted)]">Posición: <span id="windowPos" class="mono text-[var(--text)]">0</span></span>
+                            <span class="text-[var(--text-muted)]">Producto: <span id="windowProduct" class="mono text-[var(--accent-green)]">0</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resultado -->
+                <div class="result-box">
+                    <div>
+                        <div class="text-sm text-[var(--text-muted)] mb-1">Respuesta</div>
+                        <div class="result-value">23,514,624,000</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-[var(--text-muted)] mb-1">Dígitos</div>
+                        <div class="mono text-lg">5576689664895</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NIVEL 2 -->
+        <div class="level-content" id="level2">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-green)] flex items-center justify-center text-sm">2</span>
+                        Fuerza Bruta - 3 Variantes
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        El enfoque directo: probar todas las ventanas de 13 dígitos y calcular el producto de cada una.
+                    </p>
+                </div>
+
+                <div class="variant-tabs">
+                    <button class="variant-tab active" data-variant="a">Variante A</button>
+                    <button class="variant-tab" data-variant="b">Variante B</button>
+                    <button class="variant-tab" data-variant="c">Variante C</button>
+                </div>
+
+                <!-- Variante A: while True + break -->
+                <div class="variant-content active" id="variant-a">
+                    <div class="space-y-4">
+                        <h4 class="font-medium text-[var(--accent-green)]">Variante A: while True + break</h4>
+                        <p class="text-sm text-[var(--text-secondary)]">Iteramos con índice manual hasta el final del string.</p>
+                        <div class="code-editor">
+                            <div class="code-header">
+                                <span class="code-lang">Python</span>
+                                <button class="run-btn" onclick="runCode('code2a', 'output2a')">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                                    Ejecutar
+                                </button>
+                            </div>
+                            <textarea class="code-textarea" id="code2a">NUMBER = """
+73167176531330624919225119674426574742355349194934
+96983520312774506326239578318016984801869478851843
+85861560789112949495459501737958331952853208805511
+12540698747158523863050715693290963295227443043557
+66896648950445244523161731856403098711121722383113
+62229893423380308135336276614282806444486645238749
+30358907296290491560440772390713810515859307960866
+70172427121883998797908792274921901699720888093776
+65727333001053367881220235421809751254540594752243
+52584907711670556013604839586446706324415722155397
+53697817977846174064955149290862569321978468622482
+83972241375657056057490261407972968652414535100474
+82166370484403199890008895243450658541227588666881
+16427171479924442928230863465674813919123162824586
+17866458359124566529476545682848912883142607690042
+24219022671055626321111109370544217506941658960408
+07198403850962455444362981230987879927244284909188
+84580156166097919133875499200524063689912560717606
+05886116467109405077541002256983155200055935729725
+71636269561882670428252483600823257530420752963450
+""".replace("\n", "")
+
+max_product = 0
+i = 0
+
+while True:
+    if i > len(NUMBER) - 13:
+        break
+
+    window = NUMBER[i:i+13]
+
+    product = 1
+    for digit in window:
+        product *= int(digit)
+
+    if product > max_product:
+        max_product = product
+        best_window = window
+
+    i += 1
+
+print(f"Producto máximo: {max_product}")
+print(f"Dígitos: {best_window}")</textarea>
+                            <div class="code-output" id="output2a">// Output aparecerá aquí</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Variante B: while condition -->
+                <div class="variant-content" id="variant-b">
+                    <div class="space-y-4">
+                        <h4 class="font-medium text-[var(--accent-green)]">Variante B: while condición</h4>
+                        <p class="text-sm text-[var(--text-secondary)]">Condición directa en el while.</p>
+                        <div class="code-editor">
+                            <div class="code-header">
+                                <span class="code-lang">Python</span>
+                                <button class="run-btn" onclick="runCode('code2b', 'output2b')">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                                    Ejecutar
+                                </button>
+                            </div>
+                            <textarea class="code-textarea" id="code2b">NUMBER = """
+73167176531330624919225119674426574742355349194934
+96983520312774506326239578318016984801869478851843
+85861560789112949495459501737958331952853208805511
+12540698747158523863050715693290963295227443043557
+66896648950445244523161731856403098711121722383113
+62229893423380308135336276614282806444486645238749
+30358907296290491560440772390713810515859307960866
+70172427121883998797908792274921901699720888093776
+65727333001053367881220235421809751254540594752243
+52584907711670556013604839586446706324415722155397
+53697817977846174064955149290862569321978468622482
+83972241375657056057490261407972968652414535100474
+82166370484403199890008895243450658541227588666881
+16427171479924442928230863465674813919123162824586
+17866458359124566529476545682848912883142607690042
+24219022671055626321111109370544217506941658960408
+07198403850962455444362981230987879927244284909188
+84580156166097919133875499200524063689912560717606
+05886116467109405077541002256983155200055935729725
+71636269561882670428252483600823257530420752963450
+""".replace("\n", "")
+
+max_product = 0
+best_window = ""
+pos = 0
+
+while pos <= len(NUMBER) - 13:
+    window = NUMBER[pos:pos+13]
+
+    product = 1
+    for d in window:
+        product *= int(d)
+
+    if product > max_product:
+        max_product = product
+        best_window = window
+
+    pos += 1
+
+print(f"Producto máximo: {max_product}")
+print(f"Dígitos: {best_window}")</textarea>
+                            <div class="code-output" id="output2b">// Output aparecerá aquí</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Variante C: for range -->
+                <div class="variant-content" id="variant-c">
+                    <div class="space-y-4">
+                        <h4 class="font-medium text-[var(--accent-green)]">Variante C: for range</h4>
+                        <p class="text-sm text-[var(--text-secondary)]">Usando range para iterar posiciones.</p>
+                        <div class="code-editor">
+                            <div class="code-header">
+                                <span class="code-lang">Python</span>
+                                <button class="run-btn" onclick="runCode('code2c', 'output2c')">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                                    Ejecutar
+                                </button>
+                            </div>
+                            <textarea class="code-textarea" id="code2c">NUMBER = """
+73167176531330624919225119674426574742355349194934
+96983520312774506326239578318016984801869478851843
+85861560789112949495459501737958331952853208805511
+12540698747158523863050715693290963295227443043557
+66896648950445244523161731856403098711121722383113
+62229893423380308135336276614282806444486645238749
+30358907296290491560440772390713810515859307960866
+70172427121883998797908792274921901699720888093776
+65727333001053367881220235421809751254540594752243
+52584907711670556013604839586446706324415722155397
+53697817977846174064955149290862569321978468622482
+83972241375657056057490261407972968652414535100474
+82166370484403199890008895243450658541227588666881
+16427171479924442928230863465674813919123162824586
+17866458359124566529476545682848912883142607690042
+24219022671055626321111109370544217506941658960408
+07198403850962455444362981230987879927244284909188
+84580156166097919133875499200524063689912560717606
+05886116467109405077541002256983155200055935729725
+71636269561882670428252483600823257530420752963450
+""".replace("\n", "")
+
+def product_of_digits(s):
+    result = 1
+    for char in s:
+        result *= int(char)
+    return result
+
+max_product = 0
+best_window = ""
+
+for i in range(len(NUMBER) - 12):
+    window = NUMBER[i:i+13]
+    p = product_of_digits(window)
+
+    if p > max_product:
+        max_product = p
+        best_window = window
+
+print(f"Producto máximo: {max_product}")
+print(f"Dígitos: {best_window}")</textarea>
+                            <div class="code-output" id="output2c">// Output aparecerá aquí</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Complejidad -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">Análisis de complejidad</h4>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <div class="text-sm text-[var(--text-muted)] mb-1">Tiempo</div>
+                            <div class="mono text-lg">O(n × k)</div>
+                            <p class="text-xs text-[var(--text-muted)] mt-1">n = 1000 posiciones, k = 13 dígitos</p>
+                        </div>
+                        <div>
+                            <div class="text-sm text-[var(--text-muted)] mb-1">Espacio</div>
+                            <div class="mono text-lg">O(1)</div>
+                            <p class="text-xs text-[var(--text-muted)] mt-1">Solo variables auxiliares</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NIVEL 3 -->
+        <div class="level-content" id="level3">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-amber)] flex items-center justify-center text-sm">3</span>
+                        Enfoque Pythónico
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        Usando <code>math.prod</code>, comprensiones, y <code>max</code> con key function.
+                    </p>
+                </div>
+
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python</span>
+                        <button class="run-btn" onclick="runCode('code3', 'output3')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code3">from math import prod
+
+NUMBER = """
+73167176531330624919225119674426574742355349194934
+96983520312774506326239578318016984801869478851843
+85861560789112949495459501737958331952853208805511
+12540698747158523863050715693290963295227443043557
+66896648950445244523161731856403098711121722383113
+62229893423380308135336276614282806444486645238749
+30358907296290491560440772390713810515859307960866
+70172427121883998797908792274921901699720888093776
+65727333001053367881220235421809751254540594752243
+52584907711670556013604839586446706324415722155397
+53697817977846174064955149290862569321978468622482
+83972241375657056057490261407972968652414535100474
+82166370484403199890008895243450658541227588666881
+16427171479924442928230863465674813919123162824586
+17866458359124566529476545682848912883142607690042
+24219022671055626321111109370544217506941658960408
+07198403850962455444362981230987879927244284909188
+84580156166097919133875499200524063689912560717606
+05886116467109405077541002256983155200055935729725
+71636269561882670428252483600823257530420752963450
+""".replace("\n", "")
+
+# Convertir a lista de enteros una sola vez
+digits = [int(d) for d in NUMBER]
+
+# Generar todas las ventanas de 13 dígitos
+windows = [digits[i:i+13] for i in range(len(digits) - 12)]
+
+# Encontrar el máximo usando prod
+best = max(windows, key=prod)
+
+print(f"Producto máximo: {prod(best)}")
+print(f"Dígitos: {''.join(map(str, best))}")</textarea>
+                    <div class="code-output" id="output3">// Output aparecerá aquí</div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="p-5 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                        <h4 class="font-medium mb-3 text-[var(--accent-amber)]">Herramientas usadas</h4>
+                        <ul class="space-y-2 text-sm text-[var(--text-secondary)]">
+                            <li><code>math.prod()</code> — Producto de iterables (Python 3.8+)</li>
+                            <li><code>max(key=)</code> — Máximo con función de comparación</li>
+                            <li>List comprehension — Generar ventanas</li>
+                            <li><code>''.join(map())</code> — Reconstruir string</li>
+                        </ul>
+                    </div>
+                    <div class="p-5 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                        <h4 class="font-medium mb-3 text-[var(--accent-amber)]">Alternativa con generador</h4>
+                        <div class="text-sm mono text-[var(--text-secondary)] bg-[var(--bg-elevated)] p-3 rounded-lg">
+<pre># Memoria constante con generador
+windows = (
+    digits[i:i+13]
+    for i in range(len(digits) - 12)
+)
+max(windows, key=prod)</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NIVEL 4 -->
+        <div class="level-content" id="level4">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-purple)] flex items-center justify-center text-sm">4</span>
+                        Optimización Matemática
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        La ventana deslizante puede optimizarse: en vez de recalcular 13 multiplicaciones en cada paso, podemos <strong>dividir y multiplicar</strong>... pero los ceros complican todo.
+                    </p>
+                </div>
+
+                <!-- Insight matemático -->
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="math-block">
+                        <div class="math-formula serif">P(i+1) = P(i) × d[i+k] / d[i]</div>
+                        <div class="math-description">Actualización de ventana en O(1)... si no hay ceros</div>
+                    </div>
+                    <div class="math-block">
+                        <div class="math-formula serif">d[i] = 0 ⟹ P = 0</div>
+                        <div class="math-description">Un cero anula todo el producto</div>
+                    </div>
+                </div>
+
+                <!-- Estrategia de ceros -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">Estrategia con ceros</h4>
+                    <div class="space-y-4">
+                        <p class="text-[var(--text-secondary)]">
+                            Cuando encontramos un cero, no tiene sentido seguir con esa ventana. Saltamos directamente al siguiente segmento sin ceros:
+                        </p>
+                        <div class="grid grid-cols-3 gap-4 text-center">
+                            <div class="p-4 bg-[var(--bg-elevated)] rounded-lg">
+                                <div class="mono text-xl mb-2">987<span class="text-[#ef4444]">0</span>123</div>
+                                <div class="text-xs text-[var(--text-muted)]">Cero en posición 3</div>
+                            </div>
+                            <div class="flex items-center justify-center">
+                                <svg class="w-8 h-8 text-[var(--accent-purple)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                                </svg>
+                            </div>
+                            <div class="p-4 bg-[var(--bg-elevated)] rounded-lg">
+                                <div class="mono text-xl mb-2">____<span class="text-[var(--accent-green)]">123...</span></div>
+                                <div class="text-xs text-[var(--text-muted)]">Saltar a posición 4</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — Ventana optimizada</span>
+                        <button class="run-btn" onclick="runCode('code4', 'output4')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code4">from math import prod
+
+NUMBER = """
+73167176531330624919225119674426574742355349194934
+96983520312774506326239578318016984801869478851843
+85861560789112949495459501737958331952853208805511
+12540698747158523863050715693290963295227443043557
+66896648950445244523161731856403098711121722383113
+62229893423380308135336276614282806444486645238749
+30358907296290491560440772390713810515859307960866
+70172427121883998797908792274921901699720888093776
+65727333001053367881220235421809751254540594752243
+52584907711670556013604839586446706324415722155397
+53697817977846174064955149290862569321978468622482
+83972241375657056057490261407972968652414535100474
+82166370484403199890008895243450658541227588666881
+16427171479924442928230863465674813919123162824586
+17866458359124566529476545682848912883142607690042
+24219022671055626321111109370544217506941658960408
+07198403850962455444362981230987879927244284909188
+84580156166097919133875499200524063689912560717606
+05886116467109405077541002256983155200055935729725
+71636269561882670428252483600823257530420752963450
+""".replace("\n", "")
+
+K = 13  # Tamaño de ventana
+
+def max_product_optimized(s, k):
+    """Encuentra el producto máximo de k dígitos consecutivos."""
+    digits = [int(c) for c in s]
+    n = len(digits)
+
+    max_prod = 0
+    best_start = 0
+
+    i = 0
+    while i <= n - k:
+        # Buscar el siguiente cero en la ventana
+        zero_pos = -1
+        for j in range(i, i + k):
+            if digits[j] == 0:
+                zero_pos = j
+                break
+
+        if zero_pos != -1:
+            # Hay un cero, saltar después de él
+            i = zero_pos + 1
+            continue
+
+        # No hay ceros, calcular producto
+        p = prod(digits[i:i+k])
+
+        if p > max_prod:
+            max_prod = p
+            best_start = i
+
+        i += 1
+
+    return max_prod, best_start
+
+result, pos = max_product_optimized(NUMBER, K)
+print(f"Producto máximo: {result}")
+print(f"Dígitos: {NUMBER[pos:pos+K]}")
+print(f"Posición: {pos}")
+
+# Contar cuántas ventanas con ceros evitamos
+zeros = NUMBER.count('0')
+print(f"\nOptimización: {zeros} ceros en el número")
+print(f"Ventanas con ceros evitadas: ~{zeros * K}")</textarea>
+                    <div class="code-output" id="output4">// Output aparecerá aquí</div>
+                </div>
+
+                <!-- Tabla de rendimiento -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">Comparación de rendimiento</h4>
+                    <table class="perf-table">
+                        <thead>
+                            <tr>
+                                <th>Método</th>
+                                <th>Complejidad</th>
+                                <th>Operaciones (n=1000, k=13)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Fuerza bruta</td>
+                                <td>O(n × k)</td>
+                                <td>
+                                    ~12,844 multiplicaciones
+                                    <div class="perf-bar"><div class="perf-bar-fill perf-slow" style="width: 100%"></div></div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Con skip de ceros</td>
+                                <td>O(n) amortizado</td>
+                                <td>
+                                    ~8,000 multiplicaciones
+                                    <div class="perf-bar"><div class="perf-bar-fill perf-fast" style="width: 62%"></div></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Nota adicional -->
+                <div class="p-5 bg-[var(--accent-purple)]/10 border border-[var(--accent-purple)]/30 rounded-xl">
+                    <h4 class="font-medium mb-2 text-[var(--accent-purple)]">Nota sobre división en ventana deslizante</h4>
+                    <p class="text-sm text-[var(--text-secondary)]">
+                        Teóricamente podríamos hacer <code>P_new = P_old / d_out × d_in</code>, pero la división por cero y los errores de punto flotante lo hacen impracticable. La estrategia de <strong>saltar segmentos con ceros</strong> es más robusta y eficiente en la práctica.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Pyodide setup
+        let pyodide = null;
+
+        async function initPyodide() {
+            const status = document.getElementById('pyodideStatus');
+            const text = document.getElementById('pyodideText');
+            status.classList.add('loading');
+
+            try {
+                pyodide = await loadPyodide();
+                status.classList.remove('loading');
+                status.classList.add('ready');
+                text.textContent = 'Python listo';
+            } catch (e) {
+                text.textContent = 'Error cargando Python';
+                status.style.background = '#ef4444';
+            }
+        }
+
+        async function runCode(inputId, outputId) {
+            const code = document.getElementById(inputId).value;
+            const output = document.getElementById(outputId);
+            const btn = output.parentElement.querySelector('.run-btn');
+
+            if (!pyodide) {
+                output.textContent = 'Esperando Pyodide...';
+                return;
+            }
+
+            btn.classList.add('running');
+            btn.disabled = true;
+            output.textContent = 'Ejecutando...';
+            output.className = 'code-output';
+
+            try {
+                pyodide.runPython(`
+import sys
+from io import StringIO
+sys.stdout = StringIO()
+`);
+                await pyodide.runPythonAsync(code);
+                const stdout = pyodide.runPython('sys.stdout.getvalue()');
+                output.textContent = stdout || '(sin output)';
+                output.classList.add('success');
+            } catch (e) {
+                output.textContent = e.message;
+                output.classList.add('error');
+            }
+
+            btn.classList.remove('running');
+            btn.disabled = false;
+        }
+
+        // Level tabs
+        document.querySelectorAll('.level-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.level-content').forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(`level${tab.dataset.level}`).classList.add('active');
+            });
+        });
+
+        // Variant tabs
+        document.querySelectorAll('.variant-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.variant-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.variant-content').forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(`variant-${tab.dataset.variant}`).classList.add('active');
+            });
+        });
+
+        // Window demo
+        const NUMBER = "73167176531330624919225119674426574742355349194934969835203127745063262395783180169848018694788518438586156078911294949545950173795833195285320880551112540698747158523863050715693290963295227443043557668966489504452445231617318564030987111217223831136222989342338030813533627661428280644448664523874930358907296290491560440772390713810515859307960866701724271218839987979087922749219016997208880937766572733300105336788122023542180975125454059475224352584907711670556013604839586446706324415722155397536978179778461740649551492908625693219784686224828397224137565705605749026140797296865241453510047482166370484403199890008895243450658541227588666881164271714799244429282308634656748139191231628245861786645835912456652947654568284891288314260769004224219022671055626321111109370544217506941658960408071984038509624554443629812309878799272442849091888458015616609791913387549920052406368991256071760605886116467109405077541002256983155200055935729725716362695618826704282524836008232575304207529634509";
+
+        let windowPos = 0;
+        const WINDOW_SIZE = 13;
+        const MAX_POS = 615; // Posición del máximo producto
+
+        function calculateProduct(pos) {
+            let p = 1;
+            for (let i = 0; i < WINDOW_SIZE; i++) {
+                p *= parseInt(NUMBER[pos + i]);
+            }
+            return p;
+        }
+
+        function renderWindow() {
+            const demo = document.getElementById('windowDemo');
+            const showDigits = 30;
+            const startShow = Math.max(0, windowPos - 8);
+            const endShow = Math.min(NUMBER.length, startShow + showDigits);
+
+            let html = '';
+            for (let i = startShow; i < endShow; i++) {
+                const d = NUMBER[i];
+                const isActive = i >= windowPos && i < windowPos + WINDOW_SIZE;
+                const isZero = d === '0';
+
+                let classes = 'window-digit';
+                if (isActive) classes += isZero ? ' zero' : ' active';
+                else if (isZero) classes += ' zero';
+
+                html += `<div class="${classes}">${d}</div>`;
+            }
+            demo.innerHTML = html;
+
+            document.getElementById('windowPos').textContent = windowPos;
+            document.getElementById('windowProduct').textContent = calculateProduct(windowPos).toLocaleString();
+        }
+
+        function slideWindow(delta) {
+            windowPos = Math.max(0, Math.min(NUMBER.length - WINDOW_SIZE, windowPos + delta));
+            renderWindow();
+        }
+
+        function goToMax() {
+            windowPos = MAX_POS;
+            renderWindow();
+        }
+
+        // Highlight zeros in digit grid
+        function highlightDigitGrid() {
+            const grid = document.getElementById('digitGrid');
+            let html = '';
+            for (let i = 0; i < NUMBER.length; i++) {
+                const d = NUMBER[i];
+                if (d === '0') {
+                    html += `<span class="zero">${d}</span>`;
+                } else if (i >= MAX_POS && i < MAX_POS + WINDOW_SIZE) {
+                    html += `<span class="highlight">${d}</span>`;
+                } else {
+                    html += d;
+                }
+                if ((i + 1) % 50 === 0) html += '\n';
+            }
+            grid.innerHTML = html;
+        }
+
+        // Init
+        initPyodide();
+        renderWindow();
+        highlightDigitGrid();
+    </script>
+</body>
+</html>
