@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#018 Suma Máxima de Camino I — Euler Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    <style>
+        :root {
+            --bg: #000000;
+            --bg-elevated: #0a0a0f;
+            --bg-card: #111118;
+            --border: #1a1a24;
+            --border-hover: #2a2a3a;
+            --text: #e8e8ed;
+            --text-secondary: #8888a0;
+            --text-muted: #505068;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-amber: #f59e0b;
+            --accent-purple: #a855f7;
+            --accent-red: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .serif { font-family: 'Source Serif 4', Georgia, serif; }
+
+        header { position: sticky; top: 0; z-index: 50; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+
+        .level-tabs { display: flex; gap: 2px; background: var(--bg-elevated); padding: 4px; border-radius: 10px; }
+        .level-tab { padding: 8px 16px; font-size: 13px; font-weight: 500; color: var(--text-muted); background: transparent; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-family: 'JetBrains Mono', monospace; }
+        .level-tab:hover { color: var(--text-secondary); }
+        .level-tab.active { background: var(--accent-blue); color: white; }
+        .level-tab[data-level="2"].active { background: var(--accent-green); }
+        .level-tab[data-level="3"].active { background: var(--accent-purple); }
+
+        .level-content { display: none; animation: fadeIn 0.3s ease; }
+        .level-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .code-editor { position: relative; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .code-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: var(--bg-card); border-bottom: 1px solid var(--border); }
+        .code-lang { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent-green); text-transform: uppercase; letter-spacing: 0.5px; }
+        .run-btn { display: flex; align-items: center; gap: 6px; padding: 6px 14px; background: var(--accent-blue); color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .run-btn:hover { filter: brightness(1.1); }
+        .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .run-btn.running { background: var(--accent-amber); }
+        .code-textarea { width: 100%; min-height: 200px; padding: 16px; background: transparent; border: none; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.7; resize: vertical; outline: none; }
+        .code-output { padding: 12px 16px; background: var(--bg-card); border-top: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-secondary); min-height: 40px; white-space: pre-wrap; }
+        .code-output.success { color: var(--accent-green); }
+        .code-output.error { color: #ef4444; }
+
+        .result-box { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(34, 197, 94, 0.08) 100%); border: 1px solid var(--accent-blue); border-radius: 12px; }
+        .result-value { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 600; color: var(--accent-green); }
+
+        .concept-tag { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
+
+        .pyodide-status { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--bg-card); border-radius: 8px; font-size: 12px; color: var(--text-muted); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+        .status-dot.loading { background: var(--accent-amber); animation: pulse 1s infinite; }
+        .status-dot.ready { background: var(--accent-green); }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        code:not(.code-textarea) { padding: 2px 8px; background: var(--bg-elevated); border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.9em; color: var(--accent-amber); }
+
+        .triangle-visual {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 20px;
+            background: var(--bg-elevated);
+            border-radius: 12px;
+        }
+
+        .triangle-row {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+        }
+
+        .triangle-cell {
+            width: 36px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            background: var(--bg-card);
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .triangle-cell.highlight {
+            background: var(--accent-green);
+            color: white;
+            border-color: var(--accent-green);
+        }
+
+        .triangle-cell.greedy {
+            background: var(--accent-red);
+            color: white;
+            border-color: var(--accent-red);
+        }
+
+        .triangle-cell.optimal {
+            background: var(--accent-purple);
+            color: white;
+            border-color: var(--accent-purple);
+        }
+
+        .path-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .path-card {
+            padding: 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .path-card.wrong { border-color: var(--accent-red); }
+        .path-card.correct { border-color: var(--accent-green); }
+
+        .dp-visual {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 20px;
+            background: var(--bg-elevated);
+            border-radius: 12px;
+        }
+
+        .dp-cell {
+            width: 44px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            background: var(--bg-card);
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .dp-cell.original {
+            color: var(--text-muted);
+        }
+
+        .dp-cell.computed {
+            background: var(--accent-purple);
+            color: white;
+            border-color: var(--accent-purple);
+        }
+
+        .dp-cell.final {
+            background: var(--accent-green);
+            color: white;
+            border-color: var(--accent-green);
+        }
+
+        .arrow-down {
+            color: var(--text-muted);
+            font-size: 16px;
+            margin: 4px 0;
+        }
+    </style>
+</head>
+<body>
+    <header class="px-6 py-4">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-6">
+                <a href="../../index.html" class="text-sm text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
+                    ← Euler Lab
+                </a>
+                <div class="flex items-center gap-3">
+                    <span class="mono text-lg text-[var(--accent-blue)]">#018</span>
+                    <h1 class="text-lg font-medium">Suma Máxima de Camino I</h1>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="pyodide-status">
+                    <div class="status-dot" id="pyodideStatus"></div>
+                    <span id="pyodideText">Cargando Python...</span>
+                </div>
+                <div class="flex gap-2">
+                    <a href="../017/index.html" class="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--border)] hover:border-[var(--border-hover)]">← 017</a>
+                    <a href="../019/index.html" class="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--border)] hover:border-[var(--border-hover)]">019 →</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-8">
+        <!-- Enunciado -->
+        <div class="mb-8 p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 w-10 h-10 flex items-center justify-content-center rounded-lg bg-[var(--accent-blue)]/10 text-[var(--accent-blue)]">
+                    <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <div class="space-y-3">
+                    <h2 class="text-lg font-medium">Maximum Path Sum I</h2>
+                    <p class="text-[var(--text-secondary)] leading-relaxed">
+                        Empezando en la cima del triángulo y moviéndote a números <strong class="text-white">adyacentes</strong>
+                        en la fila de abajo, encuentra la <strong class="text-white">suma máxima</strong> desde la cima hasta la base.
+                    </p>
+                    <div class="flex items-center gap-6 pt-2">
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-purple)]">●</span>
+                            Programación Dinámica
+                        </span>
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-amber)]">●</span>
+                            Bottom-up
+                        </span>
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-red)]">●</span>
+                            Por qué falla greedy
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs de niveles -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="level-tabs">
+                <button class="level-tab active" data-level="1">Nivel 1: Entendimiento</button>
+                <button class="level-tab" data-level="2">Nivel 2: Fuerza Bruta</button>
+                <button class="level-tab" data-level="3">Nivel 3: Programación Dinámica</button>
+            </div>
+        </div>
+
+        <!-- NIVEL 1 -->
+        <div class="level-content active" id="level1">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-blue)] flex items-center justify-center text-sm">1</span>
+                        El Problema del Triángulo
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        Tenemos un triángulo de números. Desde la cima, podemos bajar a uno de los dos números
+                        <strong>adyacentes</strong> en la fila siguiente. Queremos maximizar la suma del camino.
+                    </p>
+                </div>
+
+                <!-- Ejemplo pequeño -->
+                <div class="space-y-4">
+                    <h4 class="font-medium">Ejemplo pequeño (4 filas):</h4>
+                    <div class="triangle-visual">
+                        <div class="triangle-row">
+                            <div class="triangle-cell highlight">3</div>
+                        </div>
+                        <div class="triangle-row">
+                            <div class="triangle-cell highlight">7</div>
+                            <div class="triangle-cell">4</div>
+                        </div>
+                        <div class="triangle-row">
+                            <div class="triangle-cell">2</div>
+                            <div class="triangle-cell highlight">4</div>
+                            <div class="triangle-cell">6</div>
+                        </div>
+                        <div class="triangle-row">
+                            <div class="triangle-cell">8</div>
+                            <div class="triangle-cell">5</div>
+                            <div class="triangle-cell highlight">9</div>
+                            <div class="triangle-cell">3</div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-[var(--text-muted)] text-center">
+                        Camino óptimo: 3 → 7 → 4 → 9 = <strong class="text-[var(--accent-green)]">23</strong>
+                    </p>
+                </div>
+
+                <!-- ¿Qué significa "adyacente"? -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-blue)]">¿Qué significa "adyacente"?</h4>
+                    <p class="text-[var(--text-secondary)] mb-4">
+                        Desde cada número, solo puedes moverte a los <strong>dos números directamente debajo</strong>:
+                    </p>
+                    <div class="p-4 bg-[var(--bg-elevated)] rounded-lg mono text-sm text-center">
+                        <p>Si estás en posición <span class="text-[var(--accent-blue)]">i</span> de una fila,</p>
+                        <p>puedes ir a posición <span class="text-[var(--accent-green)]">i</span> o <span class="text-[var(--accent-green)]">i+1</span> de la siguiente.</p>
+                    </div>
+                    <div class="mt-4 triangle-visual" style="padding: 12px;">
+                        <div class="triangle-row">
+                            <div class="triangle-cell" style="background: var(--accent-blue); color: white;">7</div>
+                        </div>
+                        <div class="triangle-row">
+                            <div class="triangle-cell" style="background: var(--accent-green); color: white;">2</div>
+                            <div class="triangle-cell" style="background: var(--accent-green); color: white;">4</div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-[var(--text-muted)] text-center mt-2">
+                        Desde el 7, solo puedes ir al 2 o al 4 (no al 6)
+                    </p>
+                </div>
+
+                <!-- Por qué greedy falla -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-red)]">¿Por qué NO funciona elegir siempre el mayor?</h4>
+                    <p class="text-[var(--text-secondary)] mb-4">
+                        El enfoque <strong>"greedy"</strong> (codicioso) sería: en cada paso, elegir el número más grande.
+                        Pero esto puede llevarnos a un camino subóptimo:
+                    </p>
+                    <div class="path-comparison">
+                        <div class="path-card wrong">
+                            <div class="text-sm font-medium text-[var(--accent-red)] mb-3">Camino Greedy</div>
+                            <div class="triangle-visual" style="padding: 8px;">
+                                <div class="triangle-row">
+                                    <div class="triangle-cell greedy" style="width: 28px; height: 26px; font-size: 10px;">3</div>
+                                </div>
+                                <div class="triangle-row">
+                                    <div class="triangle-cell greedy" style="width: 28px; height: 26px; font-size: 10px;">7</div>
+                                    <div class="triangle-cell" style="width: 28px; height: 26px; font-size: 10px;">4</div>
+                                </div>
+                                <div class="triangle-row">
+                                    <div class="triangle-cell" style="width: 28px; height: 26px; font-size: 10px;">2</div>
+                                    <div class="triangle-cell greedy" style="width: 28px; height: 26px; font-size: 10px;">4</div>
+                                    <div class="triangle-cell" style="width: 28px; height: 26px; font-size: 10px;">6</div>
+                                </div>
+                                <div class="triangle-row">
+                                    <div class="triangle-cell" style="width: 28px; height: 26px; font-size: 10px;">8</div>
+                                    <div class="triangle-cell greedy" style="width: 28px; height: 26px; font-size: 10px;">5</div>
+                                    <div class="triangle-cell" style="width: 28px; height: 26px; font-size: 10px;">9</div>
+                                    <div class="triangle-cell" style="width: 28px; height: 26px; font-size: 10px;">3</div>
+                                </div>
+                            </div>
+                            <p class="text-xs mt-2">3→7→4→5 = <strong>19</strong></p>
+                        </div>
+                        <div class="path-card correct">
+                            <div class="text-sm font-medium text-[var(--accent-green)] mb-3">Camino Óptimo</div>
+                            <div class="triangle-visual" style="padding: 8px;">
+                                <div class="triangle-row">
+                                    <div class="triangle-cell optimal" style="width: 28px; height: 26px; font-size: 10px;">3</div>
+                                </div>
+                                <div class="triangle-row">
+                                    <div class="triangle-cell optimal" style="width: 28px; height: 26px; font-size: 10px;">7</div>
+                                    <div class="triangle-cell" style="width: 28px; height: 26px; font-size: 10px;">4</div>
+                                </div>
+                                <div class="triangle-row">
+                                    <div class="triangle-cell" style="width: 28px; height: 26px; font-size: 10px;">2</div>
+                                    <div class="triangle-cell optimal" style="width: 28px; height: 26px; font-size: 10px;">4</div>
+                                    <div class="triangle-cell" style="width: 28px; height: 26px; font-size: 10px;">6</div>
+                                </div>
+                                <div class="triangle-row">
+                                    <div class="triangle-cell" style="width: 28px; height: 26px; font-size: 10px;">8</div>
+                                    <div class="triangle-cell" style="width: 28px; height: 26px; font-size: 10px;">5</div>
+                                    <div class="triangle-cell optimal" style="width: 28px; height: 26px; font-size: 10px;">9</div>
+                                    <div class="triangle-cell" style="width: 28px; height: 26px; font-size: 10px;">3</div>
+                                </div>
+                            </div>
+                            <p class="text-xs mt-2">3→7→4→9 = <strong>23</strong></p>
+                        </div>
+                    </div>
+                    <p class="text-sm text-[var(--text-muted)] mt-4">
+                        Greedy elige 5 sobre 9 porque desde el 4, el 5 está "disponible" pero el camino al 9 requiere
+                        planificación desde antes.
+                    </p>
+                </div>
+
+                <!-- El problema real -->
+                <div class="p-5 bg-[var(--accent-amber)]/10 border border-[var(--accent-amber)]/30 rounded-xl">
+                    <h4 class="font-medium mb-2 text-[var(--accent-amber)]">El Triángulo Real (15 filas)</h4>
+                    <p class="text-sm text-[var(--text-secondary)] mb-3">
+                        El problema nos da un triángulo de 15 filas. ¿Cuántos caminos posibles hay?
+                    </p>
+                    <div class="p-3 bg-[var(--bg-elevated)] rounded-lg mono text-sm">
+                        En cada fila elegimos izquierda o derecha: 2 opciones.<br>
+                        14 decisiones (filas 1→2, 2→3, ..., 14→15).<br>
+                        Total: 2<sup>14</sup> = <strong class="text-[var(--accent-red)]">16,384 caminos</strong>
+                    </div>
+                    <p class="text-xs text-[var(--text-muted)] mt-2">
+                        Probar todos es factible para 15 filas, pero el problema 67 tiene ¡100 filas! (2⁹⁹ caminos)
+                    </p>
+                </div>
+
+                <!-- Resultado -->
+                <div class="result-box">
+                    <div>
+                        <div class="text-sm text-[var(--text-muted)] mb-1">Suma máxima del camino</div>
+                        <div class="result-value">1074</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-[var(--text-muted)] mb-1">Filas en el triángulo</div>
+                        <div class="mono text-lg">15</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NIVEL 2 -->
+        <div class="level-content" id="level2">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-green)] flex items-center justify-center text-sm">2</span>
+                        Fuerza Bruta: Probar Todos los Caminos
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        La solución más directa: explorar <strong>todos</strong> los caminos posibles con recursión
+                        y quedarnos con el mejor.
+                    </p>
+                </div>
+
+                <!-- Idea recursiva -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-green)]">La Idea Recursiva</h4>
+                    <p class="text-[var(--text-secondary)] mb-4">
+                        Para cada celda, la mejor suma desde ahí hasta abajo es:
+                    </p>
+                    <div class="p-4 bg-[var(--bg-elevated)] rounded-lg mono text-sm text-center">
+                        mejor(fila, col) = valor[fila][col] + max(<br>
+                        <span class="pl-8">mejor(fila+1, col),</span><br>
+                        <span class="pl-8">mejor(fila+1, col+1)</span><br>
+                        )
+                    </div>
+                    <p class="text-sm text-[var(--text-muted)] mt-4">
+                        Caso base: en la última fila, mejor(fila, col) = valor[fila][col]
+                    </p>
+                </div>
+
+                <!-- Código recursivo -->
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — Recursión (fuerza bruta)</span>
+                        <button class="run-btn" onclick="runCode('code2', 'output2')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code2" style="min-height: 450px;">triangle = [
+    [75],
+    [95, 64],
+    [17, 47, 82],
+    [18, 35, 87, 10],
+    [20, 4, 82, 47, 65],
+    [19, 1, 23, 75, 3, 34],
+    [88, 2, 77, 73, 7, 63, 67],
+    [99, 65, 4, 28, 6, 16, 70, 92],
+    [41, 41, 26, 56, 83, 40, 80, 70, 33],
+    [41, 48, 72, 33, 47, 32, 37, 16, 94, 29],
+    [53, 71, 44, 65, 25, 43, 91, 52, 97, 51, 14],
+    [70, 11, 33, 28, 77, 73, 17, 78, 39, 68, 17, 57],
+    [91, 71, 52, 38, 17, 14, 91, 43, 58, 50, 27, 29, 48],
+    [63, 66, 4, 68, 89, 53, 67, 30, 73, 16, 69, 87, 40, 31],
+    [4, 62, 98, 27, 23, 9, 70, 98, 73, 93, 38, 53, 60, 4, 23]
+]
+
+def max_path_recursive(row, col):
+    """
+    Calcula la suma máxima desde (row, col) hasta la base.
+
+    Esta versión es INEFICIENTE porque recalcula los mismos
+    subproblemas muchas veces.
+    """
+    # Caso base: última fila
+    if row == len(triangle) - 1:
+        return triangle[row][col]
+
+    # Caso recursivo: mi valor + el mejor de los dos hijos
+    left = max_path_recursive(row + 1, col)
+    right = max_path_recursive(row + 1, col + 1)
+
+    return triangle[row][col] + max(left, right)
+
+# Para el ejemplo pequeño
+small = [[3], [7, 4], [2, 4, 6], [8, 5, 9, 3]]
+triangle_backup = triangle
+triangle = small
+
+print("Ejemplo pequeño:")
+print(f"Suma máxima: {max_path_recursive(0, 0)}")
+
+# Para el problema real
+triangle = triangle_backup
+print(f"\nTriángulo de 15 filas:")
+print(f"Suma máxima: {max_path_recursive(0, 0)}")
+print("\n⚠️ Esto funciona, pero es O(2^n) - muy lento para triángulos grandes")</textarea>
+                    <div class="code-output" id="output2">// Output aparecerá aquí</div>
+                </div>
+
+                <!-- El problema de eficiencia -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-red)]">El Problema: Trabajo Repetido</h4>
+                    <p class="text-[var(--text-secondary)] mb-4">
+                        Observa este triángulo de llamadas para el ejemplo pequeño:
+                    </p>
+                    <div class="p-4 bg-[var(--bg-elevated)] rounded-lg mono text-xs overflow-x-auto">
+                        <pre>
+max(0,0) = 3 + max(max(1,0), max(1,1))
+           │
+           ├── max(1,0) = 7 + max(max(2,0), max(2,1))
+           │              │
+           │              ├── max(2,0) = 2 + max(max(3,0), max(3,1))
+           │              └── max(2,1) = 4 + max(max(3,1), max(3,2))  ← ¡REPETIDO!
+           │
+           └── max(1,1) = 4 + max(max(2,1), max(2,2))
+                          │
+                          ├── max(2,1) = 4 + max(max(3,1), max(3,2))  ← ¡REPETIDO!
+                          └── max(2,2) = 6 + max(max(3,2), max(3,3))
+                        </pre>
+                    </div>
+                    <p class="text-sm text-[var(--text-muted)] mt-4">
+                        <code>max(2,1)</code> se calcula <strong>dos veces</strong>. En triángulos grandes,
+                        el mismo subproblema se recalcula miles de veces.
+                    </p>
+                </div>
+
+                <!-- Complejidad -->
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div class="p-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                        <div class="text-sm text-[var(--text-muted)] mb-1">Complejidad temporal</div>
+                        <div class="mono text-lg text-[var(--accent-red)]">O(2ⁿ)</div>
+                        <p class="text-xs text-[var(--text-muted)] mt-1">Exponencial - cada nodo genera 2 llamadas</p>
+                    </div>
+                    <div class="p-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                        <div class="text-sm text-[var(--text-muted)] mb-1">Complejidad espacial</div>
+                        <div class="mono text-lg">O(n)</div>
+                        <p class="text-xs text-[var(--text-muted)] mt-1">Profundidad del stack de recursión</p>
+                    </div>
+                </div>
+
+                <!-- Conceptos -->
+                <div class="flex flex-wrap gap-3">
+                    <span class="concept-tag"><span class="text-[var(--accent-green)]">✓</span> Recursión</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-green)]">✓</span> Subproblemas solapados</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-red)]">!</span> Ineficiente O(2ⁿ)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- NIVEL 3 -->
+        <div class="level-content" id="level3">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-purple)] flex items-center justify-center text-sm">3</span>
+                        Programación Dinámica: Bottom-Up
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        En vez de calcular desde arriba (y repetir trabajo), calculamos desde <strong>abajo hacia arriba</strong>.
+                        Cada celda solo se procesa una vez.
+                    </p>
+                </div>
+
+                <!-- La idea clave -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-purple)]">La Idea Clave</h4>
+                    <div class="space-y-4 text-[var(--text-secondary)]">
+                        <p>
+                            Empezamos por la <strong>penúltima fila</strong>. Para cada número, sumamos el mayor de sus dos hijos:
+                        </p>
+                        <div class="p-4 bg-[var(--bg-elevated)] rounded-lg mono text-sm text-center">
+                            nuevo[i] = original[i] + max(hijo_izq, hijo_der)
+                        </div>
+                        <p>
+                            Repetimos hasta llegar a la cima. El número en la cima es la respuesta.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Visualización paso a paso -->
+                <div class="space-y-4">
+                    <h4 class="font-medium">Ejemplo paso a paso:</h4>
+
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <!-- Estado inicial -->
+                        <div class="p-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                            <p class="text-xs text-[var(--text-muted)] mb-2">Paso 0: Triángulo original</p>
+                            <div class="dp-visual" style="padding: 8px;">
+                                <div class="triangle-row">
+                                    <div class="dp-cell original">3</div>
+                                </div>
+                                <div class="triangle-row">
+                                    <div class="dp-cell original">7</div>
+                                    <div class="dp-cell original">4</div>
+                                </div>
+                                <div class="triangle-row">
+                                    <div class="dp-cell original">2</div>
+                                    <div class="dp-cell original">4</div>
+                                    <div class="dp-cell original">6</div>
+                                </div>
+                                <div class="triangle-row">
+                                    <div class="dp-cell">8</div>
+                                    <div class="dp-cell">5</div>
+                                    <div class="dp-cell">9</div>
+                                    <div class="dp-cell">3</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Paso 1 -->
+                        <div class="p-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                            <p class="text-xs text-[var(--text-muted)] mb-2">Paso 1: Procesar fila 3</p>
+                            <div class="dp-visual" style="padding: 8px;">
+                                <div class="triangle-row">
+                                    <div class="dp-cell original">3</div>
+                                </div>
+                                <div class="triangle-row">
+                                    <div class="dp-cell original">7</div>
+                                    <div class="dp-cell original">4</div>
+                                </div>
+                                <div class="triangle-row">
+                                    <div class="dp-cell computed">10</div>
+                                    <div class="dp-cell computed">13</div>
+                                    <div class="dp-cell computed">15</div>
+                                </div>
+                            </div>
+                            <p class="text-xs text-[var(--text-muted)] mt-2 mono">
+                                2+max(8,5)=10, 4+max(5,9)=13, 6+max(9,3)=15
+                            </p>
+                        </div>
+
+                        <!-- Paso 2 -->
+                        <div class="p-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                            <p class="text-xs text-[var(--text-muted)] mb-2">Paso 2: Procesar fila 2</p>
+                            <div class="dp-visual" style="padding: 8px;">
+                                <div class="triangle-row">
+                                    <div class="dp-cell original">3</div>
+                                </div>
+                                <div class="triangle-row">
+                                    <div class="dp-cell computed">20</div>
+                                    <div class="dp-cell computed">19</div>
+                                </div>
+                            </div>
+                            <p class="text-xs text-[var(--text-muted)] mt-2 mono">
+                                7+max(10,13)=20, 4+max(13,15)=19
+                            </p>
+                        </div>
+
+                        <!-- Paso 3 -->
+                        <div class="p-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                            <p class="text-xs text-[var(--text-muted)] mb-2">Paso 3: Procesar fila 1 (cima)</p>
+                            <div class="dp-visual" style="padding: 8px;">
+                                <div class="triangle-row">
+                                    <div class="dp-cell final">23</div>
+                                </div>
+                            </div>
+                            <p class="text-xs text-[var(--text-muted)] mt-2 mono">
+                                3+max(20,19)=23 ✓
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Código DP -->
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — Programación Dinámica (bottom-up)</span>
+                        <button class="run-btn" onclick="runCode('code3', 'output3')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code3" style="min-height: 400px;">triangle = [
+    [75],
+    [95, 64],
+    [17, 47, 82],
+    [18, 35, 87, 10],
+    [20, 4, 82, 47, 65],
+    [19, 1, 23, 75, 3, 34],
+    [88, 2, 77, 73, 7, 63, 67],
+    [99, 65, 4, 28, 6, 16, 70, 92],
+    [41, 41, 26, 56, 83, 40, 80, 70, 33],
+    [41, 48, 72, 33, 47, 32, 37, 16, 94, 29],
+    [53, 71, 44, 65, 25, 43, 91, 52, 97, 51, 14],
+    [70, 11, 33, 28, 77, 73, 17, 78, 39, 68, 17, 57],
+    [91, 71, 52, 38, 17, 14, 91, 43, 58, 50, 27, 29, 48],
+    [63, 66, 4, 68, 89, 53, 67, 30, 73, 16, 69, 87, 40, 31],
+    [4, 62, 98, 27, 23, 9, 70, 98, 73, 93, 38, 53, 60, 4, 23]
+]
+
+def max_path_dp(tri):
+    """
+    Calcula la suma máxima usando DP bottom-up.
+
+    Modificamos el triángulo in-place, de abajo hacia arriba.
+    Cada celda se convierte en: valor + max(hijo_izq, hijo_der)
+    """
+    # Hacemos una copia para no modificar el original
+    dp = [row[:] for row in tri]
+
+    # Desde la penúltima fila hasta la primera
+    for row in range(len(dp) - 2, -1, -1):
+        for col in range(len(dp[row])):
+            # Sumar el mayor de los dos hijos
+            left_child = dp[row + 1][col]
+            right_child = dp[row + 1][col + 1]
+            dp[row][col] += max(left_child, right_child)
+
+    # La cima contiene la suma máxima
+    return dp[0][0]
+
+# Ejemplo pequeño
+small = [[3], [7, 4], [2, 4, 6], [8, 5, 9, 3]]
+print(f"Ejemplo pequeño: {max_path_dp(small)}")
+
+# Problema real
+print(f"Triángulo de 15 filas: {max_path_dp(triangle)}")
+
+# Mostrar cómo se ve el triángulo transformado (ejemplo pequeño)
+print("\n--- Triángulo transformado (ejemplo pequeño) ---")
+dp = [row[:] for row in small]
+for row in range(len(dp) - 2, -1, -1):
+    for col in range(len(dp[row])):
+        dp[row][col] += max(dp[row + 1][col], dp[row + 1][col + 1])
+    print(f"Después de fila {row}: {dp[row]}")</textarea>
+                    <div class="code-output" id="output3">// Output aparecerá aquí</div>
+                </div>
+
+                <!-- Versión super compacta -->
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — Versión compacta (una línea por iteración)</span>
+                        <button class="run-btn" onclick="runCode('code3b', 'output3b')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code3b">triangle = [
+    [75],
+    [95, 64],
+    [17, 47, 82],
+    [18, 35, 87, 10],
+    [20, 4, 82, 47, 65],
+    [19, 1, 23, 75, 3, 34],
+    [88, 2, 77, 73, 7, 63, 67],
+    [99, 65, 4, 28, 6, 16, 70, 92],
+    [41, 41, 26, 56, 83, 40, 80, 70, 33],
+    [41, 48, 72, 33, 47, 32, 37, 16, 94, 29],
+    [53, 71, 44, 65, 25, 43, 91, 52, 97, 51, 14],
+    [70, 11, 33, 28, 77, 73, 17, 78, 39, 68, 17, 57],
+    [91, 71, 52, 38, 17, 14, 91, 43, 58, 50, 27, 29, 48],
+    [63, 66, 4, 68, 89, 53, 67, 30, 73, 16, 69, 87, 40, 31],
+    [4, 62, 98, 27, 23, 9, 70, 98, 73, 93, 38, 53, 60, 4, 23]
+]
+
+def max_path_compact(tri):
+    """
+    Versión compacta usando reduce y zip.
+
+    Empezamos con la última fila y vamos "reduciendo" hacia arriba.
+    """
+    from functools import reduce
+
+    def combine_rows(bottom, top):
+        # Para cada elemento de la fila superior,
+        # sumar el máximo de sus dos hijos
+        return [t + max(l, r) for t, l, r in zip(top, bottom, bottom[1:])]
+
+    # Reducir de abajo hacia arriba
+    return reduce(combine_rows, reversed(tri))[0]
+
+print(f"Suma máxima: {max_path_compact(triangle)}")
+
+# Explicación del zip
+print("\n--- Cómo funciona zip en este contexto ---")
+bottom = [8, 5, 9, 3]
+top = [2, 4, 6]
+print(f"bottom:     {bottom}")
+print(f"bottom[1:]: {bottom[1:]}")
+print(f"top:        {top}")
+print(f"\nzip(top, bottom, bottom[1:]):")
+for t, l, r in zip(top, bottom, bottom[1:]):
+    print(f"  ({t}, {l}, {r}) → {t} + max({l}, {r}) = {t + max(l, r)}")</textarea>
+                    <div class="code-output" id="output3b">// Output aparecerá aquí</div>
+                </div>
+
+                <!-- Comparación de complejidad -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">Comparación de Complejidad</h4>
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-[var(--text-muted)]">
+                                <th class="text-left pb-3">Método</th>
+                                <th class="text-left pb-3">Tiempo</th>
+                                <th class="text-left pb-3">Espacio</th>
+                                <th class="text-left pb-3">15 filas</th>
+                                <th class="text-left pb-3">100 filas</th>
+                            </tr>
+                        </thead>
+                        <tbody class="mono text-xs">
+                            <tr class="border-t border-[var(--border)]">
+                                <td class="py-3 text-[var(--accent-red)]">Recursión</td>
+                                <td>O(2ⁿ)</td>
+                                <td>O(n)</td>
+                                <td>16,384 ops</td>
+                                <td class="text-[var(--accent-red)]">10³⁰ ops</td>
+                            </tr>
+                            <tr class="border-t border-[var(--border)]">
+                                <td class="py-3 text-[var(--accent-purple)]">DP bottom-up</td>
+                                <td class="text-[var(--accent-green)]">O(n²)</td>
+                                <td>O(n²)</td>
+                                <td class="text-[var(--accent-green)]">120 ops</td>
+                                <td class="text-[var(--accent-green)]">5,050 ops</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="text-xs text-[var(--text-muted)] mt-4">
+                        n = número de filas. DP es <strong>exponencialmente más rápido</strong>.
+                    </p>
+                </div>
+
+                <!-- Patrón DP -->
+                <div class="p-5 bg-[var(--accent-purple)]/10 border border-[var(--accent-purple)]/30 rounded-xl">
+                    <h4 class="font-medium mb-2 text-[var(--accent-purple)]">El Patrón de Programación Dinámica</h4>
+                    <ol class="list-decimal list-inside space-y-2 text-sm text-[var(--text-secondary)]">
+                        <li><strong>Identificar subproblemas solapados</strong>: los mismos cálculos se repiten</li>
+                        <li><strong>Definir el estado</strong>: ¿qué información necesito? (fila, columna)</li>
+                        <li><strong>Encontrar la recurrencia</strong>: dp[i][j] = valor + max(dp[i+1][j], dp[i+1][j+1])</li>
+                        <li><strong>Establecer caso base</strong>: la última fila ya tiene los valores finales</li>
+                        <li><strong>Elegir dirección</strong>: bottom-up suele ser más eficiente que top-down con memoización</li>
+                    </ol>
+                </div>
+
+                <!-- Conceptos aprendidos -->
+                <div class="flex flex-wrap gap-3">
+                    <span class="concept-tag"><span class="text-[var(--accent-purple)]">✓</span> Programación Dinámica</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-purple)]">✓</span> Bottom-up vs Top-down</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-purple)]">✓</span> Subproblemas solapados</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-purple)]">✓</span> Por qué greedy falla</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Pyodide setup
+        let pyodide = null;
+
+        async function initPyodide() {
+            const status = document.getElementById('pyodideStatus');
+            const text = document.getElementById('pyodideText');
+            status.classList.add('loading');
+
+            try {
+                pyodide = await loadPyodide();
+                status.classList.remove('loading');
+                status.classList.add('ready');
+                text.textContent = 'Python listo';
+            } catch (e) {
+                text.textContent = 'Error cargando Python';
+                status.style.background = '#ef4444';
+            }
+        }
+
+        async function runCode(inputId, outputId) {
+            const code = document.getElementById(inputId).value;
+            const output = document.getElementById(outputId);
+            const btn = output.parentElement.querySelector('.run-btn');
+
+            if (!pyodide) {
+                output.textContent = 'Esperando Pyodide...';
+                return;
+            }
+
+            btn.classList.add('running');
+            btn.disabled = true;
+            output.textContent = 'Ejecutando...';
+            output.className = 'code-output';
+
+            try {
+                pyodide.runPython(`
+import sys
+from io import StringIO
+sys.stdout = StringIO()
+`);
+                await pyodide.runPythonAsync(code);
+                const stdout = pyodide.runPython('sys.stdout.getvalue()');
+                output.textContent = stdout || '(sin output)';
+                output.classList.add('success');
+            } catch (e) {
+                output.textContent = e.message;
+                output.classList.add('error');
+            }
+
+            btn.classList.remove('running');
+            btn.disabled = false;
+        }
+
+        // Level tabs
+        document.querySelectorAll('.level-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.level-content').forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(`level${tab.dataset.level}`).classList.add('active');
+            });
+        });
+
+        // Init
+        initPyodide();
+    </script>
+</body>
+</html>
