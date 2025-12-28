@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#020 Suma de Dígitos de un Factorial — Euler Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    <style>
+        :root {
+            --bg: #000000;
+            --bg-elevated: #0a0a0f;
+            --bg-card: #111118;
+            --border: #1a1a24;
+            --border-hover: #2a2a3a;
+            --text: #e8e8ed;
+            --text-secondary: #8888a0;
+            --text-muted: #505068;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-amber: #f59e0b;
+            --accent-purple: #a855f7;
+            --accent-red: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .serif { font-family: 'Source Serif 4', Georgia, serif; }
+
+        header { position: sticky; top: 0; z-index: 50; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+
+        .level-tabs { display: flex; gap: 2px; background: var(--bg-elevated); padding: 4px; border-radius: 10px; }
+        .level-tab { padding: 8px 16px; font-size: 13px; font-weight: 500; color: var(--text-muted); background: transparent; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-family: 'JetBrains Mono', monospace; }
+        .level-tab:hover { color: var(--text-secondary); }
+        .level-tab.active { background: var(--accent-blue); color: white; }
+        .level-tab[data-level="2"].active { background: var(--accent-green); }
+
+        .level-content { display: none; animation: fadeIn 0.3s ease; }
+        .level-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .code-editor { position: relative; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .code-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: var(--bg-card); border-bottom: 1px solid var(--border); }
+        .code-lang { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent-green); text-transform: uppercase; letter-spacing: 0.5px; }
+        .run-btn { display: flex; align-items: center; gap: 6px; padding: 6px 14px; background: var(--accent-blue); color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .run-btn:hover { filter: brightness(1.1); }
+        .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .run-btn.running { background: var(--accent-amber); }
+        .code-textarea { width: 100%; min-height: 200px; padding: 16px; background: transparent; border: none; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.7; resize: vertical; outline: none; }
+        .code-output { padding: 12px 16px; background: var(--bg-card); border-top: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-secondary); min-height: 40px; }
+        .code-output.success { color: var(--accent-green); }
+        .code-output.error { color: #ef4444; }
+
+        .result-box { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(34, 197, 94, 0.08) 100%); border: 1px solid var(--accent-blue); border-radius: 12px; }
+        .result-value { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 600; color: var(--accent-green); }
+
+        .math-block { padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; text-align: center; }
+        .math-formula { font-family: 'Source Serif 4', Georgia, serif; font-size: 20px; color: var(--text); margin-bottom: 8px; }
+        .math-description { font-size: 13px; color: var(--text-muted); }
+
+        .concept-tag { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
+
+        .pyodide-status { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--bg-card); border-radius: 8px; font-size: 12px; color: var(--text-muted); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+        .status-dot.loading { background: var(--accent-amber); animation: pulse 1s infinite; }
+        .status-dot.ready { background: var(--accent-green); }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        code:not(.code-textarea) { padding: 2px 8px; background: var(--bg-elevated); border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.9em; color: var(--accent-amber); }
+
+        .big-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            line-height: 1.6;
+            word-break: break-all;
+            padding: 16px;
+            background: var(--bg-elevated);
+            border-radius: 8px;
+            color: var(--text-secondary);
+        }
+
+        .digit-highlight {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        .factorial-visual {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: wrap;
+            padding: 16px;
+            background: var(--bg-elevated);
+            border-radius: 12px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .factorial-step {
+            padding: 6px 10px;
+            background: var(--bg-card);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .factorial-step.highlight {
+            background: var(--accent-green);
+            color: black;
+            font-weight: 600;
+        }
+
+        .factorial-step.times {
+            background: transparent;
+            color: var(--text-muted);
+        }
+
+        .growth-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .growth-table th, .growth-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .growth-table th {
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 12px;
+        }
+
+        .growth-table td {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+        }
+
+        .growth-table tr:hover {
+            background: var(--bg-elevated);
+        }
+
+        .comparison-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .compare-card {
+            padding: 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .compare-card h5 {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .compare-card .value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <header class="px-6 py-4">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-6">
+                <a href="../../index.html" class="text-sm text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
+                    <- Euler Lab
+                </a>
+                <div class="flex items-center gap-3">
+                    <span class="mono text-lg text-[var(--accent-blue)]">#020</span>
+                    <h1 class="text-lg font-medium">Suma de Dígitos de un Factorial</h1>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="pyodide-status">
+                    <div class="status-dot" id="pyodideStatus"></div>
+                    <span id="pyodideText">Cargando Python...</span>
+                </div>
+                <div class="flex gap-2">
+                    <a href="../019/index.html" class="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--border)] hover:border-[var(--border-hover)]"><- 019</a>
+                    <span class="text-sm text-[var(--text-muted)] px-3 py-1.5 rounded-lg border border-[var(--border)] opacity-50">021 -></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-8">
+        <!-- Enunciado -->
+        <div class="mb-8 p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 w-10 h-10 flex items-center justify-content-center rounded-lg bg-[var(--accent-blue)]/10 text-[var(--accent-blue)]">
+                    <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <div class="space-y-3">
+                    <h2 class="text-lg font-medium">Factorial Digit Sum</h2>
+                    <p class="text-[var(--text-secondary)] leading-relaxed">
+                        <em>n</em>! significa <em>n</em> x (<em>n</em> - 1) x ... x 3 x 2 x 1
+                        <br><br>
+                        Por ejemplo, 10! = 10 x 9 x ... x 3 x 2 x 1 = 3628800,<br>
+                        y la suma de los dígitos de 10! es 3 + 6 + 2 + 8 + 8 + 0 + 0 = <strong class="text-white">27</strong>.
+                        <br><br>
+                        Encuentra la suma de los dígitos de <strong class="text-white">100!</strong>
+                    </p>
+                    <div class="flex items-center gap-6 pt-2">
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-green)]">*</span>
+                            Factorial
+                        </span>
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-amber)]">*</span>
+                            BigInt
+                        </span>
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-purple)]">*</span>
+                            Suma de dígitos
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs de niveles -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="level-tabs">
+                <button class="level-tab active" data-level="1">Nivel 1: Entendimiento</button>
+                <button class="level-tab" data-level="2">Nivel 2: Implementacion</button>
+            </div>
+        </div>
+
+        <!-- NIVEL 1 -->
+        <div class="level-content active" id="level1">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-blue)] flex items-center justify-center text-sm">1</span>
+                        ¿Que es un factorial?
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        El factorial de un numero <em>n</em>, escrito como <strong>n!</strong>, es el producto
+                        de todos los enteros positivos desde 1 hasta n.
+                    </p>
+                </div>
+
+                <!-- Visualizacion de factorial -->
+                <div class="space-y-4">
+                    <h4 class="font-medium">Visualizando 5!</h4>
+                    <div class="factorial-visual">
+                        <span class="factorial-step highlight">5</span>
+                        <span class="factorial-step times">x</span>
+                        <span class="factorial-step">4</span>
+                        <span class="factorial-step times">x</span>
+                        <span class="factorial-step">3</span>
+                        <span class="factorial-step times">x</span>
+                        <span class="factorial-step">2</span>
+                        <span class="factorial-step times">x</span>
+                        <span class="factorial-step">1</span>
+                        <span class="factorial-step times">=</span>
+                        <span class="factorial-step highlight">120</span>
+                    </div>
+                </div>
+
+                <!-- Tabla de crecimiento -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">El crecimiento explosivo del factorial</h4>
+                    <table class="growth-table">
+                        <thead>
+                            <tr>
+                                <th>n</th>
+                                <th>n!</th>
+                                <th>Digitos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>5</td>
+                                <td>120</td>
+                                <td>3</td>
+                            </tr>
+                            <tr>
+                                <td>10</td>
+                                <td>3,628,800</td>
+                                <td>7</td>
+                            </tr>
+                            <tr>
+                                <td>15</td>
+                                <td>1,307,674,368,000</td>
+                                <td>13</td>
+                            </tr>
+                            <tr>
+                                <td>20</td>
+                                <td class="text-[var(--accent-amber)]">2,432,902,008,176,640,000</td>
+                                <td>19</td>
+                            </tr>
+                            <tr>
+                                <td>50</td>
+                                <td class="text-[var(--text-muted)] text-xs">3.04 x 10^64</td>
+                                <td>65</td>
+                            </tr>
+                            <tr>
+                                <td class="text-[var(--accent-green)]">100</td>
+                                <td class="text-[var(--text-muted)] text-xs">9.33 x 10^157</td>
+                                <td class="text-[var(--accent-green)]">158</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="text-sm text-[var(--text-muted)] mt-4">
+                        100! tiene <strong>158 digitos</strong>. Es un numero ENORME, pero Python lo maneja sin problemas.
+                    </p>
+                </div>
+
+                <!-- Comparacion con potencias -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-purple)]">Factorial vs Potencia: ¿Cual crece mas rapido?</h4>
+                    <div class="comparison-box">
+                        <div class="compare-card">
+                            <h5>Potencia (2^n)</h5>
+                            <div class="space-y-2">
+                                <div class="value">2^10 = <span class="text-[var(--accent-blue)]">1,024</span></div>
+                                <div class="value">2^20 = <span class="text-[var(--accent-blue)]">1,048,576</span></div>
+                                <div class="value">2^100 ~ <span class="text-[var(--accent-blue)]">10^30</span></div>
+                            </div>
+                        </div>
+                        <div class="compare-card">
+                            <h5>Factorial (n!)</h5>
+                            <div class="space-y-2">
+                                <div class="value">10! = <span class="text-[var(--accent-green)]">3,628,800</span></div>
+                                <div class="value">20! ~ <span class="text-[var(--accent-green)]">2.4 x 10^18</span></div>
+                                <div class="value">100! ~ <span class="text-[var(--accent-green)]">9.3 x 10^157</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-[var(--text-muted)] mt-4">
+                        El factorial crece <em>mucho</em> mas rapido. Ya en n=100, el factorial tiene 158 digitos
+                        mientras que 2^100 "solo" tiene 31 digitos.
+                    </p>
+                </div>
+
+                <!-- El numero 100! completo -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-green)]">100! completo (158 digitos)</h4>
+                    <div class="big-number" id="factorial100">
+                        93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000
+                    </div>
+                    <p class="text-sm text-[var(--text-muted)] mt-4">
+                        Observa los muchos ceros al final. Cada vez que multiplicamos por un multiplo de 5 y de 2,
+                        anadimos un cero. Hay 24 ceros al final de 100!
+                    </p>
+                </div>
+
+                <!-- Por que tantos ceros -->
+                <div class="p-5 bg-[var(--accent-amber)]/10 border border-[var(--accent-amber)]/30 rounded-xl">
+                    <h4 class="font-medium mb-2 text-[var(--accent-amber)]">¿Por que tantos ceros al final?</h4>
+                    <p class="text-sm text-[var(--text-secondary)] mb-3">
+                        Cada cero al final viene de un factor 10 = 2 x 5.
+                    </p>
+                    <div class="mono text-xs text-[var(--text-muted)] space-y-1">
+                        <p>Multiplos de 5 en 1-100: 5, 10, 15, 20, 25... = 20 numeros</p>
+                        <p>Multiplos de 25 (dan 5 extra): 25, 50, 75, 100 = 4 numeros</p>
+                        <p>Total de factores 5: 20 + 4 = <span class="text-[var(--accent-amber)]">24</span></p>
+                    </div>
+                    <p class="text-xs text-[var(--text-muted)] mt-3">
+                        Hay muchos mas factores 2 que 5, asi que el limitante son los 5.
+                        Por eso 100! termina en exactamente 24 ceros.
+                    </p>
+                </div>
+
+                <!-- El ejemplo paso a paso -->
+                <div class="space-y-4">
+                    <h4 class="font-medium">Ejemplo: suma de digitos de 10!</h4>
+                    <div class="p-4 bg-[var(--bg-elevated)] rounded-lg">
+                        <div class="mono text-lg mb-4">
+                            10! = <span class="digit-highlight">3</span><span class="digit-highlight">6</span><span class="digit-highlight">2</span><span class="digit-highlight">8</span><span class="digit-highlight">8</span><span class="digit-highlight">0</span><span class="digit-highlight">0</span>
+                        </div>
+                        <div class="mono text-sm text-[var(--text-secondary)]">
+                            Suma = 3 + 6 + 2 + 8 + 8 + 0 + 0 = <span class="text-[var(--accent-green)]">27</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Referencia al problema 16 -->
+                <div class="p-5 bg-[var(--accent-blue)]/10 border border-[var(--accent-blue)]/30 rounded-xl">
+                    <h4 class="font-medium mb-2 text-[var(--accent-blue)]">Conexion con el Problema 16</h4>
+                    <p class="text-sm text-[var(--text-secondary)]">
+                        Este problema es muy similar al <a href="../016/index.html" class="text-[var(--accent-blue)] underline">Problema 16 (Power Digit Sum)</a>.
+                        La unica diferencia es que ahi calculabamos 2^1000 y aqui calculamos 100!
+                    </p>
+                    <p class="text-sm text-[var(--text-muted)] mt-2">
+                        El algoritmo es identico: calcular el numero grande, convertir a string, sumar digitos.
+                        Python maneja ambos casos automaticamente con enteros de precision arbitraria.
+                    </p>
+                </div>
+
+                <!-- Resultado -->
+                <div class="result-box">
+                    <div>
+                        <div class="text-sm text-[var(--text-muted)] mb-1">Suma de digitos de 100!</div>
+                        <div class="result-value">648</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-[var(--text-muted)] mb-1">Digitos en 100!</div>
+                        <div class="mono text-lg">158</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NIVEL 2 -->
+        <div class="level-content" id="level2">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-green)] flex items-center justify-center text-sm">2</span>
+                        Implementacion en Python
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        Python tiene la funcion <code>math.factorial()</code> integrada, pero tambien
+                        podemos implementarlo nosotros mismos para entender mejor.
+                    </p>
+                </div>
+
+                <!-- Codigo con math.factorial -->
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — Usando math.factorial</span>
+                        <button class="run-btn" onclick="runCode('code1', 'output1')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code1">import math
+
+# Paso 1: Calcular 100!
+# math.factorial() es muy eficiente
+factorial_100 = math.factorial(100)
+
+# Paso 2: Convertir a string y sumar digitos
+digit_sum = sum(int(d) for d in str(factorial_100))
+
+print(f"100! tiene {len(str(factorial_100))} digitos")
+print(f"Suma de digitos: {digit_sum}")
+
+# Verificar con el ejemplo del problema
+print(f"\nVerificacion: 10! = {math.factorial(10)}")
+print(f"Suma de digitos de 10!: {sum(int(d) for d in str(math.factorial(10)))}")</textarea>
+                    <div class="code-output" id="output1">// Output aparecera aqui</div>
+                </div>
+
+                <!-- Implementando factorial manualmente -->
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — Implementando factorial</span>
+                        <button class="run-btn" onclick="runCode('code2', 'output2')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code2">def factorial_iterativo(n):
+    """Calcula n! con un bucle."""
+    resultado = 1
+    for i in range(2, n + 1):
+        resultado *= i
+    return resultado
+
+def factorial_recursivo(n):
+    """Calcula n! recursivamente.
+
+    La definicion matematica es:
+    - 0! = 1
+    - n! = n * (n-1)!
+    """
+    if n <= 1:
+        return 1
+    return n * factorial_recursivo(n - 1)
+
+# Resolver el problema
+fact_100 = factorial_iterativo(100)
+digit_sum = sum(int(d) for d in str(fact_100))
+
+print(f"Suma de digitos de 100!: {digit_sum}")
+
+# Mostrar ambos metodos dan el mismo resultado
+print(f"\n5! iterativo: {factorial_iterativo(5)}")
+print(f"5! recursivo: {factorial_recursivo(5)}")
+
+# La recursiva tiene limite de profundidad
+# Para n=100, la iterativa es mas segura
+print(f"\n100! iterativo: {len(str(factorial_iterativo(100)))} digitos")
+# factorial_recursivo(100) funcionaria pero no es recomendable para n grandes</textarea>
+                    <div class="code-output" id="output2">// Output aparecera aqui</div>
+                </div>
+
+                <!-- Por que preferir iterativo -->
+                <div class="p-5 bg-[var(--accent-amber)]/10 border border-[var(--accent-amber)]/30 rounded-xl">
+                    <h4 class="font-medium mb-2 text-[var(--accent-amber)]">Iterativo vs Recursivo</h4>
+                    <div class="grid md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p class="text-[var(--accent-green)] font-medium mb-2">Iterativo (preferido)</p>
+                            <ul class="list-disc list-inside space-y-1 text-[var(--text-muted)]">
+                                <li>Sin limite de profundidad</li>
+                                <li>Usa memoria constante</li>
+                                <li>Mas rapido en Python</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <p class="text-[var(--accent-red)] font-medium mb-2">Recursivo</p>
+                            <ul class="list-disc list-inside space-y-1 text-[var(--text-muted)]">
+                                <li>Limite ~1000 llamadas en Python</li>
+                                <li>Crea n stack frames</li>
+                                <li>Elegante pero ineficiente</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- One-liner -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">La solucion en una linea</h4>
+                    <div class="p-4 bg-[var(--bg-elevated)] rounded-lg mono text-sm">
+                        <p class="text-[var(--accent-green)]">import math; print(sum(int(d) for d in str(math.factorial(100))))</p>
+                    </div>
+                    <p class="text-sm text-[var(--text-muted)] mt-4">
+                        O sin importar:
+                    </p>
+                    <div class="p-4 bg-[var(--bg-elevated)] rounded-lg mono text-sm mt-2">
+                        <p class="text-[var(--accent-blue)]">from functools import reduce</p>
+                        <p class="text-[var(--accent-green)]">print(sum(int(d) for d in str(reduce(lambda a,b: a*b, range(1,101)))))</p>
+                    </div>
+                </div>
+
+                <!-- Usando reduce -->
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — Usando reduce (funcional)</span>
+                        <button class="run-btn" onclick="runCode('code3', 'output3')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code3">from functools import reduce
+
+# reduce aplica una funcion acumulativamente
+# reduce(f, [a, b, c, d]) = f(f(f(a, b), c), d)
+
+# Para factorial: multiplicamos todos los numeros de 1 a n
+factorial = lambda n: reduce(lambda acc, x: acc * x, range(1, n + 1), 1)
+
+# Visualizar como funciona reduce para 5!
+print("Como funciona reduce para 5!:")
+print("range(1, 6) = [1, 2, 3, 4, 5]")
+print("Paso 1: 1 * 1 = 1")
+print("Paso 2: 1 * 2 = 2")
+print("Paso 3: 2 * 3 = 6")
+print("Paso 4: 6 * 4 = 24")
+print("Paso 5: 24 * 5 = 120")
+
+print(f"\n5! = {factorial(5)}")
+print(f"100! tiene {len(str(factorial(100)))} digitos")
+
+# Resolver el problema
+digit_sum = sum(int(d) for d in str(factorial(100)))
+print(f"\nSuma de digitos de 100!: {digit_sum}")</textarea>
+                    <div class="code-output" id="output3">// Output aparecera aqui</div>
+                </div>
+
+                <!-- Explorando factoriales -->
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — Explorando factoriales</span>
+                        <button class="run-btn" onclick="runCode('code4', 'output4')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code4">import math
+
+def digit_sum(n):
+    """Suma de digitos de un numero."""
+    return sum(int(d) for d in str(n))
+
+def trailing_zeros(n):
+    """Cuenta ceros al final de n!"""
+    # Cada cero viene de un par (2, 5)
+    # Hay mas 2s que 5s, asi que contamos los 5s
+    count = 0
+    power_of_5 = 5
+    while power_of_5 <= n:
+        count += n // power_of_5
+        power_of_5 *= 5
+    return count
+
+# Tabla de factoriales
+print("n     n!                    Digitos  Suma   Ceros")
+print("-" * 55)
+
+for n in [1, 5, 10, 15, 20, 25, 50, 100]:
+    fact = math.factorial(n)
+    fact_str = str(fact)
+    if len(fact_str) > 20:
+        display = fact_str[:10] + "..." + fact_str[-5:]
+    else:
+        display = fact_str
+
+    print(f"{n:<5} {display:<22} {len(fact_str):<8} {digit_sum(fact):<6} {trailing_zeros(n)}")
+
+# Dato curioso
+print("\n" + "=" * 55)
+print("Dato curioso: 100! termina en 24 ceros porque hay")
+print("24 factores de 5 en los numeros del 1 al 100:")
+print(f"  Multiplos de 5:   100/5  = {100//5}")
+print(f"  Multiplos de 25:  100/25 = {100//25}")
+print(f"  Multiplos de 125: 100/125 = {100//125}")
+print(f"  Total: {100//5 + 100//25 + 100//125} ceros")</textarea>
+                    <div class="code-output" id="output4">// Output aparecera aqui</div>
+                </div>
+
+                <!-- Comparacion de metodos -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">Resumen de metodos</h4>
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-[var(--text-muted)]">
+                                <th class="text-left pb-3">Metodo</th>
+                                <th class="text-left pb-3">Codigo</th>
+                                <th class="text-left pb-3">Nota</th>
+                            </tr>
+                        </thead>
+                        <tbody class="mono text-xs">
+                            <tr class="border-t border-[var(--border)]">
+                                <td class="py-3 text-[var(--accent-green)]">math.factorial</td>
+                                <td>math.factorial(100)</td>
+                                <td class="text-[var(--text-muted)]">Recomendado</td>
+                            </tr>
+                            <tr class="border-t border-[var(--border)]">
+                                <td class="py-3">Bucle for</td>
+                                <td>resultado *= i</td>
+                                <td class="text-[var(--text-muted)]">Educativo</td>
+                            </tr>
+                            <tr class="border-t border-[var(--border)]">
+                                <td class="py-3">Recursion</td>
+                                <td>n * factorial(n-1)</td>
+                                <td class="text-[var(--text-muted)]">Limite stack</td>
+                            </tr>
+                            <tr class="border-t border-[var(--border)]">
+                                <td class="py-3">reduce</td>
+                                <td>reduce(lambda...)</td>
+                                <td class="text-[var(--text-muted)]">Funcional</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Conceptos aprendidos -->
+                <div class="flex flex-wrap gap-3">
+                    <span class="concept-tag"><span class="text-[var(--accent-green)]">OK</span> Factorial (n!)</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-green)]">OK</span> math.factorial()</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-green)]">OK</span> Iterativo vs Recursivo</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-green)]">OK</span> reduce()</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Pyodide setup
+        let pyodide = null;
+
+        async function initPyodide() {
+            const status = document.getElementById('pyodideStatus');
+            const text = document.getElementById('pyodideText');
+            status.classList.add('loading');
+
+            try {
+                pyodide = await loadPyodide();
+                status.classList.remove('loading');
+                status.classList.add('ready');
+                text.textContent = 'Python listo';
+            } catch (e) {
+                text.textContent = 'Error cargando Python';
+                status.style.background = '#ef4444';
+            }
+        }
+
+        async function runCode(inputId, outputId) {
+            const code = document.getElementById(inputId).value;
+            const output = document.getElementById(outputId);
+            const btn = output.parentElement.querySelector('.run-btn');
+
+            if (!pyodide) {
+                output.textContent = 'Esperando Pyodide...';
+                return;
+            }
+
+            btn.classList.add('running');
+            btn.disabled = true;
+            output.textContent = 'Ejecutando...';
+            output.className = 'code-output';
+
+            try {
+                pyodide.runPython(`
+import sys
+from io import StringIO
+sys.stdout = StringIO()
+`);
+                await pyodide.runPythonAsync(code);
+                const stdout = pyodide.runPython('sys.stdout.getvalue()');
+                output.textContent = stdout || '(sin output)';
+                output.classList.add('success');
+            } catch (e) {
+                output.textContent = e.message;
+                output.classList.add('error');
+            }
+
+            btn.classList.remove('running');
+            btn.disabled = false;
+        }
+
+        // Level tabs
+        document.querySelectorAll('.level-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.level-content').forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(`level${tab.dataset.level}`).classList.add('active');
+            });
+        });
+
+        // Init
+        initPyodide();
+    </script>
+</body>
+</html>
