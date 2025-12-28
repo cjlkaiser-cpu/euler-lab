@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#015 Caminos en una Cuadrícula — Euler Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    <style>
+        :root {
+            --bg: #000000;
+            --bg-elevated: #0a0a0f;
+            --bg-card: #111118;
+            --border: #1a1a24;
+            --border-hover: #2a2a3a;
+            --text: #e8e8ed;
+            --text-secondary: #8888a0;
+            --text-muted: #505068;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-amber: #f59e0b;
+            --accent-purple: #a855f7;
+            --accent-red: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .serif { font-family: 'Source Serif 4', Georgia, serif; }
+
+        header { position: sticky; top: 0; z-index: 50; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+
+        .level-tabs { display: flex; gap: 2px; background: var(--bg-elevated); padding: 4px; border-radius: 10px; }
+        .level-tab { padding: 8px 16px; font-size: 13px; font-weight: 500; color: var(--text-muted); background: transparent; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-family: 'JetBrains Mono', monospace; }
+        .level-tab:hover { color: var(--text-secondary); }
+        .level-tab.active { background: var(--accent-blue); color: white; }
+        .level-tab[data-level="2"].active { background: var(--accent-green); }
+        .level-tab[data-level="3"].active { background: var(--accent-purple); }
+
+        .level-content { display: none; animation: fadeIn 0.3s ease; }
+        .level-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .code-editor { position: relative; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .code-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: var(--bg-card); border-bottom: 1px solid var(--border); }
+        .code-lang { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent-green); text-transform: uppercase; letter-spacing: 0.5px; }
+        .run-btn { display: flex; align-items: center; gap: 6px; padding: 6px 14px; background: var(--accent-blue); color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .run-btn:hover { filter: brightness(1.1); }
+        .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .run-btn.running { background: var(--accent-amber); }
+        .code-textarea { width: 100%; min-height: 200px; padding: 16px; background: transparent; border: none; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.7; resize: vertical; outline: none; }
+        .code-output { padding: 12px 16px; background: var(--bg-card); border-top: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-secondary); min-height: 40px; }
+        .code-output.success { color: var(--accent-green); }
+        .code-output.error { color: #ef4444; }
+
+        .result-box { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(34, 197, 94, 0.08) 100%); border: 1px solid var(--accent-blue); border-radius: 12px; }
+        .result-value { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 600; color: var(--accent-green); }
+
+        .math-block { padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; text-align: center; }
+        .math-formula { font-family: 'Source Serif 4', Georgia, serif; font-size: 20px; color: var(--text); margin-bottom: 8px; }
+        .math-description { font-size: 13px; color: var(--text-muted); }
+
+        .concept-tag { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
+
+        .pyodide-status { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--bg-card); border-radius: 8px; font-size: 12px; color: var(--text-muted); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+        .status-dot.loading { background: var(--accent-amber); animation: pulse 1s infinite; }
+        .status-dot.ready { background: var(--accent-green); }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        code:not(.code-textarea) { padding: 2px 8px; background: var(--bg-elevated); border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.9em; color: var(--accent-amber); }
+
+        .grid-visual {
+            display: inline-grid;
+            gap: 0;
+            background: var(--bg-elevated);
+            padding: 16px;
+            border-radius: 12px;
+        }
+
+        .grid-cell {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+        }
+
+        .grid-cell.corner-start {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .grid-cell.corner-end {
+            background: var(--accent-green);
+            color: white;
+        }
+
+        .path-line {
+            stroke: var(--accent-amber);
+            stroke-width: 3;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .path-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .mini-grid {
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+
+        .mini-grid svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .pascal-triangle {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 20px;
+            background: var(--bg-elevated);
+            border-radius: 12px;
+        }
+
+        .pascal-row {
+            display: flex;
+            gap: 4px;
+        }
+
+        .pascal-cell {
+            width: 40px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            background: var(--bg-card);
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .pascal-cell.highlight {
+            background: var(--accent-purple);
+            color: white;
+            border-color: var(--accent-purple);
+        }
+
+        .dp-grid {
+            display: inline-grid;
+            gap: 2px;
+            padding: 16px;
+            background: var(--bg-elevated);
+            border-radius: 12px;
+        }
+
+        .dp-cell {
+            width: 50px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            background: var(--bg-card);
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .dp-cell.edge {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .dp-cell.computed {
+            background: var(--accent-green);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header class="px-6 py-4">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-6">
+                <a href="../../index.html" class="text-sm text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
+                    ← Euler Lab
+                </a>
+                <div class="flex items-center gap-3">
+                    <span class="mono text-lg text-[var(--accent-blue)]">#015</span>
+                    <h1 class="text-lg font-medium">Caminos en una Cuadrícula</h1>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="pyodide-status">
+                    <div class="status-dot" id="pyodideStatus"></div>
+                    <span id="pyodideText">Cargando Python...</span>
+                </div>
+                <div class="flex gap-2">
+                    <a href="../014/index.html" class="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--border)] hover:border-[var(--border-hover)]">← 014</a>
+                    <a href="../016/index.html" class="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--border)] hover:border-[var(--border-hover)]">016 →</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-8">
+        <!-- Enunciado -->
+        <div class="mb-8 p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 w-10 h-10 flex items-center justify-content-center rounded-lg bg-[var(--accent-blue)]/10 text-[var(--accent-blue)]">
+                    <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <div class="space-y-3">
+                    <h2 class="text-lg font-medium">Lattice Paths</h2>
+                    <p class="text-[var(--text-secondary)] leading-relaxed">
+                        Partiendo de la esquina superior izquierda de una cuadrícula de <strong class="text-white">2×2</strong>,
+                        y pudiendo moverse solo hacia la <strong class="text-white">derecha</strong> o hacia <strong class="text-white">abajo</strong>,
+                        hay exactamente <strong class="text-white">6 rutas</strong> hacia la esquina inferior derecha.
+                        <br><br>
+                        ¿Cuántas rutas hay en una cuadrícula de <strong class="text-white">20×20</strong>?
+                    </p>
+                    <div class="flex items-center gap-6 pt-2">
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-purple)]">●</span>
+                            Combinatoria
+                        </span>
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-green)]">●</span>
+                            Programación Dinámica
+                        </span>
+                        <span class="concept-tag">
+                            <span class="text-[var(--accent-amber)]">●</span>
+                            Triángulo de Pascal
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs de niveles -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="level-tabs">
+                <button class="level-tab active" data-level="1">Nivel 1: Entendimiento</button>
+                <button class="level-tab" data-level="2">Nivel 2: Programación Dinámica</button>
+                <button class="level-tab" data-level="3">Nivel 3: Fórmula Combinatoria</button>
+            </div>
+        </div>
+
+        <!-- NIVEL 1 -->
+        <div class="level-content active" id="level1">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-blue)] flex items-center justify-center text-sm">1</span>
+                        Visualizando el Problema
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        Empecemos con el caso pequeño: una cuadrícula de 2×2 tiene exactamente 6 caminos posibles.
+                        Cada camino requiere <strong>2 movimientos hacia la derecha</strong> y <strong>2 hacia abajo</strong>.
+                    </p>
+                </div>
+
+                <!-- Las 6 rutas del 2×2 -->
+                <div class="space-y-4">
+                    <h4 class="font-medium">Los 6 caminos en una cuadrícula 2×2:</h4>
+                    <div class="path-container">
+                        <!-- Camino 1: RRDD -->
+                        <div class="mini-grid">
+                            <svg viewBox="0 0 80 80" width="80" height="80">
+                                <rect x="0" y="0" width="80" height="80" fill="var(--bg-elevated)" rx="4"/>
+                                <line x1="0" y1="26.6" x2="80" y2="26.6" stroke="var(--border)" stroke-width="1"/>
+                                <line x1="0" y1="53.3" x2="80" y2="53.3" stroke="var(--border)" stroke-width="1"/>
+                                <line x1="26.6" y1="0" x2="26.6" y2="80" stroke="var(--border)" stroke-width="1"/>
+                                <line x1="53.3" y1="0" x2="53.3" y2="80" stroke="var(--border)" stroke-width="1"/>
+                                <circle cx="0" cy="0" r="5" fill="var(--accent-blue)"/>
+                                <circle cx="80" cy="80" r="5" fill="var(--accent-green)"/>
+                                <path d="M 0 0 L 53.3 0 L 80 0 L 80 53.3 L 80 80" class="path-line"/>
+                            </svg>
+                            <div class="text-xs text-center mt-1 mono text-[var(--text-muted)]">R R D D</div>
+                        </div>
+
+                        <!-- Camino 2: RDRD -->
+                        <div class="mini-grid">
+                            <svg viewBox="0 0 80 80" width="80" height="80">
+                                <rect x="0" y="0" width="80" height="80" fill="var(--bg-elevated)" rx="4"/>
+                                <line x1="0" y1="26.6" x2="80" y2="26.6" stroke="var(--border)" stroke-width="1"/>
+                                <line x1="0" y1="53.3" x2="80" y2="53.3" stroke="var(--border)" stroke-width="1"/>
+                                <line x1="26.6" y1="0" x2="26.6" y2="80" stroke="var(--border)" stroke-width="1"/>
+                                <line x1="53.3" y1="0" x2="53.3" y2="80" stroke="var(--border)" stroke-width="1"/>
+                                <circle cx="0" cy="0" r="5" fill="var(--accent-blue)"/>
+                                <circle cx="80" cy="80" r="5" fill="var(--accent-green)"/>
+                                <path d="M 0 0 L 40 0 L 40 40 L 80 40 L 80 80" class="path-line"/>
+                            </svg>
+                            <div class="text-xs text-center mt-1 mono text-[var(--text-muted)]">R D R D</div>
+                        </div>
+
+                        <!-- Camino 3: RDDR -->
+                        <div class="mini-grid">
+                            <svg viewBox="0 0 80 80" width="80" height="80">
+                                <rect x="0" y="0" width="80" height="80" fill="var(--bg-elevated)" rx="4"/>
+                                <line x1="0" y1="26.6" x2="80" y2="26.6" stroke="var(--border)" stroke-width="1"/>
+                                <line x1="0" y1="53.3" x2="80" y2="53.3" stroke="var(--border)" stroke-width="1"/>
+                                <line x1="26.6" y1="0" x2="26.6" y2="80" stroke="var(--border)" stroke-width="1"/>
+                                <line x1="53.3" y1="0" x2="53.3" y2="80" stroke="var(--border)" stroke-width="1"/>
+                                <circle cx="0" cy="0" r="5" fill="var(--accent-blue)"/>
+                                <circle cx="80" cy="80" r="5" fill="var(--accent-green)"/>
+                                <path d="M 0 0 L 40 0 L 40 80 L 80 80" class="path-line"/>
+                            </svg>
+                            <div class="text-xs text-center mt-1 mono text-[var(--text-muted)]">R D D R</div>
+                        </div>
+
+                        <!-- Camino 4: DRRD -->
+                        <div class="mini-grid">
+                            <svg viewBox="0 0 80 80" width="80" height="80">
+                                <rect x="0" y="0" width="80" height="80" fill="var(--bg-elevated)" rx="4"/>
+                                <line x1="0" y1="26.6" x2="80" y2="26.6" stroke="var(--border)" stroke-width="1"/>
+                                <line x1="0" y1="53.3" x2="80" y2="53.3" stroke="var(--border)" stroke-width="1"/>
+                                <line x1="26.6" y1="0" x2="26.6" y2="80" stroke="var(--border)" stroke-width="1"/>
+                                <line x1="53.3" y1="0" x2="53.3" y2="80" stroke="var(--border)" stroke-width="1"/>
+                                <circle cx="0" cy="0" r="5" fill="var(--accent-blue)"/>
+                                <circle cx="80" cy="80" r="5" fill="var(--accent-green)"/>
+                                <path d="M 0 0 L 0 40 L 80 40 L 80 80" class="path-line"/>
+                            </svg>
+                            <div class="text-xs text-center mt-1 mono text-[var(--text-muted)]">D R R D</div>
+                        </div>
+
+                        <!-- Camino 5: DRDR -->
+                        <div class="mini-grid">
+                            <svg viewBox="0 0 80 80" width="80" height="80">
+                                <rect x="0" y="0" width="80" height="80" fill="var(--bg-elevated)" rx="4"/>
+                                <line x1="0" y1="26.6" x2="80" y2="26.6" stroke="var(--border)" stroke-width="1"/>
+                                <line x1="0" y1="53.3" x2="80" y2="53.3" stroke="var(--border)" stroke-width="1"/>
+                                <line x1="26.6" y1="0" x2="26.6" y2="80" stroke="var(--border)" stroke-width="1"/>
+                                <line x1="53.3" y1="0" x2="53.3" y2="80" stroke="var(--border)" stroke-width="1"/>
+                                <circle cx="0" cy="0" r="5" fill="var(--accent-blue)"/>
+                                <circle cx="80" cy="80" r="5" fill="var(--accent-green)"/>
+                                <path d="M 0 0 L 0 40 L 40 40 L 40 80 L 80 80" class="path-line"/>
+                            </svg>
+                            <div class="text-xs text-center mt-1 mono text-[var(--text-muted)]">D R D R</div>
+                        </div>
+
+                        <!-- Camino 6: DDRR -->
+                        <div class="mini-grid">
+                            <svg viewBox="0 0 80 80" width="80" height="80">
+                                <rect x="0" y="0" width="80" height="80" fill="var(--bg-elevated)" rx="4"/>
+                                <line x1="0" y1="26.6" x2="80" y2="26.6" stroke="var(--border)" stroke-width="1"/>
+                                <line x1="0" y1="53.3" x2="80" y2="53.3" stroke="var(--border)" stroke-width="1"/>
+                                <line x1="26.6" y1="0" x2="26.6" y2="80" stroke="var(--border)" stroke-width="1"/>
+                                <line x1="53.3" y1="0" x2="53.3" y2="80" stroke="var(--border)" stroke-width="1"/>
+                                <circle cx="0" cy="0" r="5" fill="var(--accent-blue)"/>
+                                <circle cx="80" cy="80" r="5" fill="var(--accent-green)"/>
+                                <path d="M 0 0 L 0 80 L 80 80" class="path-line"/>
+                            </svg>
+                            <div class="text-xs text-center mt-1 mono text-[var(--text-muted)]">D D R R</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- El insight clave -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-purple)]">El Insight Clave</h4>
+                    <div class="space-y-4 text-[var(--text-secondary)]">
+                        <p>
+                            Observa algo crucial: <strong>todos los caminos tienen la misma longitud</strong>.
+                            Para ir de (0,0) a (2,2) necesitas exactamente:
+                        </p>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div class="p-4 bg-[var(--bg-elevated)] rounded-lg text-center">
+                                <div class="text-2xl mb-1">→ → </div>
+                                <div class="mono text-[var(--accent-blue)]">2 pasos a la derecha</div>
+                            </div>
+                            <div class="p-4 bg-[var(--bg-elevated)] rounded-lg text-center">
+                                <div class="text-2xl mb-1">↓ ↓</div>
+                                <div class="mono text-[var(--accent-green)]">2 pasos abajo</div>
+                            </div>
+                        </div>
+                        <p class="mt-4">
+                            Un camino no es más que una <strong>secuencia de 4 movimientos</strong>: 2 son R (derecha) y 2 son D (abajo).
+                            <br><br>
+                            La pregunta se transforma: <em>¿De cuántas formas podemos ordenar RRDD?</em>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Reformulación como combinatoria -->
+                <div class="space-y-4">
+                    <h4 class="font-medium">Reformulando el problema</h4>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="math-block">
+                            <div class="text-sm text-[var(--text-muted)] mb-2">Grid 2×2</div>
+                            <div class="math-formula serif">4 posiciones, elegir 2 para "R"</div>
+                            <div class="math-description">
+                                C(4,2) = 6 caminos
+                            </div>
+                        </div>
+                        <div class="math-block">
+                            <div class="text-sm text-[var(--text-muted)] mb-2">Grid 20×20</div>
+                            <div class="math-formula serif">40 posiciones, elegir 20 para "R"</div>
+                            <div class="math-description">
+                                C(40,20) = ???
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conexión con Pascal -->
+                <div class="p-5 bg-[var(--accent-amber)]/10 border border-[var(--accent-amber)]/30 rounded-xl">
+                    <h4 class="font-medium mb-2 text-[var(--accent-amber)]">Conexión con el Triángulo de Pascal</h4>
+                    <p class="text-sm text-[var(--text-secondary)]">
+                        C(n,k) son exactamente los números del triángulo de Pascal. Para n=4, k=2:
+                    </p>
+                    <div class="pascal-triangle mt-4">
+                        <div class="pascal-row"><div class="pascal-cell">1</div></div>
+                        <div class="pascal-row"><div class="pascal-cell">1</div><div class="pascal-cell">1</div></div>
+                        <div class="pascal-row"><div class="pascal-cell">1</div><div class="pascal-cell">2</div><div class="pascal-cell">1</div></div>
+                        <div class="pascal-row"><div class="pascal-cell">1</div><div class="pascal-cell">3</div><div class="pascal-cell">3</div><div class="pascal-cell">1</div></div>
+                        <div class="pascal-row"><div class="pascal-cell">1</div><div class="pascal-cell">4</div><div class="pascal-cell highlight">6</div><div class="pascal-cell">4</div><div class="pascal-cell">1</div></div>
+                    </div>
+                    <p class="text-xs text-[var(--text-muted)] mt-3 text-center">
+                        Fila 4, posición 2: C(4,2) = 6
+                    </p>
+                </div>
+
+                <!-- Resultado -->
+                <div class="result-box">
+                    <div>
+                        <div class="text-sm text-[var(--text-muted)] mb-1">Caminos en grid 20×20</div>
+                        <div class="result-value">137,846,528,820</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-[var(--text-muted)] mb-1">Fórmula</div>
+                        <div class="mono text-lg">C(40, 20)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NIVEL 2 -->
+        <div class="level-content" id="level2">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-green)] flex items-center justify-center text-sm">2</span>
+                        Programación Dinámica (DP)
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        Antes de usar la fórmula directa, veamos cómo resolverlo con <strong>programación dinámica</strong>.
+                        Esta técnica es fundamental en algoritmos y tiene aplicaciones mucho más amplias.
+                    </p>
+                </div>
+
+                <!-- La idea de DP -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-green)]">La Idea Central de DP</h4>
+                    <div class="space-y-4 text-[var(--text-secondary)]">
+                        <p>
+                            <strong>Pregunta clave:</strong> ¿Cuántos caminos hay para llegar a cada celda?
+                        </p>
+                        <p>
+                            Para llegar a cualquier celda (i, j), solo puedes venir de:
+                        </p>
+                        <ul class="list-disc list-inside space-y-1 ml-4">
+                            <li><strong>Arriba</strong>: celda (i-1, j)</li>
+                            <li><strong>Izquierda</strong>: celda (i, j-1)</li>
+                        </ul>
+                        <div class="mt-4 p-4 bg-[var(--bg-elevated)] rounded-lg text-center">
+                            <div class="math-formula serif">caminos(i, j) = caminos(i-1, j) + caminos(i, j-1)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visualización de la tabla DP -->
+                <div class="space-y-4">
+                    <h4 class="font-medium">Construyendo la tabla (grid 3×3):</h4>
+                    <div class="flex justify-center">
+                        <div class="dp-grid" style="grid-template-columns: repeat(4, 1fr);">
+                            <div class="dp-cell edge">1</div>
+                            <div class="dp-cell edge">1</div>
+                            <div class="dp-cell edge">1</div>
+                            <div class="dp-cell edge">1</div>
+                            <div class="dp-cell edge">1</div>
+                            <div class="dp-cell">2</div>
+                            <div class="dp-cell">3</div>
+                            <div class="dp-cell">4</div>
+                            <div class="dp-cell edge">1</div>
+                            <div class="dp-cell">3</div>
+                            <div class="dp-cell">6</div>
+                            <div class="dp-cell">10</div>
+                            <div class="dp-cell edge">1</div>
+                            <div class="dp-cell">4</div>
+                            <div class="dp-cell">10</div>
+                            <div class="dp-cell computed">20</div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-[var(--text-muted)] text-center">
+                        <span class="text-[var(--accent-blue)]">■</span> Bordes = 1 camino
+                        <span class="ml-4 text-[var(--accent-green)]">■</span> Esquina final = 20 caminos
+                    </p>
+                </div>
+
+                <!-- Por qué los bordes son 1 -->
+                <div class="p-5 bg-[var(--accent-blue)]/10 border border-[var(--accent-blue)]/30 rounded-xl">
+                    <h4 class="font-medium mb-2 text-[var(--accent-blue)]">¿Por qué los bordes son siempre 1?</h4>
+                    <p class="text-sm text-[var(--text-secondary)]">
+                        Para llegar a cualquier celda del borde superior, solo puedes ir hacia la derecha: <code>→ → → →</code>
+                        <br>
+                        Para llegar a cualquier celda del borde izquierdo, solo puedes ir hacia abajo: <code>↓ ↓ ↓ ↓</code>
+                        <br><br>
+                        Solo hay <strong>un único camino</strong> posible para cada celda del borde.
+                    </p>
+                </div>
+
+                <!-- Código DP -->
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — Programación Dinámica</span>
+                        <button class="run-btn" onclick="runCode('code2', 'output2')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code2">def lattice_paths_dp(n):
+    """
+    Cuenta caminos en una cuadrícula n×n usando DP.
+
+    Construimos una tabla donde grid[i][j] = número de caminos
+    desde (0,0) hasta (i,j).
+    """
+    # Crear tabla (n+1) × (n+1) porque hay n+1 puntos en cada dimensión
+    # Para un grid 2×2, hay 3×3 = 9 intersecciones
+    size = n + 1
+    grid = [[0] * size for _ in range(size)]
+
+    # Caso base: primera fila y primera columna = 1
+    # (solo hay un camino para llegar a cualquier punto del borde)
+    for i in range(size):
+        grid[0][i] = 1  # Primera fila
+        grid[i][0] = 1  # Primera columna
+
+    # Rellenar el resto de la tabla
+    # Cada celda = suma de (arriba + izquierda)
+    for i in range(1, size):
+        for j in range(1, size):
+            grid[i][j] = grid[i-1][j] + grid[i][j-1]
+
+    return grid[n][n]
+
+# Verificar con el ejemplo del problema
+print("Grid 2×2:", lattice_paths_dp(2))  # Debe ser 6
+print("Grid 3×3:", lattice_paths_dp(3))  # Debe ser 20
+
+# Resolver el problema
+print("\nGrid 20×20:", lattice_paths_dp(20))</textarea>
+                    <div class="code-output" id="output2">// Output aparecerá aquí</div>
+                </div>
+
+                <!-- Análisis de complejidad -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">Análisis de Complejidad</h4>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <div class="text-sm text-[var(--text-muted)] mb-1">Tiempo</div>
+                            <div class="mono text-lg">O(n²)</div>
+                            <p class="text-xs text-[var(--text-muted)] mt-1">Llenamos una tabla de (n+1)×(n+1)</p>
+                        </div>
+                        <div>
+                            <div class="text-sm text-[var(--text-muted)] mb-1">Espacio</div>
+                            <div class="mono text-lg">O(n²)</div>
+                            <p class="text-xs text-[var(--text-muted)] mt-1">Almacenamos toda la tabla</p>
+                        </div>
+                    </div>
+                    <p class="text-sm text-[var(--text-muted)] mt-4">
+                        <strong>Optimización posible:</strong> Solo necesitamos la fila anterior para calcular la actual,
+                        así que podríamos reducir el espacio a O(n). Pero para n=20, O(n²) es perfectamente aceptable.
+                    </p>
+                </div>
+
+                <!-- Versión optimizada en espacio -->
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — DP Optimizado (O(n) espacio)</span>
+                        <button class="run-btn" onclick="runCode('code2b', 'output2b')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code2b">def lattice_paths_dp_optimized(n):
+    """
+    Versión optimizada en espacio.
+
+    Observación: para calcular la fila i, solo necesitamos la fila i-1.
+    Podemos usar una sola fila y actualizarla in-place.
+    """
+    # Una sola fila de tamaño n+1, inicializada con 1s
+    row = [1] * (n + 1)
+
+    # Para cada fila (excepto la primera que ya es todo 1s)
+    for i in range(1, n + 1):
+        # Para cada columna (excepto la primera que siempre es 1)
+        for j in range(1, n + 1):
+            # row[j] ya contiene el valor de la fila anterior (arriba)
+            # row[j-1] ya fue actualizado y contiene el valor de la izquierda
+            row[j] = row[j] + row[j-1]
+
+    return row[n]
+
+# Verificar
+print("Grid 2×2:", lattice_paths_dp_optimized(2))
+print("Grid 3×3:", lattice_paths_dp_optimized(3))
+print("\nGrid 20×20:", lattice_paths_dp_optimized(20))
+print("\n¡Mismo resultado, pero usando solo O(n) memoria!")</textarea>
+                    <div class="code-output" id="output2b">// Output aparecerá aquí</div>
+                </div>
+
+                <!-- Conceptos aprendidos -->
+                <div class="flex flex-wrap gap-3">
+                    <span class="concept-tag"><span class="text-[var(--accent-green)]">✓</span> Programación Dinámica</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-green)]">✓</span> Tabla de subproblemas</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-green)]">✓</span> Optimización de espacio</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- NIVEL 3 -->
+        <div class="level-content" id="level3">
+            <div class="grid gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-medium flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-[var(--accent-purple)] flex items-center justify-center text-sm">3</span>
+                        Fórmula Combinatoria Directa
+                    </h3>
+                    <p class="text-[var(--text-secondary)]">
+                        La programación dinámica es elegante, pero existe una solución O(n) que usa directamente
+                        el coeficiente binomial. Es la forma más eficiente de resolver este problema.
+                    </p>
+                </div>
+
+                <!-- La fórmula -->
+                <div class="math-block">
+                    <div class="text-sm text-[var(--text-muted)] mb-3">Fórmula del coeficiente binomial</div>
+                    <div class="math-formula serif text-2xl">
+                        C(n, k) = n! / (k! × (n-k)!)
+                    </div>
+                    <div class="math-description mt-4">
+                        Para un grid n×n: <strong>C(2n, n)</strong>
+                    </div>
+                </div>
+
+                <!-- Por qué funciona -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4 text-[var(--accent-purple)]">¿Por qué C(2n, n)?</h4>
+                    <div class="space-y-4 text-[var(--text-secondary)]">
+                        <p>Para un grid n×n necesitamos:</p>
+                        <ul class="list-disc list-inside space-y-2 ml-4">
+                            <li><strong>n movimientos</strong> hacia la derecha (R)</li>
+                            <li><strong>n movimientos</strong> hacia abajo (D)</li>
+                            <li><strong>2n movimientos</strong> en total</li>
+                        </ul>
+                        <p class="mt-4">
+                            Un camino es una secuencia de 2n movimientos donde elegimos cuáles n son "R".
+                            <br><br>
+                            <strong>Ejemplo grid 2×2:</strong>
+                        </p>
+                        <div class="p-4 bg-[var(--bg-elevated)] rounded-lg mono text-sm mt-2">
+                            <p>Posiciones: <span class="text-[var(--accent-blue)]">1</span> <span class="text-[var(--accent-blue)]">2</span> <span class="text-[var(--accent-blue)]">3</span> <span class="text-[var(--accent-blue)]">4</span></p>
+                            <p class="mt-2">Elegir 2 para "R": {1,2}, {1,3}, {1,4}, {2,3}, {2,4}, {3,4}</p>
+                            <p class="mt-1">Caminos: RRDD, RDRD, RDDR, DRRD, DRDR, DDRR</p>
+                            <p class="mt-2 text-[var(--accent-green)]">C(4,2) = 6 ✓</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Código con math.comb -->
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — math.comb (Python 3.8+)</span>
+                        <button class="run-btn" onclick="runCode('code3', 'output3')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code3">import math
+
+def lattice_paths_comb(n):
+    """
+    Solución O(n) usando el coeficiente binomial.
+
+    Para un grid n×n, la respuesta es C(2n, n).
+    Python 3.8+ incluye math.comb() que lo calcula eficientemente.
+    """
+    return math.comb(2 * n, n)
+
+# Verificar
+print("Grid 2×2:", lattice_paths_comb(2))   # 6
+print("Grid 3×3:", lattice_paths_comb(3))   # 20
+print("Grid 4×4:", lattice_paths_comb(4))   # 70
+
+# Resolver el problema
+print("\nGrid 20×20:", lattice_paths_comb(20))
+
+# Bonus: ¡también podemos calcular grids enormes!
+print("\nGrid 100×100:", lattice_paths_comb(100))</textarea>
+                    <div class="code-output" id="output3">// Output aparecerá aquí</div>
+                </div>
+
+                <!-- Implementación manual -->
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python — Cálculo manual (sin math.comb)</span>
+                        <button class="run-btn" onclick="runCode('code3b', 'output3b')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea class="code-textarea" id="code3b">def lattice_paths_manual(n):
+    """
+    Calcula C(2n, n) manualmente.
+
+    Truco: C(2n, n) = (2n)! / (n! × n!)
+
+    Pero calcular factoriales enormes y dividir es ineficiente.
+    En vez de eso, calculamos paso a paso:
+
+    C(2n, n) = (2n × (2n-1) × ... × (n+1)) / (n × (n-1) × ... × 1)
+
+    Para evitar overflow (aunque Python lo maneja), alternamos
+    multiplicaciones y divisiones.
+    """
+    result = 1
+
+    for i in range(n):
+        # Multiplicamos por (2n - i) / (i + 1)
+        result = result * (2 * n - i) // (i + 1)
+
+    return result
+
+# Verificar
+print("Grid 2×2:", lattice_paths_manual(2))
+print("Grid 3×3:", lattice_paths_manual(3))
+print("\nGrid 20×20:", lattice_paths_manual(20))
+
+# Mostremos el cálculo paso a paso para n=2
+print("\n--- Cálculo paso a paso para C(4,2) ---")
+result = 1
+n = 2
+for i in range(n):
+    numerator = 2 * n - i
+    denominator = i + 1
+    result = result * numerator // denominator
+    print(f"Paso {i+1}: × {numerator} / {denominator} = {result}")</textarea>
+                    <div class="code-output" id="output3b">// Output aparecerá aquí</div>
+                </div>
+
+                <!-- Comparación de métodos -->
+                <div class="p-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
+                    <h4 class="font-medium mb-4">Comparación de Métodos</h4>
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-[var(--text-muted)]">
+                                <th class="text-left pb-3">Método</th>
+                                <th class="text-left pb-3">Tiempo</th>
+                                <th class="text-left pb-3">Espacio</th>
+                                <th class="text-left pb-3">Uso</th>
+                            </tr>
+                        </thead>
+                        <tbody class="mono">
+                            <tr class="border-t border-[var(--border)]">
+                                <td class="py-3">DP (tabla)</td>
+                                <td>O(n²)</td>
+                                <td>O(n²)</td>
+                                <td class="text-[var(--text-secondary)]">Didáctico</td>
+                            </tr>
+                            <tr class="border-t border-[var(--border)]">
+                                <td class="py-3">DP optimizado</td>
+                                <td>O(n²)</td>
+                                <td>O(n)</td>
+                                <td class="text-[var(--text-secondary)]">Memoria limitada</td>
+                            </tr>
+                            <tr class="border-t border-[var(--border)]">
+                                <td class="py-3 text-[var(--accent-purple)]">math.comb</td>
+                                <td class="text-[var(--accent-green)]">O(n)</td>
+                                <td class="text-[var(--accent-green)]">O(1)</td>
+                                <td class="text-[var(--text-secondary)]">Óptimo</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- El número central de Pascal -->
+                <div class="p-5 bg-[var(--accent-purple)]/10 border border-[var(--accent-purple)]/30 rounded-xl">
+                    <h4 class="font-medium mb-2 text-[var(--accent-purple)]">C(2n, n): El Número Central de Catalan</h4>
+                    <p class="text-sm text-[var(--text-secondary)]">
+                        C(2n, n) es el <strong>número central</strong> de la fila 2n del triángulo de Pascal.
+                        Es el más grande de su fila y aparece en muchos problemas de combinatoria:
+                    </p>
+                    <ul class="list-disc list-inside space-y-1 ml-4 text-sm text-[var(--text-muted)] mt-2">
+                        <li>Caminos en cuadrículas (este problema)</li>
+                        <li>Formas de subir escaleras</li>
+                        <li>Secuencias balanceadas de paréntesis (relacionado con Catalan)</li>
+                        <li>Aproximación de π (fórmula de Wallis)</li>
+                    </ul>
+                </div>
+
+                <!-- Conceptos aprendidos -->
+                <div class="flex flex-wrap gap-3">
+                    <span class="concept-tag"><span class="text-[var(--accent-purple)]">✓</span> Coeficiente binomial</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-purple)]">✓</span> math.comb</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-purple)]">✓</span> Reformulación combinatoria</span>
+                    <span class="concept-tag"><span class="text-[var(--accent-purple)]">✓</span> Triángulo de Pascal</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Pyodide setup
+        let pyodide = null;
+
+        async function initPyodide() {
+            const status = document.getElementById('pyodideStatus');
+            const text = document.getElementById('pyodideText');
+            status.classList.add('loading');
+
+            try {
+                pyodide = await loadPyodide();
+                status.classList.remove('loading');
+                status.classList.add('ready');
+                text.textContent = 'Python listo';
+            } catch (e) {
+                text.textContent = 'Error cargando Python';
+                status.style.background = '#ef4444';
+            }
+        }
+
+        async function runCode(inputId, outputId) {
+            const code = document.getElementById(inputId).value;
+            const output = document.getElementById(outputId);
+            const btn = output.parentElement.querySelector('.run-btn');
+
+            if (!pyodide) {
+                output.textContent = 'Esperando Pyodide...';
+                return;
+            }
+
+            btn.classList.add('running');
+            btn.disabled = true;
+            output.textContent = 'Ejecutando...';
+            output.className = 'code-output';
+
+            try {
+                pyodide.runPython(`
+import sys
+from io import StringIO
+sys.stdout = StringIO()
+`);
+                await pyodide.runPythonAsync(code);
+                const stdout = pyodide.runPython('sys.stdout.getvalue()');
+                output.textContent = stdout || '(sin output)';
+                output.classList.add('success');
+            } catch (e) {
+                output.textContent = e.message;
+                output.classList.add('error');
+            }
+
+            btn.classList.remove('running');
+            btn.disabled = false;
+        }
+
+        // Level tabs
+        document.querySelectorAll('.level-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.level-content').forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(`level${tab.dataset.level}`).classList.add('active');
+            });
+        });
+
+        // Init
+        initPyodide();
+    </script>
+</body>
+</html>
