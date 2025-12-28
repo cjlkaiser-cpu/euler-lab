@@ -188,16 +188,27 @@ Si se incluye:
 
 ---
 
-### Footer
-- Link al problema anterior
-- Link al problema siguiente
+### Footer / Navegación (en header)
+
+**IMPORTANTE**: Usar siempre `index.html` explícito en los enlaces:
+
+```html
+<!-- Link a Euler Lab -->
+<a href="../../index.html">← Euler Lab</a>
+
+<!-- Links entre problemas -->
+<a href="../011/index.html">← 011</a>
+<a href="../013/index.html">013 →</a>
+```
+
+**NO usar** formato sin `index.html` (`../011/`, `../../`) porque falla al abrir localmente.
 
 ---
 
 ## Paso 3: Navegación
 
-- En problema anterior: link "Siguiente →" apunta al nuevo
-- En problema nuevo: link "← Anterior" apunta al anterior
+- En problema anterior: link "Siguiente →" apunta al nuevo (`../{{NÚMERO}}/index.html`)
+- En problema nuevo: link "← Anterior" apunta al anterior (`../{{NÚMERO-1}}/index.html`)
 
 ---
 
