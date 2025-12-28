@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#004 Palíndromo más grande — Euler Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    <style>
+        :root {
+            --bg: #000000;
+            --bg-elevated: #0a0a0f;
+            --bg-card: #111118;
+            --border: #1a1a24;
+            --border-hover: #2a2a3a;
+            --text: #e8e8ed;
+            --text-secondary: #8888a0;
+            --text-muted: #505068;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-amber: #f59e0b;
+            --accent-purple: #a855f7;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .serif { font-family: 'Source Serif 4', Georgia, serif; }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .level-tabs {
+            display: flex;
+            gap: 2px;
+            background: var(--bg-elevated);
+            padding: 4px;
+            border-radius: 10px;
+        }
+
+        .level-tab {
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .level-tab:hover { color: var(--text-secondary); }
+
+        .level-tab.active {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .level-tab[data-level="2"].active { background: var(--accent-green); }
+        .level-tab[data-level="3"].active { background: var(--accent-amber); }
+        .level-tab[data-level="4"].active { background: var(--accent-purple); }
+
+        .level-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .level-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .code-editor {
+            position: relative;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 16px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .code-lang {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--accent-green);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .run-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .run-btn:hover { filter: brightness(1.1); }
+        .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .run-btn.running { background: var(--accent-amber); }
+
+        .code-textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 16px;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            resize: vertical;
+            outline: none;
+        }
+
+        .code-output {
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--text-secondary);
+            min-height: 40px;
+        }
+
+        .code-output.success { color: var(--accent-green); }
+        .code-output.error { color: #ef4444; }
+
+        .result-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(34, 197, 94, 0.08) 100%);
+            border: 1px solid var(--accent-blue);
+            border-radius: 12px;
+        }
+
+        .result-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--accent-green);
+        }
+
+        .step-card {
+            display: flex;
+            gap: 16px;
+            padding: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            transition: border-color 0.2s;
+        }
+
+        .step-card:hover { border-color: var(--border-hover); }
+
+        .step-number {
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--accent-blue);
+        }
+
+        .math-block {
+            padding: 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .math-formula {
+            font-family: 'Source Serif 4', Georgia, serif;
+            font-size: 20px;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .math-description {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .perf-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .perf-table th, .perf-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .perf-table th {
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        .perf-table td {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+
+        .perf-bar {
+            height: 6px;
+            background: var(--bg-elevated);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+
+        .perf-bar-fill { height: 100%; border-radius: 3px; }
+        .perf-fast { background: var(--accent-green); }
+        .perf-slow { background: #ef4444; }
+
+        .concept-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .custom-input {
+            padding: 10px 14px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .custom-input:focus { border-color: var(--accent-blue); }
+
+        .pyodide-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+
+        .status-dot.loading { background: var(--accent-amber); animation: pulse 1s infinite; }
+        .status-dot.ready { background: var(--accent-green); }
+        .status-dot.error { background: #ef4444; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        code:not(.code-textarea) {
+            padding: 2px 8px;
+            background: var(--bg-elevated);
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            color: var(--accent-amber);
+        }
+
+        .palindrome-display {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            margin: 20px 0;
+        }
+
+        .palindrome-char {
+            width: 40px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 24px;
+            font-weight: 600;
+            border-radius: 8px;
+        }
+
+        .char-mirror-left {
+            background: rgba(236, 72, 153, 0.15);
+            color: #f472b6;
+            border: 1px solid rgba(236, 72, 153, 0.3);
+        }
+
+        .char-center {
+            background: rgba(168, 85, 247, 0.15);
+            color: #c084fc;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+
+        .char-mirror-right {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .example-calc {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .example-num {
+            font-size: 18px;
+            color: var(--text);
+        }
+
+        .example-op {
+            color: var(--text-muted);
+        }
+
+        .example-result {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--accent-green);
+        }
+
+        @media (max-width: 640px) {
+            .level-tabs { flex-wrap: wrap; }
+            .level-tab { flex: 1; text-align: center; padding: 8px 12px; font-size: 12px; }
+            .result-box { flex-direction: column; text-align: center; gap: 8px; }
+            .step-card { flex-direction: column; }
+            .palindrome-char { width: 30px; height: 40px; font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="max-w-3xl mx-auto px-5 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <nav class="text-xs text-gray-600 mb-1 mono">
+                        <a href="../../index.html" class="hover:text-blue-400 transition">Euler Lab</a>
+                        <span class="mx-1.5 text-gray-800">/</span>
+                        <span class="text-gray-500">#004</span>
+                    </nav>
+                    <h1 class="text-xl font-medium">Palíndromo más grande</h1>
+                </div>
+                <div class="pyodide-status mono">
+                    <span class="status-dot loading" id="pyodide-dot"></span>
+                    <span id="pyodide-text">Cargando Python...</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-5 py-8">
+        <!-- Problem statement -->
+        <section class="mb-10">
+            <div class="p-6 bg-gray-950 border border-gray-900 rounded-xl">
+                <p class="serif text-lg text-gray-300 leading-relaxed">
+                    Un <strong class="text-white">palíndromo</strong> se lee igual de izquierda a derecha que de derecha a izquierda.
+                </p>
+                <p class="serif text-lg text-gray-300 mt-3">
+                    El palíndromo más grande hecho del producto de dos números de <strong class="text-white">2 dígitos</strong> es:
+                </p>
+                <div class="example-calc my-4">
+                    <span class="example-num">91</span>
+                    <span class="example-op">×</span>
+                    <span class="example-num">99</span>
+                    <span class="example-op">=</span>
+                    <span class="example-result">9009</span>
+                </div>
+                <p class="serif text-lg text-gray-300">
+                    Encuentra el palíndromo más grande hecho del producto de dos números de <strong class="text-white">3 dígitos</strong>.
+                </p>
+            </div>
+        </section>
+
+        <!-- Level tabs -->
+        <nav class="mb-8 flex justify-center">
+            <div class="level-tabs">
+                <button class="level-tab active" data-level="1">A mano</button>
+                <button class="level-tab" data-level="2">Fuerza bruta</button>
+                <button class="level-tab" data-level="3">Pythónico</button>
+                <button class="level-tab" data-level="4">Matemático</button>
+            </div>
+        </nav>
+
+        <!-- LEVEL 1: A mano -->
+        <section class="level-content active" id="level-1">
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">¿Qué es un palíndromo?</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        Un número (o palabra) que se lee igual en ambos sentidos: <code>121</code>, <code>1331</code>, <code>9009</code>.
+                    </p>
+                </div>
+
+                <div class="palindrome-display">
+                    <span class="palindrome-char char-mirror-left">9</span>
+                    <span class="palindrome-char char-center">0</span>
+                    <span class="palindrome-char char-center">0</span>
+                    <span class="palindrome-char char-mirror-right">9</span>
+                </div>
+
+                <div class="space-y-4">
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Verificando el ejemplo</h2>
+
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h3 class="font-medium mb-1">91 × 99 = 9009</h3>
+                            <p class="text-gray-500 text-sm">Ambos son números de 2 dígitos (entre 10 y 99)</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h3 class="font-medium mb-1">¿9009 es palíndromo?</h3>
+                            <p class="text-gray-500 text-sm">Al revés: 9-0-0-9 → <strong class="text-green-400">Sí!</strong></p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div>
+                            <h3 class="font-medium mb-1">¿Es el mayor?</h3>
+                            <p class="text-gray-500 text-sm">99 × 99 = 9801 (no es palíndromo). No hay productos mayores que sean palíndromos.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">El problema real</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        Con 3 dígitos (100-999), hay <strong class="text-white">900 × 900 = 810.000</strong> productos posibles.
+                        Necesitamos un algoritmo para encontrar el mayor palíndromo.
+                    </p>
+                </div>
+
+                <div class="math-block">
+                    <div class="math-formula">str(n) == str(n)[::-1]</div>
+                    <div class="math-description">En Python: comparar el string con su reverso</div>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Conceptos clave</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="concept-tag">🔤 Strings</span>
+                        <span class="concept-tag">🔄 Reverso</span>
+                        <span class="concept-tag">🔁 Bucles anidados</span>
+                        <span class="concept-tag">📊 Máximo</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEVEL 2: Fuerza bruta -->
+        <section class="level-content" id="level-2">
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">La estrategia</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        Probar todos los productos de dos números de 3 dígitos, verificar si cada producto es palíndromo,
+                        y quedarnos con el mayor.
+                    </p>
+                </div>
+
+                <div class="p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl mb-6">
+                    <p class="text-blue-300 text-sm">
+                        <strong>Clave:</strong> Para verificar si un número es palíndromo, lo convertimos a string
+                        y comparamos con su reverso.
+                    </p>
+                </div>
+
+                <!-- Variante A -->
+                <div>
+                    <h2 class="text-sm font-medium text-green-400 uppercase tracking-wide mb-3">Variante A: while con contadores</h2>
+                    <p class="text-gray-400 text-sm mb-4">
+                        Dos bucles while anidados con contadores manuales. Muy explícita, muestra cada paso.
+                    </p>
+                    <div class="code-editor">
+                        <div class="code-header">
+                            <span class="code-lang">Python</span>
+                            <button class="run-btn" onclick="runCode('code-varA')">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                Ejecutar
+                            </button>
+                        </div>
+                        <textarea id="code-varA" class="code-textarea" spellcheck="false" style="min-height: 400px;">def es_palindromo(n):
+    texto = str(n)              # Convertir a string
+    reverso = texto[::-1]       # Invertir el string
+    return texto == reverso     # Comparar
+
+mayor = 0                       # El mayor palíndromo encontrado
+i = 100                         # Primer factor
+
+while i <= 999:
+    j = 100                     # Segundo factor
+    while j <= 999:
+        producto = i * j
+        if es_palindromo(producto):
+            if producto > mayor:
+                mayor = producto
+        j = j + 1
+    i = i + 1
+
+print(mayor)</textarea>
+                        <div class="code-output" id="output-varA">Pulsa "Ejecutar" para ver el resultado</div>
+                    </div>
+                </div>
+
+                <!-- Variante B -->
+                <div>
+                    <h2 class="text-sm font-medium text-green-400 uppercase tracking-wide mb-3">Variante B: for con range</h2>
+                    <p class="text-gray-400 text-sm mb-4">
+                        Bucles for anidados. Más compacto y pythónico.
+                    </p>
+                    <div class="code-editor">
+                        <div class="code-header">
+                            <span class="code-lang">Python</span>
+                            <button class="run-btn" onclick="runCode('code-varB')">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                Ejecutar
+                            </button>
+                        </div>
+                        <textarea id="code-varB" class="code-textarea" spellcheck="false" style="min-height: 280px;">def es_palindromo(n):
+    s = str(n)
+    return s == s[::-1]
+
+mayor = 0
+
+for i in range(100, 1000):      # 100 a 999
+    for j in range(100, 1000):  # 100 a 999
+        producto = i * j
+        if es_palindromo(producto) and producto > mayor:
+            mayor = producto
+
+print(mayor)</textarea>
+                        <div class="code-output" id="output-varB">Pulsa "Ejecutar" para ver el resultado</div>
+                    </div>
+                </div>
+
+                <!-- Variante C -->
+                <div>
+                    <h2 class="text-sm font-medium text-green-400 uppercase tracking-wide mb-3">Variante C: desde el mayor</h2>
+                    <p class="text-gray-400 text-sm mb-4">
+                        Empezamos desde 999 hacia abajo. Encontramos palíndromos grandes primero (pero debemos seguir buscando).
+                    </p>
+                    <div class="code-editor">
+                        <div class="code-header">
+                            <span class="code-lang">Python</span>
+                            <button class="run-btn" onclick="runCode('code-varC')">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                Ejecutar
+                            </button>
+                        </div>
+                        <textarea id="code-varC" class="code-textarea" spellcheck="false" style="min-height: 340px;">def es_palindromo(n):
+    s = str(n)
+    return s == s[::-1]
+
+mayor = 0
+factores = (0, 0)
+
+for i in range(999, 99, -1):        # 999 hacia 100
+    for j in range(999, 99, -1):    # 999 hacia 100
+        producto = i * j
+        if producto <= mayor:
+            break                    # No puede mejorar
+        if es_palindromo(producto):
+            mayor = producto
+            factores = (i, j)
+
+print(f"{mayor} = {factores[0]} × {factores[1]}")</textarea>
+                        <div class="code-output" id="output-varC">Pulsa "Ejecutar" para ver el resultado</div>
+                    </div>
+                </div>
+
+                <!-- Comparativa -->
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">¿Cuál elegir?</h2>
+                    <div class="bg-gray-950 border border-gray-900 rounded-xl overflow-hidden">
+                        <table class="perf-table">
+                            <thead>
+                                <tr>
+                                    <th>Variante</th>
+                                    <th>Iteraciones</th>
+                                    <th>Ventaja</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-gray-300">A: while</td>
+                                    <td>810.000</td>
+                                    <td class="text-gray-400">Muy explícita</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-gray-300">B: for range</td>
+                                    <td>810.000</td>
+                                    <td class="text-gray-400">Compacta</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-gray-300">C: descendente</td>
+                                    <td>~menos</td>
+                                    <td class="text-gray-400">Early exit con break</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="result-box">
+                    <span class="text-gray-400">Resultado (las tres variantes)</span>
+                    <span class="result-value">906609</span>
+                </div>
+
+                <!-- Conceptos -->
+                <div class="space-y-4">
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Conceptos clave</h2>
+
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>str(n)</code></h3>
+                            <p class="text-gray-500 text-sm"><strong>Conversión a string.</strong> Convierte el número 906609 en el texto "906609".</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>texto[::-1]</code></h3>
+                            <p class="text-gray-500 text-sm"><strong>Slice inverso.</strong> El <code>::-1</code> recorre el string de atrás hacia adelante. "906609" → "906609".</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>range(999, 99, -1)</code></h3>
+                            <p class="text-gray-500 text-sm"><strong>Range descendente.</strong> Empieza en 999, termina antes de 99, decrementando de 1 en 1.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">4</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>and</code> en condiciones</h3>
+                            <p class="text-gray-500 text-sm"><strong>Operador lógico.</strong> Ambas condiciones deben ser verdaderas. Python evalúa de izquierda a derecha y para si encuentra False.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">5</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>factores = (i, j)</code></h3>
+                            <p class="text-gray-500 text-sm"><strong>Tupla.</strong> Agrupa dos valores relacionados. Accedemos con <code>factores[0]</code> y <code>factores[1]</code>.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Conceptos de Python aprendidos</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="concept-tag">🔤 str()</span>
+                        <span class="concept-tag">🔀 [::-1] slice inverso</span>
+                        <span class="concept-tag">🔁 for anidados</span>
+                        <span class="concept-tag">📦 Tuplas</span>
+                        <span class="concept-tag">⬇️ range descendente</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEVEL 3: Pythónico -->
+        <section class="level-content" id="level-3">
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Generador + max</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        Usamos una expresión generadora para crear todos los palíndromos y <code>max()</code> para obtener el mayor.
+                    </p>
+                </div>
+
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python</span>
+                        <button class="run-btn" onclick="runCode('code-pythonic')">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea id="code-pythonic" class="code-textarea" spellcheck="false" style="min-height: 200px;">es_palindromo = lambda n: str(n) == str(n)[::-1]
+
+resultado = max(
+    i * j
+    for i in range(100, 1000)
+    for j in range(i, 1000)      # j >= i evita duplicados
+    if es_palindromo(i * j)
+)
+
+print(resultado)</textarea>
+                    <div class="code-output" id="output-pythonic">Pulsa "Ejecutar" para ver el resultado</div>
+                </div>
+
+                <div class="space-y-4">
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Desglose</h2>
+
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>lambda n: str(n) == str(n)[::-1]</code></h3>
+                            <p class="text-gray-500 text-sm">Función anónima en una línea. Equivale a <code>def es_palindromo(n): return ...</code></p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>for j in range(i, 1000)</code></h3>
+                            <p class="text-gray-500 text-sm">j empieza en i, no en 100. Así evitamos calcular 100×999 y 999×100 (son iguales).</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div>
+                            <h3 class="font-medium mb-1"><code>max(...)</code></h3>
+                            <p class="text-gray-500 text-sm">Recibe un generador y devuelve el valor máximo sin crear una lista en memoria.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-950 border border-gray-900 rounded-xl overflow-hidden">
+                    <table class="perf-table">
+                        <thead>
+                            <tr>
+                                <th>Aspecto</th>
+                                <th>Fuerza bruta</th>
+                                <th>Pythónico</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-gray-400">Iteraciones</td>
+                                <td>810.000</td>
+                                <td>405.450 (sin duplicados)</td>
+                            </tr>
+                            <tr>
+                                <td class="text-gray-400">Líneas</td>
+                                <td>~12</td>
+                                <td>7</td>
+                            </tr>
+                            <tr>
+                                <td class="text-gray-400">Memoria</td>
+                                <td>O(1)</td>
+                                <td>O(1) (generador)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="result-box">
+                    <span class="text-gray-400">Resultado</span>
+                    <span class="result-value">906609</span>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Conceptos aprendidos</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="concept-tag">λ lambda</span>
+                        <span class="concept-tag">🌊 Generator expression</span>
+                        <span class="concept-tag">📊 max()</span>
+                        <span class="concept-tag">🔄 Evitar duplicados</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEVEL 4: Matemático -->
+        <section class="level-content" id="level-4">
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Estructura de un palíndromo de 6 dígitos</h2>
+                    <p class="text-gray-400 leading-relaxed">
+                        Un palíndromo de 6 dígitos tiene la forma <code>abccba</code>.
+                    </p>
+                </div>
+
+                <div class="palindrome-display">
+                    <span class="palindrome-char char-mirror-left">a</span>
+                    <span class="palindrome-char char-mirror-left">b</span>
+                    <span class="palindrome-char char-center">c</span>
+                    <span class="palindrome-char char-center">c</span>
+                    <span class="palindrome-char char-mirror-right">b</span>
+                    <span class="palindrome-char char-mirror-right">a</span>
+                </div>
+
+                <div class="math-block">
+                    <div class="math-formula">abccba = 100001a + 10010b + 1100c</div>
+                    <div class="math-description">Descomposición por posición</div>
+                </div>
+
+                <div class="math-block">
+                    <div class="math-formula">= 11 × (9091a + 910b + 100c)</div>
+                    <div class="math-description">¡Todo palíndromo de 6 dígitos es divisible por 11!</div>
+                </div>
+
+                <div class="space-y-4">
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Implicación</h2>
+
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h3 class="font-medium mb-1">Si P = i × j y P es divisible por 11</h3>
+                            <p class="text-gray-500 text-sm">Entonces al menos uno de i o j debe ser divisible por 11 (11 es primo).</p>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h3 class="font-medium mb-1">Optimización</h3>
+                            <p class="text-gray-500 text-sm">Podemos fijar uno de los factores como múltiplo de 11, reduciendo las iteraciones ~11×.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-editor">
+                    <div class="code-header">
+                        <span class="code-lang">Python</span>
+                        <button class="run-btn" onclick="runCode('code-math')">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            Ejecutar
+                        </button>
+                    </div>
+                    <textarea id="code-math" class="code-textarea" spellcheck="false" style="min-height: 380px;">def es_palindromo(n):
+    s = str(n)
+    return s == s[::-1]
+
+mayor = 0
+factores = (0, 0)
+
+# i va de 999 a 100
+for i in range(999, 99, -1):
+    # j debe ser múltiplo de 11 (o i lo es)
+    if i % 11 == 0:
+        j_start = 999
+        j_step = -1
+    else:
+        j_start = 990              # Mayor múltiplo de 11 <= 999
+        j_step = -11
+
+    for j in range(j_start, 99, j_step):
+        producto = i * j
+        if producto <= mayor:
+            break
+        if es_palindromo(producto):
+            mayor = producto
+            factores = (i, j)
+            break                  # Encontrado para este i
+
+print(f"{mayor} = {factores[0]} × {factores[1]}")</textarea>
+                    <div class="code-output" id="output-math">Pulsa "Ejecutar" para ver el resultado</div>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Comparativa de rendimiento</h2>
+                    <div class="bg-gray-950 border border-gray-900 rounded-xl overflow-hidden">
+                        <table class="perf-table">
+                            <thead>
+                                <tr>
+                                    <th>Método</th>
+                                    <th>Iteraciones</th>
+                                    <th>Mejora</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-gray-400">Fuerza bruta</td>
+                                    <td>810.000</td>
+                                    <td class="text-gray-400">—</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-gray-400">Sin duplicados</td>
+                                    <td>405.450</td>
+                                    <td class="text-amber-400">2×</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-gray-400">Divisibilidad por 11</td>
+                                    <td>~36.855</td>
+                                    <td class="text-green-400">~22×</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-500">Fuerza bruta</span>
+                        <span class="mono text-gray-600">810.000 iteraciones</span>
+                    </div>
+                    <div class="perf-bar"><div class="perf-bar-fill perf-slow" style="width: 100%"></div></div>
+
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-500">Optimizado (÷11)</span>
+                        <span class="mono text-gray-600">~36.855 iteraciones</span>
+                    </div>
+                    <div class="perf-bar"><div class="perf-bar-fill perf-fast" style="width: 4.5%"></div></div>
+                </div>
+
+                <div class="result-box">
+                    <div>
+                        <span class="text-gray-400 block text-sm">Resultado</span>
+                        <span class="result-value">906609</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-gray-400 block text-sm">Factores</span>
+                        <span class="mono text-lg text-gray-300">913 × 993</span>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Conceptos aprendidos</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="concept-tag">🔢 Divisibilidad por 11</span>
+                        <span class="concept-tag">📐 Estructura numérica</span>
+                        <span class="concept-tag">⚡ Reducción de búsqueda</span>
+                        <span class="concept-tag">🧮 Propiedades de primos</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Try with custom digits -->
+        <section class="mt-12 pt-8 border-t border-gray-900">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Prueba con otro número de dígitos</h2>
+            <div class="flex gap-3 items-center flex-wrap">
+                <input type="number" id="custom-limit" class="custom-input w-24" value="2" min="1" max="4">
+                <span class="text-gray-500">dígitos</span>
+                <button class="run-btn" onclick="runCustom()">Calcular</button>
+                <span id="custom-result" class="mono text-lg text-green-400"></span>
+            </div>
+        </section>
+
+        <!-- Navigation -->
+        <footer class="mt-16 pt-8 border-t border-gray-900 flex justify-between items-center">
+            <a href="../003/index.html" class="text-gray-500 hover:text-white transition text-sm">← Problema 3: Factor primo mayor</a>
+            <a href="../005/index.html" class="text-gray-500 hover:text-white transition text-sm">Problema 5: MCM 1-20 →</a>
+        </footer>
+    </main>
+
+    <script>
+        // Level tabs
+        document.querySelectorAll('.level-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const level = tab.dataset.level;
+
+                document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                document.querySelectorAll('.level-content').forEach(c => c.classList.remove('active'));
+                document.getElementById(`level-${level}`).classList.add('active');
+            });
+        });
+
+        // Pyodide
+        let pyodide = null;
+
+        async function initPyodide() {
+            const dot = document.getElementById('pyodide-dot');
+            const text = document.getElementById('pyodide-text');
+
+            try {
+                pyodide = await loadPyodide();
+                dot.classList.remove('loading');
+                dot.classList.add('ready');
+                text.textContent = 'Python listo';
+            } catch (e) {
+                dot.classList.remove('loading');
+                dot.classList.add('error');
+                text.textContent = 'Error cargando Python';
+                console.error(e);
+            }
+        }
+
+        initPyodide();
+
+        async function runCode(textareaId) {
+            if (!pyodide) {
+                alert('Python aún está cargando. Espera un momento.');
+                return;
+            }
+
+            const textarea = document.getElementById(textareaId);
+            const outputId = 'output-' + textareaId.replace('code-', '');
+            const output = document.getElementById(outputId);
+            const btn = textarea.closest('.code-editor').querySelector('.run-btn');
+
+            btn.disabled = true;
+            btn.classList.add('running');
+            btn.innerHTML = '<svg class="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/></svg> Ejecutando...';
+            output.className = 'code-output';
+            output.textContent = 'Ejecutando...';
+
+            try {
+                pyodide.runPython(`
+import sys
+from io import StringIO
+sys.stdout = StringIO()
+`);
+
+                pyodide.runPython(textarea.value);
+
+                const stdout = pyodide.runPython('sys.stdout.getvalue()');
+                output.textContent = stdout || '(sin salida)';
+                output.classList.add('success');
+            } catch (e) {
+                output.textContent = e.message;
+                output.classList.add('error');
+            }
+
+            btn.disabled = false;
+            btn.classList.remove('running');
+            btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Ejecutar';
+        }
+
+        async function runCustom() {
+            if (!pyodide) {
+                alert('Python aún está cargando. Espera un momento.');
+                return;
+            }
+
+            const digits = parseInt(document.getElementById('custom-limit').value);
+            const result = document.getElementById('custom-result');
+
+            if (isNaN(digits) || digits < 1 || digits > 4) {
+                result.textContent = 'Entre 1 y 4 dígitos';
+                result.style.color = '#ef4444';
+                return;
+            }
+
+            try {
+                const code = `
+def es_palindromo(n):
+    s = str(n)
+    return s == s[::-1]
+
+digits = ${digits}
+min_n = 10 ** (digits - 1) if digits > 1 else 1
+max_n = 10 ** digits - 1
+
+mayor = 0
+for i in range(max_n, min_n - 1, -1):
+    for j in range(max_n, min_n - 1, -1):
+        p = i * j
+        if p <= mayor:
+            break
+        if es_palindromo(p):
+            mayor = p
+
+mayor
+`;
+                const res = pyodide.runPython(code);
+                result.textContent = `= ${res.toLocaleString()}`;
+                result.style.color = '#22c55e';
+            } catch (e) {
+                result.textContent = 'Error: ' + e.message;
+                result.style.color = '#ef4444';
+            }
+        }
+    </script>
+</body>
+</html>
